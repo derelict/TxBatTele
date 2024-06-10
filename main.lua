@@ -2358,8 +2358,4 @@ local options = {
   { "Battery_Cap", VALUE, 4000, 500, 10000  }
 }
 
-<<<<<<< HEAD
 return { name="TxBatTele", options=options, create=create, update=update, refresh=refresh, background=background }
-=======
-return { name="mahRe2", options=options, create=create, update=update, refresh=refresh, background=background }
->>>>>>> a7e7bb7 (initial commit)
