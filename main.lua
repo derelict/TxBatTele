@@ -107,7 +107,7 @@
 -- Configurations
 --  For help using telemetry scripts
 --    http://rcdiy.ca/telemetry-scripts-getting-started/
-local Title = "Flight Battery Monitor"
+local Title = "Flight Telemetry and Battery Monitor"
 
 -- Sensors
 -- 	Use Voltage and or mAh consumed calculated sensor based on VFAS, FrSky FAS-40
@@ -613,27 +613,6 @@ if rxbatType == "buffer" then
 
 end
 
-
---for k, v in pairs(BatteryTypeDischargeCurves) do
---  print(k .. "BAT DEBUG:")
---  for _, val in ipairs(v) do
---      print(string.format("BAT DEBUG: {%.2f, %.1f}", val[1], val[2]))
---  end
---end
-
-local VoltToPercentTable = {
-  {4.20, 100}, {4.17, 97.5}, {4.15, 95}, {4.13, 92.5}, 
-  {4.11, 90}, {4.10, 87.5}, {4.08, 85}, {4.05, 82.5}, 
-  {4.02, 80}, {4.00, 77.5}, {3.98, 75}, {3.97, 72.5}, 
-  {3.95, 70}, {3.93, 67.5}, {3.91, 65}, {3.89, 62.5}, 
-  {3.87, 60}, {3.86, 57.5}, {3.85, 55}, {3.85, 52.5}, 
-  {3.84, 50}, {3.83, 47.5}, {3.82, 45}, {3.81, 42.5}, 
-  {3.80, 40}, {3.80, 37.5}, {3.79, 35}, {3.78, 32.5}, 
-  {3.77, 30}, {3.76, 27.5}, {3.75, 25}, {3.74, 22.5}, 
-  {3.73, 20}, {3.72, 17.5}, {3.71, 15}, {3.70, 12.5}, 
-  {3.69, 10}, {3.67, 7.5}, {3.61, 5}, {3.49, 2.5}, 
-  {3.27, 0}
-}
 
 
 
