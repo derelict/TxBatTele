@@ -4,11 +4,7 @@
 
 -- File Locations On The Transmitter's SD Card
 --  This script file  /SCRIPTS/WIDGETS/
-<<<<<<< HEAD
 --  Sound files       /SCRIPTS/WIDGETS/TxBatTele/sounds/
-=======
---  Sound files       /SCRIPTS/WIDGETS/mahRe2/sounds/
->>>>>>> a7e7bb7 (initial commit)
 
 -- Works On OpenTX Companion Version: 2.2
 -- Works With Sensor: FrSky FAS40S, FCS-150A, FAS100, FLVS Voltage Sensors
