@@ -12,8 +12,10 @@
 EdgeTX/OpenTX Battery and Telemetry Monitoring LUA Widget
 
 ## Key Features of TxBatTele ⭐
-- **Receiver and Main Battery Monitoring**: Monitor your Main and Receiver Battery
+- **Receiver and Main Battery Monitoring**: Monitor your Main and Receiver Battery. Support for different Battery Types (lipo and buffer currently)
 - **Other Sensors**: Monitor other Sensors
+- **Switch State Announcements**: Voice Announcements for any Switch Position (like Armed, Disarmed, Flightmode, and so on)
+- **Status Pages**: Show pre, post and in flight Statuspage (widget)
 
 ## Screenshots
 ![image](https://github.com/derelict/TxBatTele/assets/2826671/480d3ce7-b507-47c2-8f4d-54872552ef35)
