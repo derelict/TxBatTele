@@ -122,6 +122,8 @@ local Title = "Flight Telemetry and Battery Monitor"
 
 local contexts = {"main", "receiver"}
 
+local verbosity = 3 --todo verbosity levels
+
 -- local currentContext = contexts[currentContextIndex]
 -- 
 -- -- Use the current context variables
@@ -220,6 +222,9 @@ local modelTable = {
     modelName = "SAB Goblin 630",
     modelImage = "goblin.png",
     modelWav = "sg630",
+    telemetryStatus = "TELE",
+    --resetSwitch = "SD" .. CHAR_DOWN ,
+    resetSwitch = "TELE" ,
     VoltageSensor = { 
       main = { "Cels" }, 
       receiver = { "RxBt" }
@@ -290,13 +295,13 @@ local PlayRxBatWarning = true
 
 
 
-local TelemetryStatusSwitch = "TELE"
-local TelemetryStatusSwitch_ID  = getSwitchIndex(TelemetryStatusSwitch)
-
-
-local resetSwitch = TelemetryStatusSwitch
-local resetSwitch = "SD" .. CHAR_DOWN
-local resetSwitch_ID  = getSwitchIndex(resetSwitch)
+-- local TelemetryStatusSwitch = "TELE"
+-- local TelemetryStatusSwitch_ID  = getSwitchIndex(TelemetryStatusSwitch)
+-- 
+-- 
+-- local resetSwitch = TelemetryStatusSwitch
+-- local resetSwitch = "SD" .. CHAR_DOWN
+-- local resetSwitch_ID  = getSwitchIndex(resetSwitch)
 
 --local resetSwitch_ID  = getFieldInfo(resetSwitch).id
 
@@ -379,7 +384,7 @@ local BattCritThresld = 15
 local MainBatNotFullThresh = 97
 local RxBatNotFullThresh = 98
 
-local CellsDetected = false
+--local CellsDetected = false
 
 
 -- local SwitchAnnounceTable = {
@@ -718,11 +723,11 @@ local function getModelDetails(name)
 end
 
 -- ####################################################################
-local function getCellVoltage( voltageSensorIn  ) 
+local function getCellVoltage( cellResult  ) 
   -- For voltage sensors that return a table of sensors, add up the cell 
   -- voltages to get a total cell voltage.
   -- Otherwise, just return the value
-  cellResult = getValue( voltageSensorIn )
+  -- cellResult = getValue( voltageSensorIn )
   cellSum = 0
 
   if (type(cellResult) == "table") then
@@ -1320,6 +1325,14 @@ local function init_func()
   modelDetails = getModelDetails(currentModelName)
 
 
+
+  contexts = {}
+  currentContextIndex = 1
+--- -- Add entries to the table
+--- table.insert(contexts, "main")
+--- table.insert(contexts, "receiver")
+--- table.insert(contexts, "backup")
+
   sensorVoltage = {}
   sensorCurrent = {}
   sensorMah = {}
@@ -1331,7 +1344,18 @@ local function init_func()
   switchIndexes = {}
   previousSwitchState = {}
 
+  currentSensorVoltageValue = {}
+  currentSensorCurrentValue = {}
+  currentSensorMahValue = {}
 
+  currentVoltageValue = {}
+
+  CellsDetected = {}
+
+  detectedBattery = {}
+  detectedBatteryValid = {}
+
+  numberOfBatteries = 0
   --previousSwitchState = {}
 
   modelName = modelDetails.modelName
@@ -1359,10 +1383,55 @@ local function init_func()
   tableBatCapacity["main"]      = modelDetails.capacities["main"]
   tableBatCapacity["receiver"]  = modelDetails.capacities["receiver"]
 
+  switchReset                   = modelDetails.resetSwitch
+  statusTele                    = modelDetails.telemetryStatus
+
+  idswitchReset                 = getSwitchIndex(switchReset)
+  idstatusTele                  = getSwitchIndex(statusTele)
+
   tableSwitchAnnounces          = modelDetails.switchAnnounces
   tableLine1StatSensors         = modelDetails.line1statsensors
   tableLine2StatSensors         = modelDetails.line2statsensors
   tableBattPackSelectorSwitch   = modelDetails.BattPackSelectorSwitch
+
+  -- todo ... is this really needed ?
+  detectedBattery["main"] = false
+  detectedBattery["receiver"] = false
+
+  detectedBatteryValid["main"] = false
+  detectedBatteryValid["receiver"] = false
+
+
+--todo remove/change  
+  VoltsNow = 0
+  VoltsMax = 0
+  VoltsLow = 0
+  RxVoltsNow = 0
+  RxVoltsMax = 0
+  RxVoltsLow = 0
+  MainAmpsNow  = 0
+  MainAmpsLow  = 0
+  MainAmpsHigh = 0
+  RxAmpsNow  = 0
+  RxAmpsLow  = 0
+  RxAmpsHigh = 0
+
+
+
+
+
+  -- todo: maybe consider/adapt to use cases with only current and/or mah sensors
+  if sensorVoltage["main"] ~= nil then
+    table.insert(contexts, "main")
+    CellsDetected["main"] = false
+    numberOfBatteries = numberOfBatteries + 1
+  end
+
+  if sensorVoltage["receiver"] ~= nil then
+    table.insert(contexts, "receiver")
+    CellsDetected["receiver"] = false
+    numberOfBatteries = numberOfBatteries + 1
+  end
 
 
   for _, switchInfo in ipairs(tableSwitchAnnounces) do
@@ -1457,6 +1526,8 @@ local function reset_if_needed()
   -- if not ResetSwitchState  then -- Update switch position
   -- if ResetSwitchState == nil or AutomaticResetOnResetPrevState ~= ResetSwitchState then -- Update switch position
     --if AutomaticResetOnResetPrevState ~= ResetSwitchState then -- Update switch position
+
+    ResetSwitchState = getSwitchValue(idswitchReset)
 
     --print("RESET: Switch state :", ResetSwitchState)
 
@@ -1578,13 +1649,7 @@ local function reset_if_needed()
       VoltageHistory = {}
       ResetDebounced = false
 
-      VoltsNow = 0
-      VoltsMax = 0
-      VoltsLow = 0
 
-      RxVoltsNow = 0
-      RxVoltsMax = 0
-      RxVoltsLow = 0
 
       AutomaticResetOnResetPrevState = nil
 
@@ -1595,7 +1660,16 @@ local function reset_if_needed()
       MaxWatts = "-----"  -- todo ... do we want to display ---- ? makes sense if sensor not present
       MaxAmps = "-----"  -- todo ... do we want to display ---- ? makes sense if sensor not present
 
-      CellsDetected = false
+      -- CellsDetected = false
+
+
+      VoltsNow = 0
+      VoltsMax = 0
+      VoltsLow = 0
+
+      RxVoltsNow = 0
+      RxVoltsMax = 0
+      RxVoltsLow = 0
 
       MainAmpsNow  = 0
       MainAmpsLow  = 0
@@ -1617,8 +1691,233 @@ local function reset_if_needed()
   end
 end
 
+
+-- ####################################################################
+local function updateSensorValues(context)
+
+  currentSensorVoltageValue[context] = getValue(sensorVoltage[context])
+  currentSensorCurrentValue[context] = getValue(sensorCurrent[context])
+  currentSensorMahValue[context]     = getValue(sensorMah[context])
+
+  local sdf = getValue("Cels")
+
+  print("Updated Sensor Values TEST: ", sdf)
+
+  currentVoltageValue[context] = getCellVoltage(currentSensorVoltageValue[context])
+
+  print(string.format("Updated Sensor Values: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, sensorVoltage[context], currentVoltageValue[context], sensorCurrent[context], sensorMah[context], currentSensorVoltageValue[context], currentSensorCurrentValue[context], currentSensorMahValue[context]))
+
+end
+
+-- ####################################################################
+local function checkTelemetryAndBatteryCells(context)
+
+  print("DBG: ", CellsDetected[context])
+
+
+  if not CellsDetected[context] and ResetSwitchState then
+
+
+    -- RX Battery
+    --volsenval = getValue( RxBatVoltSensor )
+
+    if (type(currentSensorVoltageValue[context]) == "table") then
+      numberofcells = #currentSensorVoltageValue[context]
+    else
+      numberofcells = math.ceil( currentSensorVoltageValue[context] / CellFullVoltage )
+    end
+  
+
+    print("checkTelemetryAndBatteryCells Voltage")
+    print(currentSensorVoltageValue[context])
+
+    print("checkTelemetryAndBatteryCells Number of Cells")
+    print(numberofcells)
+
+
+
+    -- -- battery
+    -- volsenval = getValue( VoltageSensor )
+    -- print("TABLE pre:", volsenval)
+-- 
+    -- if (type(volsenval) == "table") then
+    --   numberofcells = #volsenval
+    -- else
+    --   numberofcells = math.ceil( volsenval / CellFullVoltage )
+    -- end
+-- 
+    -- print("Voltage")
+    -- print(volsenval)
+-- 
+    -- print("Number of Cells")
+    -- print(numberofcells)
+
+    --CellCount = numberofcells
+--
+    --RXCellCount = numberofRXcells
+
+    -- mainvolts = getCellVoltage(VoltageSensor)
+    -- rxvolts = getCellVoltage(RxBatVoltSensor)
+
+    if numberofcells > 0 and numberofcells == countCell[context] then
+
+      --Timer("initdone") --todo place this at a better place ... maybe tele reset or init_func
+
+      -- CurrentBatLevelPerc = {}			-- updated in PlayPercentRemaining
+
+      -- todo add timers here to wait for init announcements to finish maybe for loop until timer has ended
+      CellsDetected[context] = true
+      -- playFile(soundDirPath.."main.wav")
+      -- playFile(soundDirPath.."battery.wav")
+      -- playNumber(numberofcells, 0, 0 ,5 )
+      -- playFile(soundDirPath.."cellbatdetect.wav")
+      -- playNumber(mainvolts, 1, 0 ,5 )
+
+      t = 7
+      queueSound(context, 0)
+      queueSound("battery", 0)
+      queueNumber(numberofcells, 0, 0, 0)
+      queueSound("cellbatdetect", 0)
+      queueNumber(currentVoltageValue[context], 1, 0, t)
+
+      detectedBattery[context] = true
+      detectedBatteryValid[context] = true
+
+      --queueSound("receiver", 0)
+      --queueSound("battery", 0)
+      --queueNumber(numberofRXcells, 0, 0, 0)
+      --queueSound("cellbatdetect", 0)
+      --queueNumber(rxvolts, 1, 0, t)
+
+
+      --wait(5)
+
+      -- todo ...  ... Batt not full truncated if below enabled ???
+      -- todo ...  ... batt levels not played immediately after cell detect
+
+      -- playFile(soundDirPath.."receiver.wav")
+      -- playFile(soundDirPath.."battery.wav")
+      -- playNumber(numberofRXcells, 0, 0 ,5 )
+      -- playFile(soundDirPath.."cellbatdetect.wav")
+      -- playNumber(rxvolts, 1, 0 ,5 )
+
+      --wait(5)
+    elseif numberofcells > 0 and numberofcells ~= countCell[context] then
+      -- todo repeat warning
+      t = 5 
+      queueSound("critical", 0)
+      queueSound(context, 0)
+      queueSound("battery", 0)
+      queueSound("icw", 0)
+
+      detectedBattery[context] = true
+
+
+      --queueNumber(numberofcells, 0, 0, 0)
+      --queueSound("cellbatdetect", 0)
+      --queueNumber(currentVoltageValue[context], 1, 0, t)
+
+    end
+
+  end
+
+end
+
+-- ####################################################################
+local function switchAnnounce()
+
+-- switch state announce
+for _, switchInfo in ipairs(tableSwitchAnnounces) do
+  --local switch, action = switchInfo[1], switchInfo[2]
+  local switch = switchInfo[1]
+
+  print(string.format("SWITCH: %s", switch))
+
+  --local swidx = getSwitchIndex(switch)
+  local swidx = switchIndexes[switch]
+
+  print(string.format("SWITCH IDX: %s", swidx))
+
+  local state = getValue(swidx)
+
+  local optionscount = #switchInfo - 1
+
+  -- -1024 0 1024
+  -- -1024   1024
+
+  local downval = 1 + 1
+  local midval = 2 + 1
+  local upval = 3 + 1
+
+  if optionscount == 2 then
+    downval = 1 + 1
+    midval = 0
+    upval = 2 + 1
+  end
+
+  if optionscount == 1 then
+    downval = 0
+    midval = 0
+    upval = 1 + 1
+  end
+
+
+  print(string.format("SWITCH OPTIONS COUNT: %s", optionscount))
+
+-- SWITCH: sf STATE: 1024 pre State: -1024 downval: 2 midval: 0 upval: 3
+
+
+  if previousSwitchState[switch] ~= state or previousSwitchState[switch] == nil then
+
+    --if previousSwitchState[switch] ~=  nil then
+    --  print(string.format("SWITCH: %s STATE: %s pre State: %s downval: %s midval: %s upval: %s",  switch, state, previousSwitchState[switch],switchInfo[downval],switchInfo[midval],switchInfo[upval] ) )
+  --
+    --  end
+
+    if state < 0 and downval ~= 0 then
+      queueSysSound(switchInfo[downval], 2)
+      print(string.format("SWITCH: %s STATE: %s pre State: %s downval: %s midval: %s upval: %s Play: %s",  switch, state, previousSwitchState[switch],switchInfo[downval],switchInfo[midval],switchInfo[upval],switchInfo[downval] ) )
+    elseif state > 0 and upval ~= 0 then
+      queueSysSound(switchInfo[upval], 2)
+      print(string.format("SWITCH: %s STATE: %s pre State: %s downval: %s midval: %s upval: %s Play: %s",  switch, state, previousSwitchState[switch],switchInfo[downval],switchInfo[midval],switchInfo[upval],switchInfo[upval] ) )
+
+    elseif midval ~= 0 then
+      queueSysSound(switchInfo[midval], 2)
+      print(string.format("SWITCH: %s STATE: %s pre State: %s downval: %s midval: %s upval: %s Play: %s",  switch, state, previousSwitchState[switch],switchInfo[downval],switchInfo[midval],switchInfo[upval],switchInfo[midval] ) )
+
+    end
+  end
+
+
+  --if ( state and not previousSwitchState[switch] ) or previousSwitchState[switch] == nil then
+  -- if state then
+  --   if not previousSwitchState[switch] or previousSwitchState[switch] == nil then
+  --     playFile(action..".wav", 5)
+  --   end
+  -- end
+
+  previousSwitchState[switch] = state
+
+  
+
+end
+
+end
+
+
+
+
 -- ####################################################################
 local function bg_func()
+
+
+  local sdf = getValue("Cels")
+
+  print("Updated Sensor Values TEST: ", sdf)
+  
+  local currentContext = contexts[currentContextIndex]
+
+  print("Current Context:", currentContext)
 
   --if HasSecondsElapsed(1) then
   --  return
@@ -1652,189 +1951,32 @@ local function bg_func()
 -- print("TEST3:", test3)
 
 
-
+switchAnnounce()
 
   processQueue()
 
--- switch state announce
-  for _, switchInfo in ipairs(tableSwitchAnnounces) do
-    --local switch, action = switchInfo[1], switchInfo[2]
-    local switch = switchInfo[1]
-
-    print(string.format("SWITCH: %s", switch))
-
-    --local swidx = getSwitchIndex(switch)
-    local swidx = switchIndexes[switch]
-
-    print(string.format("SWITCH IDX: %s", swidx))
-
-    local state = getValue(swidx)
-
-    local optionscount = #switchInfo - 1
-
-    -- -1024 0 1024
-    -- -1024   1024
-
-    local downval = 1 + 1
-    local midval = 2 + 1
-    local upval = 3 + 1
-
-    if optionscount == 2 then
-      downval = 1 + 1
-      midval = 0
-      upval = 2 + 1
-    end
-
-    if optionscount == 1 then
-      downval = 0
-      midval = 0
-      upval = 1 + 1
-    end
 
 
-    print(string.format("SWITCH OPTIONS COUNT: %s", optionscount))
-
--- SWITCH: sf STATE: 1024 pre State: -1024 downval: 2 midval: 0 upval: 3
-
-
-    if previousSwitchState[switch] ~= state or previousSwitchState[switch] == nil then
-
-      --if previousSwitchState[switch] ~=  nil then
-      --  print(string.format("SWITCH: %s STATE: %s pre State: %s downval: %s midval: %s upval: %s",  switch, state, previousSwitchState[switch],switchInfo[downval],switchInfo[midval],switchInfo[upval] ) )
-    --
-      --  end
-
-      if state < 0 and downval ~= 0 then
-        queueSysSound(switchInfo[downval], 2)
-        print(string.format("SWITCH: %s STATE: %s pre State: %s downval: %s midval: %s upval: %s Play: %s",  switch, state, previousSwitchState[switch],switchInfo[downval],switchInfo[midval],switchInfo[upval],switchInfo[downval] ) )
-      elseif state > 0 and upval ~= 0 then
-        queueSysSound(switchInfo[upval], 2)
-        print(string.format("SWITCH: %s STATE: %s pre State: %s downval: %s midval: %s upval: %s Play: %s",  switch, state, previousSwitchState[switch],switchInfo[downval],switchInfo[midval],switchInfo[upval],switchInfo[upval] ) )
-
-      elseif midval ~= 0 then
-        queueSysSound(switchInfo[midval], 2)
-        print(string.format("SWITCH: %s STATE: %s pre State: %s downval: %s midval: %s upval: %s Play: %s",  switch, state, previousSwitchState[switch],switchInfo[downval],switchInfo[midval],switchInfo[upval],switchInfo[midval] ) )
-
-      end
-    end
-
-
-    --if ( state and not previousSwitchState[switch] ) or previousSwitchState[switch] == nil then
-    -- if state then
-    --   if not previousSwitchState[switch] or previousSwitchState[switch] == nil then
-    --     playFile(action..".wav", 5)
-    --   end
-    -- end
-
-    previousSwitchState[switch] = state
-
-    
-
-end
-
-
-print("TELE VALUE: ", getSwitchValue(resetSwitch_ID))
-
-ResetSwitchState = getSwitchValue(resetSwitch_ID)
+-- print("TELE VALUE: ", getSwitchValue(idswitchReset))
+-- 
+-- ResetSwitchState = getSwitchValue(idswitchReset)
+-- resetSwitch_ID
 
 -- reset if needed
   reset_if_needed() -- test if the reset switch is toggled, if so then reset all internal flags
   
  -- tele_ON = getSwitchValue(resetSwitch_ID)
 
+ -- for the current context
+ updateSensorValues(currentContext)
 
 
 
+
+ checkTelemetryAndBatteryCells(currentContext)
 
 
   -- make sure we have cells/voltage availablwe
-
-  if not CellsDetected and ResetSwitchState then
-
-
-    -- RX Battery
-    volsenval = getValue( RxBatVoltSensor )
-
-    if (type(volsenval) == "table") then
-      numberofRXcells = #volsenval
-    else
-      numberofRXcells = math.ceil( volsenval / CellFullVoltage )
-    end
-  
-
-    print("RX Voltage")
-    print(volsenval)
-
-    print("RX Number of Cells")
-    print(numberofRXcells)
-
-    -- main battery
-    volsenval = getValue( VoltageSensor )
-    print("TABLE pre:", volsenval)
-
-    if (type(volsenval) == "table") then
-      numberofcells = #volsenval
-    else
-      numberofcells = math.ceil( volsenval / CellFullVoltage )
-    end
-
-    print("Voltage")
-    print(volsenval)
-
-    print("Number of Cells")
-    print(numberofcells)
-
-    CellCount = numberofcells
-
-    RXCellCount = numberofRXcells
-
-    mainvolts = getCellVoltage(VoltageSensor)
-    rxvolts = getCellVoltage(RxBatVoltSensor)
-
-    if CellCount > 0 and RXCellCount > 0 then
-
-      --Timer("initdone") --todo place this at a better place ... maybe tele reset or init_func
-
-      CurrentBatLevelPerc = {}			-- updated in PlayPercentRemaining
-
-      -- todo add timers here to wait for init announcements to finish maybe for loop until timer has ended
-      CellsDetected = true
-      -- playFile(soundDirPath.."main.wav")
-      -- playFile(soundDirPath.."battery.wav")
-      -- playNumber(numberofcells, 0, 0 ,5 )
-      -- playFile(soundDirPath.."cellbatdetect.wav")
-      -- playNumber(mainvolts, 1, 0 ,5 )
-
-      t = 7
-      queueSound("main", 0)
-      queueSound("battery", 0)
-      queueNumber(numberofcells, 0, 0, 0)
-      queueSound("cellbatdetect", 0)
-      queueNumber(mainvolts, 1, 0, t)
-
-      queueSound("receiver", 0)
-      queueSound("battery", 0)
-      queueNumber(numberofRXcells, 0, 0, 0)
-      queueSound("cellbatdetect", 0)
-      queueNumber(rxvolts, 1, 0, t)
-
-
-      --wait(5)
-
-      -- todo ...  ... Batt not full truncated if below enabled ???
-      -- todo ...  ... batt levels not played immediately after cell detect
-
-      -- playFile(soundDirPath.."receiver.wav")
-      -- playFile(soundDirPath.."battery.wav")
-      -- playNumber(numberofRXcells, 0, 0 ,5 )
-      -- playFile(soundDirPath.."cellbatdetect.wav")
-      -- playNumber(rxvolts, 1, 0 ,5 )
-
-      --wait(5)
-
-    end
-
-  end
 
 
   -- queueSound("main", 5)
@@ -1870,7 +2012,7 @@ ResetSwitchState = getSwitchValue(resetSwitch_ID)
 
   if VoltageSensor ~= "" then
     --volts = getCellVoltage(VoltageSensor)
-    volts = getCellVoltage(VoltageSensor)
+    volts = getCellVoltage(currentSensorVoltageValue[currentContext])
     --if VoltsNow < 1 or volts > 1 then
     --  VoltsNow = volts
     --end
@@ -1878,6 +2020,9 @@ ResetSwitchState = getSwitchValue(resetSwitch_ID)
     
     --VoltsMax = getCellVoltage(VoltageSensor.."+", VoltsMax)
     --VoltsLow = getCellVoltage(VoltageSensor.."-", VoltsLow)
+
+    print("DBG vol sen: ", currentSensorVoltageValue[currentContext] )
+    print("DBG: ", volts )
 
     if VoltsNow < 1 or volts > 1 then
       VoltsNow = volts
@@ -1922,7 +2067,9 @@ ResetSwitchState = getSwitchValue(resetSwitch_ID)
 
 
   if RxBatVoltSensor ~= "" then
-    volts = getCellVoltage(RxBatVoltSensor)
+    --volts = getCellVoltage(RxBatVoltSensor)
+    volts = getCellVoltage(currentSensorVoltageValue[currentContext])
+
     --if RxVoltsNow < 1 or volts > 1 then
     --  RxVoltsNow = volts
     --end
@@ -2025,6 +2172,10 @@ end
   --print(string.format("CellCount: %d", CellCount))
   --print(string.format("VoltsMax: %d", VoltsMax))
   --print(string.format("BatUsedmAh: %d", BatUsedmAh))
+
+      -- Update the index to cycle through the contexts using the modulo operator
+      currentContextIndex = (currentContextIndex % #contexts) + 1
+
 end
 
 -- ####################################################################
@@ -2368,7 +2519,7 @@ else
 
 
 
-  yline = yline + ylineinc + 10
+  yline = yline + ylineinc + 20
   lcd.drawText(wgt.zone.x + xlineStart, wgt.zone.y + yline, "Receiver Battery", MIDSIZE + COLOR_THEME_PRIMARY1)
 
   yline = yline + ylineinc + 10
