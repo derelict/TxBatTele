@@ -15,6 +15,7 @@ EdgeTX/OpenTX Battery and Telemetry Monitoring LUA Widget
 - **Receiver and Main Battery Monitoring**: Monitor your Main and Receiver Battery
 - **Other Sensors**: Monitor other Sensors
 
+## Screenshots
 ![image](https://github.com/derelict/TxBatTele/assets/2826671/480d3ce7-b507-47c2-8f4d-54872552ef35)
 
 ## Note
@@ -22,3 +23,5 @@ EdgeTX/OpenTX Battery and Telemetry Monitoring LUA Widget
 - Based on [mahRe2](https://github.com/fdm225/mahRe2). So full Credits to them!
 - This is my first attempt in LUA Scripting. So please be gentle ;-)
 
+## How to contribute
+- **Design the LCD Widget for various sizes** ( i'm not very good at designing / see Screenshots ;-) ) 

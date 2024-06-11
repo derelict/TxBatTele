@@ -180,26 +180,29 @@ local modelTable = {
 
 
   { 
+    modelNameMatch = "DEFAULT",
     modelName = "DEFAULT",
+    modelImage = "goblin.png",
+    modelWav = "sg630",
     VoltageSensor = { 
-      main = { "DefaultCels" }, 
-      receiver = { "DefaultCels" }
+      main = { "Cels" }, 
+      receiver = { "RxBt" }
     }, 
     CurrentSensor = { 
-      main = { "DefaultCurr" }, 
-      receiver = { "DefaultCurr" }
+      main = { "Curr" }, 
+      receiver = { "Curr" }
     }, 
     MahSensor = { 
       main = {}, 
       receiver = {}
     }, 
     BattType = { 
-      main = { "DefaultLipo" }, 
-      receiver = { "DefaultLipo" }
+      main = { "lipo" }, 
+      receiver = { "buffer" }
     }, 
     CellCount = { 
-      main = { 4 }, 
-      receiver = { 4 }
+      main = { 12 }, 
+      receiver = { 2 }
     },        
     capacities = {
       main = { 500, 1000, 1500, 2000, 2500, 3000 },
@@ -213,13 +216,13 @@ local modelTable = {
   
   
   { 
-    modelName = "rs7", 
-    ModelImage = Bitmap.open("/IMAGES/" .. model.getInfo().bitmap), 
-    ModelName = model.getInfo().name,
-    ModelWav = model.getInfo().name,
+    modelNameMatch = "heli",
+    modelName = "SAB Goblin 630",
+    modelImage = "goblin.png",
+    modelWav = "sg630",
     VoltageSensor = { 
       main = { "Cels" }, 
-      receiver = { "Cels" }
+      receiver = { "RxBt" }
     }, 
     CurrentSensor = { 
       main = { "Curr" }, 
@@ -231,11 +234,11 @@ local modelTable = {
     }, 
     BattType = { 
       main = { "lipo" }, 
-      receiver = { "lipo" }
+      receiver = { "buffer" }
     }, 
     CellCount = { 
       main = { 12 }, 
-      receiver = { 12 }
+      receiver = { 2 }
     },        
     capacities = {
       main = { 500, 1000, 1500, 2000, 2500, 3000 },
@@ -245,7 +248,7 @@ local modelTable = {
     line1statsensors = line1statsensors,
     line2statsensors = line2statsensors,
     BattPackSelectorSwitch = BattPackSelectorSwitch
-  }
+  },
 
 
   
@@ -256,9 +259,8 @@ local modelTable = {
 
 local FirstModelInit = true
 local ModelImageBM = Bitmap.open("/IMAGES/280.png")
-local ModelName = model.getInfo().name
+--local ModelName = model.getInfo().name
 
-local ModelImage = Bitmap.resize(ModelImageBM, 300, 200)
 
 local ShowPostFlightSummary = true --todo
 local ShowPreFlightStatus = true -- todo
@@ -394,15 +396,8 @@ local CellsDetected = false
 
 
 
-local previousSwitchState = {}
 
-local switchIndexes = {}
 
-for _, switchInfo in ipairs(SwitchAnnounceTable) do
-  local switch = switchInfo[1]
-  local switchIndex = getFieldInfo(switch).id
-  switchIndexes[switch] = switchIndex
-end
 
 
 --local RxBtVoltageWarning = (RxBtVoltage / 100) * (100-RxBtVoltagePercentageWarning)
@@ -623,24 +618,6 @@ local SoundsTable = {[5] = "Bat5L.wav",[10] = "Bat10L.wav",[20] = "Bat20L.wav"
   ,[90] = "Bat90L.wav"}
 
 
-
--- Function to match model name with wildcard support
-local function matchModelName(modelName, pattern)
-  local escapedPattern = "^" .. pattern:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1"):gsub("%%%*", ".*") .. "$"
-  return string.match(modelName, escapedPattern) ~= nil
-end
-
--- Function to get model details based on current model name
-local function getModelDetails(currentModelName)
-  for _, model in ipairs(modelTable) do
-      if matchModelName(currentModelName, model.modelName) then
-          return model.sensor1, model.sensor2, model.cellCount
-      end
-  end
-  -- Return default values if no match is found
-  return defaultSensor1, defaultSensor2, defaultCellCount
-end
-
 -- -- Example usage
 -- local currentModelName = "ModelB123" -- This would be dynamically obtained in a real script
 -- local sensor1, sensor2, cellCount = getModelDetails(currentModelName)
@@ -710,7 +687,35 @@ end
 
 -- ########################## TESTING ##########################
 
+-- Simplified wildcard matching function
+local function matchModelName(mname, pattern)
 
+  lmname = string.lower(mname)
+  lpattern = string.lower(pattern)
+
+  print("TEST modelName:", mname, "type:", type(mname))
+  print("TEST pattern:", pattern, "type:", type(pattern))
+
+ 
+  -- Check if the pattern is a substring of the currentModelName
+  return string.find(lmname, lpattern) ~= nil
+
+
+end
+
+-- Function to get model details based on current model name
+local function getModelDetails(name)
+  local defaultDetails
+  for _, model in ipairs(modelTable) do
+    if model.modelNameMatch == "DEFAULT" then
+      defaultDetails = model
+    elseif matchModelName(name, model.modelNameMatch) then
+      return model
+    end
+  end
+  -- Return default values if no match is found
+  return defaultDetails
+end
 
 -- ####################################################################
 local function getCellVoltage( voltageSensorIn  ) 
@@ -1305,6 +1310,77 @@ end
 
 -- ####################################################################
 local function init_func()
+
+
+
+  local currentModelName = model.getInfo().name
+
+  print ("TEST MODEL:" , currentModelName)
+
+  modelDetails = getModelDetails(currentModelName)
+
+
+  sensorVoltage = {}
+  sensorCurrent = {}
+  sensorMah = {}
+  typeBattery = {}
+  countCell = {}
+
+  tableBatCapacity = {}
+
+  switchIndexes = {}
+  previousSwitchState = {}
+
+
+  --previousSwitchState = {}
+
+  modelName = modelDetails.modelName
+  modelImage = modelDetails.modelImage
+  modelWav = modelDetails.modelWav
+
+  print("MODEL NAME: ", modelName)
+  print("MODEL IMAGE: ",modelImage)
+ 
+  sensorVoltage["main"]         = table.concat(modelDetails.VoltageSensor["main"])
+  sensorVoltage["receiver"]     = table.concat(modelDetails.VoltageSensor["receiver"])
+
+  sensorCurrent["main"]         = table.concat(modelDetails.CurrentSensor["main"])
+  sensorCurrent["receiver"]     = table.concat(modelDetails.CurrentSensor["receiver"])
+
+  sensorMah["main"]             = table.concat(modelDetails.MahSensor["main"])
+  sensorMah["receiver"]         = table.concat(modelDetails.MahSensor["receiver"])
+
+  typeBattery["main"]           = table.concat(modelDetails.BattType["main"])
+  typeBattery["receiver"]       = table.concat(modelDetails.BattType["receiver"])
+
+  countCell["main"]             = table.concat(modelDetails.CellCount["main"])
+  countCell["receiver"]         = table.concat(modelDetails.CellCount["receiver"])
+
+  tableBatCapacity["main"]      = modelDetails.capacities["main"]
+  tableBatCapacity["receiver"]  = modelDetails.capacities["receiver"]
+
+  tableSwitchAnnounces          = modelDetails.switchAnnounces
+  tableLine1StatSensors         = modelDetails.line1statsensors
+  tableLine2StatSensors         = modelDetails.line2statsensors
+  tableBattPackSelectorSwitch   = modelDetails.BattPackSelectorSwitch
+
+
+  for _, switchInfo in ipairs(tableSwitchAnnounces) do
+    local switch = switchInfo[1]
+    local switchIndex = getFieldInfo(switch).id
+    print("ANN SW IDX: ", switch)
+    switchIndexes[switch] = switchIndex
+  end
+
+  bmpModelImage = Bitmap.open("/IMAGES/" .. modelImage)
+
+  bmpSizedModelImage = Bitmap.resize(bmpModelImage, 300, 200)
+
+
+
+  
+
+  
   -- Called once when model is loaded
   BatCapFullmAh = model.getGlobalVariable(GVBatCap, GVFlightMode) * 100
   -- BatCapmAh = BatCapFullmAh
@@ -1559,17 +1635,21 @@ local function bg_func()
   --local swval = getValue("sa")
 
 
+  -- test = table.concat(modelDetails.VoltageSensor["main"])
+  -- 
+  -- print("TEST2:", test)
 
 
-testid = getSwitchIndex("6POS1")
 
-testval = getSwitchValue(testid)
-
-test3 = getValue("6pos")
-
-print("TEST1:", testid)
-print("TEST2:", testval)
-print("TEST3:", test3)
+-- testid = getSwitchIndex("6POS1")
+-- 
+-- testval = getSwitchValue(testid)
+-- 
+-- test3 = getValue("6pos")
+-- 
+-- print("TEST1:", testid)
+-- print("TEST2:", testval)
+-- print("TEST3:", test3)
 
 
 
@@ -1577,7 +1657,7 @@ print("TEST3:", test3)
   processQueue()
 
 -- switch state announce
-  for _, switchInfo in ipairs(SwitchAnnounceTable) do
+  for _, switchInfo in ipairs(tableSwitchAnnounces) do
     --local switch, action = switchInfo[1], switchInfo[2]
     local switch = switchInfo[1]
 
@@ -1614,15 +1694,27 @@ print("TEST3:", test3)
 
     print(string.format("SWITCH OPTIONS COUNT: %s", optionscount))
 
-    print(string.format("SWITCH STATE: %s",  state))
+-- SWITCH: sf STATE: 1024 pre State: -1024 downval: 2 midval: 0 upval: 3
+
 
     if previousSwitchState[switch] ~= state or previousSwitchState[switch] == nil then
+
+      --if previousSwitchState[switch] ~=  nil then
+      --  print(string.format("SWITCH: %s STATE: %s pre State: %s downval: %s midval: %s upval: %s",  switch, state, previousSwitchState[switch],switchInfo[downval],switchInfo[midval],switchInfo[upval] ) )
+    --
+      --  end
+
       if state < 0 and downval ~= 0 then
         queueSysSound(switchInfo[downval], 2)
+        print(string.format("SWITCH: %s STATE: %s pre State: %s downval: %s midval: %s upval: %s Play: %s",  switch, state, previousSwitchState[switch],switchInfo[downval],switchInfo[midval],switchInfo[upval],switchInfo[downval] ) )
       elseif state > 0 and upval ~= 0 then
         queueSysSound(switchInfo[upval], 2)
+        print(string.format("SWITCH: %s STATE: %s pre State: %s downval: %s midval: %s upval: %s Play: %s",  switch, state, previousSwitchState[switch],switchInfo[downval],switchInfo[midval],switchInfo[upval],switchInfo[upval] ) )
+
       elseif midval ~= 0 then
         queueSysSound(switchInfo[midval], 2)
+        print(string.format("SWITCH: %s STATE: %s pre State: %s downval: %s midval: %s upval: %s Play: %s",  switch, state, previousSwitchState[switch],switchInfo[downval],switchInfo[midval],switchInfo[upval],switchInfo[midval] ) )
+
       end
     end
 
@@ -1635,6 +1727,8 @@ print("TEST3:", test3)
     -- end
 
     previousSwitchState[switch] = state
+
+    
 
 end
 
@@ -2246,9 +2340,58 @@ local function refreshZoneXLarge(wgt)
 
 else
 
-  lcd.drawText(wgt.zone.x + 30, wgt.zone.y + -5, ModelName, MIDSIZE + Color + SHADOWED)
+  local ylineStart = 25
+  local ylineinc = 20
 
-  lcd.drawBitmap(ModelImage, 30, 50, 50 )
+  local xlineStart = 200
+
+  lcd.drawText(wgt.zone.x + 10, wgt.zone.y + -5, modelName, MIDSIZE + COLOR_THEME_PRIMARY1)
+  lcd.drawBitmap(bmpSizedModelImage, 10, 20, 50 )
+
+  lcd.drawText(wgt.zone.x + xlineStart, wgt.zone.y + -5, "Main Battery", MIDSIZE + COLOR_THEME_PRIMARY1)
+
+  xline = xlineStart
+  yline = ylineStart
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, "Battery Type",  COLOR_THEME_PRIMARY3 + BOLD )
+  xline = xline + 100
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, ":",  COLOR_THEME_PRIMARY2 + BOLD )
+  xline = xline + 20
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, typeBattery["main"],  GREEN + BOLD )
+
+  xline = xlineStart
+  yline = yline + ylineinc
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, "Cell Count",  COLOR_THEME_PRIMARY3 + BOLD )
+  xline = xline + 100
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, ":",  COLOR_THEME_PRIMARY2 + BOLD )
+  xline = xline + 20
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["main"],  GREEN + BOLD )
+
+
+
+  yline = yline + ylineinc + 10
+  lcd.drawText(wgt.zone.x + xlineStart, wgt.zone.y + yline, "Receiver Battery", MIDSIZE + COLOR_THEME_PRIMARY1)
+
+  yline = yline + ylineinc + 10
+
+  xline = xlineStart
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, "Battery Type",  COLOR_THEME_PRIMARY3 + BOLD )
+  xline = xline + 100
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, ":",  COLOR_THEME_PRIMARY2 + BOLD )
+  xline = xline + 20
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, typeBattery["receiver"],  GREEN + BOLD )
+
+  xline = xlineStart
+  yline = yline + ylineinc
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, "Cell Count",  COLOR_THEME_PRIMARY3 + BOLD )
+  xline = xline + 100
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, ":",  COLOR_THEME_PRIMARY2 + BOLD )
+  xline = xline + 20
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["receiver"],  GREEN + BOLD )
+
+
+
+
+
 
 end
 
