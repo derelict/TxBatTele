@@ -137,6 +137,9 @@ local verbosity = 3 --todo verbosity levels
 -- -- Cycle to the next context
 -- currentContextIndex = (currentContextIndex % #contexts) + 1
 
+local statusTele = false
+
+idstatusTele = getSwitchIndex("TELE")
 
 
 local SwitchAnnounceTable = {
@@ -222,7 +225,7 @@ local modelTable = {
     modelName = "SAB Goblin 630",
     modelImage = "goblin.png",
     modelWav = "sg630",
-    telemetryStatus = "TELE",
+    --telemetryStatus = "TELE",
     --resetSwitch = "SD" .. CHAR_DOWN ,
     resetSwitch = "TELE" ,
     VoltageSensor = { 
@@ -1049,7 +1052,7 @@ local function HasSecondsElapsed(numSeconds)
   end
   currTime = getTime()
   deltaTime = currTime - StartTime
-  deltaSeconds = deltaTime/100 -- covert to seconds
+  deltaSeconds = deltaTime/100 -- convert to seconds
   deltaTimeMod = deltaSeconds % numSeconds -- return the modulus
   --print(string.format("deltaTime: %f deltaSeconds: %f deltaTimeMod: %f", deltaTime, deltaSeconds, deltaTimeMod))
   if math.abs( deltaTimeMod - 0 ) < 1 then
@@ -1365,8 +1368,11 @@ local function init_func()
   currentSensorCurrentValue = {}
   currentSensorMahValue = {}
 
-  currentVoltageValue = {}
-  currentCurrentValue = {}
+  currentVoltageValueCurrent = {}
+  currentCurrentValueCurrent = {}
+
+  currentVoltageValueLatest = {}
+  currentCurrentValueLatest = {}
 
   currentVoltageValueHigh = {}
   currentCurrentValueHigh = {}
@@ -1411,19 +1417,23 @@ local function init_func()
   tableBatCapacity["main"]      = modelDetails.capacities["main"]
   tableBatCapacity["receiver"]  = modelDetails.capacities["receiver"]
 
-  currentVoltageValue["main"] = 0
+  currentVoltageValueCurrent["main"] = 0 -- current value even when tele lost
+  currentVoltageValueLatest["main"] = 0  -- last value while tele was present
   currentVoltageValueHigh["main"] = 0
   currentVoltageValueLow["main"] = 0
 
-  currentVoltageValue["receiver"] = 0
+  currentVoltageValueCurrent["receiver"] = 0 -- current value even when tele lost
+  currentVoltageValueLatest["receiver"] = 0  -- last value while tele was present
   currentVoltageValueHigh["receiver"] = 0
   currentVoltageValueLow["receiver"] = 0
 
-  currentCurrentValue["main"] = 0
+  currentCurrentValueCurrent["main"] = 0
+  currentCurrentValueLatest["main"] = 0
   currentCurrentValueHigh["main"] = 0
   currentCurrentValueLow["main"] = 0
 
-  currentCurrentValue["receiver"] = 0
+  currentCurrentValueCurrent["receiver"] = 0
+  currentCurrentValueLatest["receiver"] = 0
   currentCurrentValueHigh["receiver"] = 0
   currentCurrentValueLow["receiver"] = 0
 
@@ -1432,10 +1442,10 @@ local function init_func()
 
 
   switchReset                   = modelDetails.resetSwitch
-  statusTele                    = modelDetails.telemetryStatus
+  --statusTele                    = modelDetails.telemetryStatus
 
   idswitchReset                 = getSwitchIndex(switchReset)
-  idstatusTele                  = getSwitchIndex(statusTele)
+  --idstatusTele                  = getSwitchIndex(statusTele)
 
   tableSwitchAnnounces          = modelDetails.switchAnnounces
   tableLine1StatSensors         = modelDetails.line1statsensors
@@ -1743,37 +1753,60 @@ end
 -- ####################################################################
 local function updateSensorValues(context)
 
+  statusTele = getSwitchValue(idstatusTele)
+
   currentSensorVoltageValue[context] = getValue(sensorVoltage[context])
   currentSensorCurrentValue[context] = getValue(sensorCurrent[context])
   currentSensorMahValue[context]     = getValue(sensorMah[context])
 
 
-  currentVoltageValue[context] = getCellVoltage(currentSensorVoltageValue[context])
-  currentCurrentValue[context] = getAmp(sensorCurrent[context]) --todo .. function calls getValue again
+  -- currentVoltageValueLatest[context] = getCellVoltage(currentSensorVoltageValue[context])
+  -- currentCurrentValueLatest[context] = getAmp(sensorCurrent[context]) --todo .. function calls getValue again
 
-  print(string.format("Updated Sensor Values: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, sensorVoltage[context], currentVoltageValue[context], sensorCurrent[context], sensorMah[context], currentSensorVoltageValue[context], currentSensorCurrentValue[context], currentSensorMahValue[context]))
+  currentVoltageValueCurrent[context] = getCellVoltage(currentSensorVoltageValue[context])  -- this will hold the current value ... even if no telemetry --> = 0
+  currentCurrentValueCurrent[context] = getAmp(sensorCurrent[context]) --todo .. function calls getValue again -- this will hold the current value ... even if no telemetry --> = 0
 
-  if currentVoltageValue[context] > currentVoltageValueHigh[context]  or currentVoltageValueHigh[context] < 1 then
-    currentVoltageValueHigh[context] = currentVoltageValue[context]
+
+  print(string.format("Updated Sensor Values: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, sensorVoltage[context], volts , sensorCurrent[context], sensorMah[context], currentSensorVoltageValue[context], currentSensorCurrentValue[context], currentSensorMahValue[context]))
+
+  -- disabled --           if VoltsNow < 1 or volts > 1 then
+  -- disabled --             VoltsNow = volts
+  -- disabled --           end
+
+  if currentVoltageValueLatest[context] == 0  or currentVoltageValueCurrent[context] ~= 0 then
+    currentVoltageValueLatest[context] = currentVoltageValueCurrent[context]
   end
 
-  if currentVoltageValue[context] < currentVoltageValueLow[context] or currentVoltageValueLow[context] < 1 then
-    currentVoltageValueLow[context] = currentVoltageValue[context]
+  if currentVoltageValueHigh[context] == 0 or ( currentVoltageValueCurrent[context] > currentVoltageValueHigh[context] and currentVoltageValueCurrent[context] ~= 0 ) then
+    currentVoltageValueHigh[context] = currentVoltageValueCurrent[context]
   end
 
-  if currentCurrentValue[context] > currentCurrentValueHigh[context] or currentCurrentValueHigh[context] < 1 then
-    currentCurrentValueHigh[context] = currentCurrentValue[context]
+  if currentVoltageValueLow[context] == 0 or ( currentVoltageValueCurrent[context] < currentVoltageValueLow[context] and currentVoltageValueCurrent[context] ~= 0 ) then
+    currentVoltageValueLow[context] = currentVoltageValueCurrent[context]
+    print(string.format("Updated Sensor Values Low: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, sensorVoltage[context], volts , sensorCurrent[context], sensorMah[context], currentSensorVoltageValue[context], currentSensorCurrentValue[context], currentSensorMahValue[context]))
+-- Updated Sensor Values Low: Context: main Sensor Voltage: Cels ( get Cell: nil ) Sensor Current: Curr Sensor mah:  Volt: 0 Current: 0 mAh: 0
   end
 
-  if currentCurrentValue[context] < currentCurrentValueLow[context] or currentCurrentValueLow[context] < 1 then
-    currentCurrentValueLow[context] = currentCurrentValue[context]
+
+
+
+  if currentCurrentValueLatest[context] == 0 or currentCurrentValueCurrent[context] ~= 0 then
+  currentCurrentValueLatest[context] = currentCurrentValueCurrent[context]
+  end
+
+  if currentCurrentValueHigh[context] == 0 or ( currentCurrentValueCurrent[context] > currentCurrentValueHigh[context] and currentCurrentValueCurrent[context] ~= 0 )   then
+    currentCurrentValueHigh[context] = currentCurrentValueCurrent[context]
+  end
+
+  if currentCurrentValueLow[context] == 0 or ( currentCurrentValueCurrent[context] < currentCurrentValueLow[context]  and currentCurrentValueCurrent[context] ~= 0 )  then
+    currentCurrentValueLow[context] = currentCurrentValueCurrent[context]
   end
 
 
   
 
   if CellsDetected[context] then
-    valueVoltsPercentRemaining[context]  = findPercentRem( currentVoltageValue[context]/countCell[context],  typeBattery[context])
+    valueVoltsPercentRemaining[context]  = findPercentRem( currentVoltageValueLatest[context]/countCell[context],  typeBattery[context])
     print(string.format("SUPD: Got Percent: %s for Context: %s", valueVoltsPercentRemaining[context], context))
   end
 
@@ -1783,6 +1816,15 @@ local function updateSensorValues(context)
   -- end
 
 end
+
+-- ####################################################################
+-- local function updateTelemetryStatus()
+-- 
+--  statusTele = getSwitchValue(idstatusTele)
+-- 
+--  print("TELEMETRY STATUS: ", statusTele)
+-- 
+-- end
 
 -- ####################################################################
 local function checkTelemetryAndBatteryCells(context)
@@ -1855,7 +1897,7 @@ local function checkTelemetryAndBatteryCells(context)
       queueSound("battery", 0)
       queueNumber(numberofcells, 0, 0, 0)
       queueSound("cellbatdetect", 0)
-      queueNumber(currentVoltageValue[context], 1, 0, t)
+      queueNumber(currentVoltageValueLatest[context], 1, 0, t)
 
       detectedBattery[context] = true
       detectedBatteryValid[context] = true
@@ -1894,7 +1936,7 @@ local function checkTelemetryAndBatteryCells(context)
  
        --queueNumber(numberofcells, 0, 0, 0)
        --queueSound("cellbatdetect", 0)
-       --queueNumber(currentVoltageValue[context], 1, 0, t)
+       --queueNumber(currentVoltageValueLatest[context], 1, 0, t)
  
     end
 
@@ -1990,9 +2032,9 @@ end
 local function bg_func()
 
 
-  local sdf = getValue("Cels")
-
-  print("Updated Sensor Values TEST: ", sdf)
+  --local sdf = getValue("Cels")
+--
+  --print("Updated Sensor Values TEST: ", sdf)
   
   local currentContext = contexts[currentContextIndex]
 
@@ -2029,6 +2071,7 @@ local function bg_func()
 -- print("TEST2:", testval)
 -- print("TEST3:", test3)
 
+-- updateTelemetryStatus()
 
 switchAnnounce()
 
@@ -2048,13 +2091,14 @@ switchAnnounce()
 
  -- for the current context
 
+ updateSensorValues(currentContext)
 
-
+ if statusTele then -- if we have no telemetry .... don't waste time doing anything that requires telemetry
 
 
 
   -- make sure we have cells/voltage availablwe
-  updateSensorValues(currentContext)
+
 
   checkTelemetryAndBatteryCells(currentContext)
 
@@ -2203,9 +2247,9 @@ switchAnnounce()
 
 
 
-  if not ResetSwitchState or not CellsDetected[currentContext] then
-    return
-  end
+  -- if not ResetSwitchState or not CellsDetected[currentContext] then
+  --   return
+  -- end
 
   --check_rxbat()
 
@@ -2228,15 +2272,26 @@ switchAnnounce()
   -- disabled --   RxBatRemPer = math.floor( (BatRemainmAh / BatCapFullmAh) * 100 )
   -- disabled -- end
 
-  voltage_sensor_tests(currentContext)
+  -- voltage_sensor_tests(currentContext)
 
+  check_for_full_battery(currentSensorVoltageValue[currentContext], BatNotFullThresh[typeBattery[currentContext]], countCell[currentContext], batTypeLowHighValues[typeBattery[currentContext]][1], batTypeLowHighValues[typeBattery[currentContext]][2])
+
+  check_cell_delta_voltage(currentSensorVoltageValue[currentContext])
+
+  check_for_missing_cells(currentSensorVoltageValue[currentContext], countCell[currentContext])
 
 
 
   --if AnnouncePercentRemaining and Timer("initdone", initTime) then -- don't announce anything until init is done
   if AnnouncePercentRemaining then -- don't announce anything until init is done
-  CheckPercentRemaining(BatRemPer, mainbattype, "main")
-  CheckPercentRemaining(RxBatRemPer, rxbatType, "receiver")
+  -- CheckPercentRemaining(BatRemPer, mainbattype, "main")
+  -- CheckPercentRemaining(RxBatRemPer, rxbatType, "receiver")
+
+  CheckPercentRemaining(valueVoltsPercentRemaining[currentContext], typeBattery[currentContext], currentContext)
+
+  -- valueVoltsPercentRemaining[context]
+  
+
 end
 
   -- disabled -- if WriteGVBatRemmAh == true then
@@ -2252,6 +2307,7 @@ end
   --print(string.format("VoltsMax: %d", VoltsMax))
   --print(string.format("BatUsedmAh: %d", BatUsedmAh))
 
+end
       -- Update the index to cycle through the contexts using the modulo operator
       currentContextIndex = (currentContextIndex % #contexts) + 1
 
@@ -2523,12 +2579,12 @@ local function refreshZoneXLarge(wgt)
     --maincur = getValue(VoltageSensor)
     --maincurmax = getValue(VoltageSensor.."+")
   
-    lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 40, string.format("C: %.2fV", currentVoltageValue["main"]), MIDSIZE + COLOR_THEME_SECONDARY1)
+    lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 40, string.format("C: %.2fV", currentVoltageValueCurrent["main"]), MIDSIZE + COLOR_THEME_SECONDARY1)
     --lcd.drawText(wgt.zone.x + 95, wgt.zone.y + 35, "/", MIDSIZE + Color)
     lcd.drawText(wgt.zone.x + 120, wgt.zone.y + 40, string.format("L: %.2fV", currentVoltageValueLow["main"]), MIDSIZE + Color)
     
 
-    lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 70, string.format("C: %.1fA", currentCurrentValue["main"]), MIDSIZE + COLOR_THEME_SECONDARY1)
+    lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 70, string.format("C: %.1fA", currentCurrentValueCurrent["main"]), MIDSIZE + COLOR_THEME_SECONDARY1)
     --lcd.drawText(wgt.zone.x + 95, wgt.zone.y + 65, "/", MIDSIZE + Color)
     lcd.drawText(wgt.zone.x + 120, wgt.zone.y + 70, string.format("H: %.1fA", currentCurrentValueHigh["main"]), MIDSIZE + Color)
 
@@ -2556,11 +2612,11 @@ local function refreshZoneXLarge(wgt)
 
   --lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 40, string.format("%.2fV / %.2fV", RxVoltsNow, RxVoltsMax), MIDSIZE + Color)
 
-  lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 40, string.format("C: %.2fV", currentVoltageValue["receiver"]), MIDSIZE + COLOR_THEME_SECONDARY1)
+  lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 40, string.format("C: %.2fV", currentVoltageValueCurrent["receiver"]), MIDSIZE + COLOR_THEME_SECONDARY1)
   --lcd.drawText(wgt.zone.x + 95, wgt.zone.y + 35, "/", MIDSIZE + Color)
   lcd.drawText(wgt.zone.x + 350, wgt.zone.y + 40, string.format("L: %.2fV", currentVoltageValueLow["receiver"]), MIDSIZE + Color)
 
-  lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 70, string.format("C: %.1fA",  currentCurrentValue["receiver"]), MIDSIZE + COLOR_THEME_SECONDARY1)
+  lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 70, string.format("C: %.1fA",  currentCurrentValueCurrent["receiver"]), MIDSIZE + COLOR_THEME_SECONDARY1)
   --lcd.drawText(wgt.zone.x + 95, wgt.zone.y + 65, "/", MIDSIZE + Color)
   lcd.drawText(wgt.zone.x + 350, wgt.zone.y + 70, string.format("H: %.1fA", currentCurrentValueHigh["receiver"]), MIDSIZE + Color)
 
