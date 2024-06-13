@@ -1836,7 +1836,7 @@ local function checkTelemetryAndBatteryCells(context)
 
     print(string.format("CTAB: Cell Count: %s expected: %s sensor value: %s cellcounttype: %s expected type: %s",numberofcells, countCell[context],currentSensorVoltageValue[context],type(numberofcells),type(countCell[context])))
 
-    if numberofcells > 0 and numberofcells == countCell[context] then -- <<<<<<<<--------- not matching ... why ????
+    if numberofcells > 0 and numberofcells == countCell[context] then 
 
       --Timer("initdone") --todo place this at a better place ... maybe tele reset or init_func
 
@@ -1879,23 +1879,23 @@ local function checkTelemetryAndBatteryCells(context)
       -- playNumber(rxvolts, 1, 0 ,5 )
 
       --wait(5)
-    -- todo not working --          elseif numberofcells > 0 and numberofcells ~= countCell[context] then
-    -- todo not working --            -- todo repeat warning
-    -- todo not working --            t = 5 
-    -- todo not working --            queueSound("critical", 0)
-    -- todo not working --            queueSound(context, 0)
-    -- todo not working --            queueSound("battery", 0)
-    -- todo not working --            queueSound("icw", t )
--- todo not working --          
-    -- todo not working --            print(string.format("ICW: Cell Count: %s expected: %s",numberofcells, countCell[context]))
--- todo not working --          
-    -- todo not working --            detectedBattery[context] = true
--- todo not working --          
--- todo not working --          
-    -- todo not working --            --queueNumber(numberofcells, 0, 0, 0)
-    -- todo not working --            --queueSound("cellbatdetect", 0)
-    -- todo not working --            --queueNumber(currentVoltageValue[context], 1, 0, t)
--- todo not working --          
+     elseif numberofcells > 0 and numberofcells ~= countCell[context] then
+       -- todo repeat warning
+       t = 5 
+       queueSound("critical", 0)
+       queueSound(context, 0)
+       queueSound("battery", 0)
+       queueSound("icw", t )
+ 
+       print(string.format("ICW: Cell Count: %s expected: %s",numberofcells, countCell[context]))
+ 
+       detectedBattery[context] = true
+ 
+ 
+       --queueNumber(numberofcells, 0, 0, 0)
+       --queueSound("cellbatdetect", 0)
+       --queueNumber(currentVoltageValue[context], 1, 0, t)
+ 
     end
 
   end
