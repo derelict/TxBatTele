@@ -1749,23 +1749,23 @@ local function updateSensorValues(context)
 
 
   currentVoltageValue[context] = getCellVoltage(currentSensorVoltageValue[context])
-  currentCurrentValue[context] = getAmp(currentSensorCurrentValue[context])
+  currentCurrentValue[context] = getAmp(sensorCurrent[context]) --todo .. function calls getValue again
 
   print(string.format("Updated Sensor Values: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, sensorVoltage[context], currentVoltageValue[context], sensorCurrent[context], sensorMah[context], currentSensorVoltageValue[context], currentSensorCurrentValue[context], currentSensorMahValue[context]))
 
-  if currentVoltageValue[context] > currentVoltageValueHigh[context]  and currentVoltageValueHigh[context] < 1 then
+  if currentVoltageValue[context] > currentVoltageValueHigh[context]  or currentVoltageValueHigh[context] < 1 then
     currentVoltageValueHigh[context] = currentVoltageValue[context]
   end
 
-  if currentVoltageValue[context] < currentVoltageValueLow[context] and currentVoltageValueLow[context] < 1 then
+  if currentVoltageValue[context] < currentVoltageValueLow[context] or currentVoltageValueLow[context] < 1 then
     currentVoltageValueLow[context] = currentVoltageValue[context]
   end
 
-  if currentCurrentValue[context] > currentCurrentValueHigh[context] and currentCurrentValueHigh[context] < 1 then
+  if currentCurrentValue[context] > currentCurrentValueHigh[context] or currentCurrentValueHigh[context] < 1 then
     currentCurrentValueHigh[context] = currentCurrentValue[context]
   end
 
-  if currentCurrentValue[context] < currentCurrentValueLow[context] and currentCurrentValueLow[context] < 1 then
+  if currentCurrentValue[context] < currentCurrentValueLow[context] or currentCurrentValueLow[context] < 1 then
     currentCurrentValueLow[context] = currentCurrentValue[context]
   end
 
@@ -2530,7 +2530,7 @@ local function refreshZoneXLarge(wgt)
 
     lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 70, string.format("C: %.1fA", currentCurrentValue["main"]), MIDSIZE + COLOR_THEME_SECONDARY1)
     --lcd.drawText(wgt.zone.x + 95, wgt.zone.y + 65, "/", MIDSIZE + Color)
-    lcd.drawText(wgt.zone.x + 120, wgt.zone.y + 70, string.format("H: %.1fA", currentVoltageValueHigh["main"]), MIDSIZE + Color)
+    lcd.drawText(wgt.zone.x + 120, wgt.zone.y + 70, string.format("H: %.1fA", currentCurrentValueHigh["main"]), MIDSIZE + Color)
 
 
 
@@ -2562,7 +2562,7 @@ local function refreshZoneXLarge(wgt)
 
   lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 70, string.format("C: %.1fA",  currentCurrentValue["receiver"]), MIDSIZE + COLOR_THEME_SECONDARY1)
   --lcd.drawText(wgt.zone.x + 95, wgt.zone.y + 65, "/", MIDSIZE + Color)
-  lcd.drawText(wgt.zone.x + 350, wgt.zone.y + 70, string.format("H: %.1fA", currentVoltageValueHigh["receiver"]), MIDSIZE + Color)
+  lcd.drawText(wgt.zone.x + 350, wgt.zone.y + 70, string.format("H: %.1fA", currentCurrentValueHigh["receiver"]), MIDSIZE + Color)
 
 
 
