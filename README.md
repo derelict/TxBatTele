@@ -9,7 +9,7 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/derelict/TxBatTele?color=red)
 ![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fderelict%2FTxBatTele&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)
 
-EdgeTX/OpenTX Battery and Telemetry Monitoring LUA Widget
+EdgeTX/OpenTX Battery and Telemetry Monitoring LUA Widget which tries to rely as less as possible on radio settings (Everything is defined in the Script). So no need for "manual" Logical Switches or Custom Functions.
 
 ## Key Features of TxBatTele ⭐
 - **Receiver** and **Main Battery** Monitoring: Monitor your Main and Receiver Battery. Support for different Battery Types (lipo and buffer currently)
@@ -18,7 +18,8 @@ EdgeTX/OpenTX Battery and Telemetry Monitoring LUA Widget
 - **Switch State Announcements**: Voice Announcements for any Switch Position (like Armed, Disarmed, Flightmode, and so on)
 - **Status Pages**: Show pre, post and in flight Statuspage (widget)
 - **Pre-Flight Checks**: Check for missings/inconsistent Cells, Battery not full conditions before flight
-- **Voice Announcements**: Get Voice Announcements for any Condition including haptic Feedback if needed 
+- **Voice Announcements**: Get Voice Announcements for any Condition including haptic Feedback if needed
+- **Logging**: Take Screenshot of the Statuspage after flight or turn on logging if/as needed based on Conditions (like Battery at 30%)
 
 ## Screenshots
 ![image](https://github.com/derelict/TxBatTele/assets/2826671/480d3ce7-b507-47c2-8f4d-54872552ef35)
