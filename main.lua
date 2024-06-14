@@ -452,7 +452,7 @@ local CellFullVoltageTolerance = 0.2
 local VoltageDelta = .3
 
 -- Announcements
-local soundDirPath = "/WIDGETS/BattNew/sounds/" -- where you put the sound files
+local soundDirPath = "/WIDGETS/TxBatTele/sounds/" -- where you put the sound files
 local AnnouncePercentRemaining = true -- true to turn on, false for off
 local SillyStuff = false  -- Play some silly/fun sounds
 
@@ -1456,6 +1456,7 @@ local function init_func()
 
   switchReset                   = modelDetails.resetSwitch
   --statusTele                    = modelDetails.telemetryStatus
+
 
   idswitchReset                 = getSwitchIndex(switchReset)
   --idstatusTele                  = getSwitchIndex(statusTele)
