@@ -299,6 +299,19 @@ local PlayRxBatWarning = true
 
 
 
+
+-- to support future functions like taking screenshot and logging on/off
+local ver, radio, maj, minor, rev, osname = getVersion()
+print("version: "..ver)
+if radio then print ("version radio: "..radio) end
+if maj then print ("version maj: "..maj) end
+if minor then print ("version minor: "..minor) end
+if rev then print ("version rev: "..rev) end
+if osname then print ("version osname: "..osname) end
+
+
+
+
 -- local TelemetryStatusSwitch = "TELE"
 -- local TelemetryStatusSwitch_ID  = getSwitchIndex(TelemetryStatusSwitch)
 -- 
@@ -1891,6 +1904,8 @@ local function checkTelemetryAndBatteryCells(context)
       -- playNumber(numberofcells, 0, 0 ,5 )
       -- playFile(soundDirPath.."cellbatdetect.wav")
       -- playNumber(mainvolts, 1, 0 ,5 )
+
+      screenshot(1)
 
       t = 7
       queueSound(context, 0)
