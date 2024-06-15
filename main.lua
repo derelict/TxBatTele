@@ -375,7 +375,7 @@ local mainbattype = "lipo"
 -- end
 
 local bufferLowVol = 6 --normally the value where the buffer shuts down completely
-local bufferHighVol = 8.2 --normally the value your BEC is set to
+local bufferHighVol = 8.2 --normally the value your BEC is set to -- todo add to model definition above
 
 -- do not change ... we are basing our calculations based on theoretical cells values
 local bufferLowPerCellValue = bufferLowVol / 2
@@ -979,6 +979,8 @@ local function CheckPercentRemaining(perc, battype, device)
 
     -- Intervalls =  -1 = off / 0 = single/on change
 
+  print(string.format("Check Perc Remain: perc: %s battype: %s device: %s", perc, battype, device))  
+
   if batAnnouceInterval == -1 and batWarnAnnounceInterval == -1 and batCritAnnounceInterval == -1 then
     return -- all intervals set to disable ... so no need to announce anything
   end
@@ -1075,6 +1077,20 @@ local function HasSecondsElapsed(numSeconds)
   end
 end
 
+
+local function doAnnouncements(context)
+
+  -- worst case scenario how events should be played on first init/tele
+  -- main battery
+  -- critical
+  -- 11 of 12 cells detected
+  -- 1 cell missing
+  -- battery not full
+  -- current voltage 22 volts
+  -- 55%
+
+end
+
 -- -- ####################################################################
 -- local function check_for_full_battery(voltageSensorValue)
 --   -- check condition 1: at reset that all voltages > CellFullVoltage volts
@@ -1129,39 +1145,48 @@ end
 -- end
 
 -- ####################################################################
-local function check_for_full_battery(voltageSensorValue, thresh, expectedcells, BatLowVolt, BatHighVolt)
-  -- check condition 1: at reset that all voltages > CellFullVoltage volts
+--local function check_for_full_battery(voltageSensorValue, thresh, expectedcells, BatLowVolt, BatHighVolt)
+  local function check_for_full_battery(context)
+
+    if batteryNotFull[context] == nil then -- only perform check once when status has not been determined yet ... otherwise do not waste time
+
+-- check_for_full_battery(currentSensorVoltageValue[context], BatNotFullThresh[typeBattery[context]], countCell[context], batTypeLowHighValues[typeBattery[context]][1], batTypeLowHighValues[typeBattery[context]][2])
+-- batteryNotFull
+
+    -- check condition 1: at reset that all voltages > CellFullVoltage volts
 
   --numberofcells = math.ceil(voltageSensorValue / CellFullVoltage)
   --print("Number of Cells")
   --print(numberofcells)
 
+  local lowBat = false
 
-  if BatUsedmAh == 0 then -- BatUsedmAh is only 0 at reset
+
+  if BatUsedmAh == 0 then -- BatUsedmAh is only 0 at reset -- todo
     --print(string.format("CheckBatNotFull: %s type: %s", CheckBatNotFull, type(voltageSensorValue)))
     --if CheckBatNotFull then  -- global variable to gate this so this check is only done once after reset
       --playBatNotFullWarning = false
 
-      print("CHECK BAT FULL", type(voltageSensorValue))
+      print("CHECK BAT FULL", type(currentSensorVoltageValue[context]))
       print(BatUsedmAh)
       print(CheckBatNotFull)
     
 
-      if (type(voltageSensorValue) == "table") then -- check to see if this is the dedicated voltage sensor
+      if (type(currentSensorVoltageValue[context]) == "table") then -- check to see if this is the dedicated voltage sensor
         print("flvss cell detection")
-        for i, v in ipairs(voltageSensorValue) do
+        for i, v in ipairs(currentSensorVoltageValue[context]) do
 
           --perc = findPercentRem( v )
 
 
-          perc = ((v - BatLowVolt) / (BatHighVolt - BatLowVolt)) * 100
+          perc = ((v - batTypeLowHighValues[typeBattery[context]][1]) / (batTypeLowHighValues[typeBattery[context]][2] - batTypeLowHighValues[typeBattery[context]][1])) * 100
 
           print("FLVSS PERCENTAGE: ", perc)
 
-          if perc < thresh then
+          if perc < BatNotFullThresh[typeBattery[context]] then
             --print(string.format("flvss i: %d v: %f", i,v))
             --playBatNotFullWarning = true
-            return true
+            lowBat = true
 
             --break
           end
@@ -1169,31 +1194,31 @@ local function check_for_full_battery(voltageSensorValue, thresh, expectedcells,
         --CheckBatNotFull = false  -- since we have done the check, set to false so it is not ran again
       
       --elseif VoltageSensor == "VFAS" and type(voltageSensorValue) == "number" then --this is for the vfas sensor
-      elseif type(voltageSensorValue) == "number" then --this is for the vfas sensor
+      elseif type(currentSensorVoltageValue[context]) == "number" then --this is for the vfas sensor
 
         -- numberofcells = voltageSensorValue / CellFullVoltage
         -- print("Number of Cells")
         -- print(numberofcells)
-        celvolt = voltageSensorValue / expectedcells
+        celvolt = currentSensorVoltageValue[context] / countCell[context]
 
         print("VFAS CELL VOLT CALC: ", celvolt)
-        print("VFAS CELL VOLT : ", voltageSensorValue)
-        print("VFAS Expected Cells: ",expectedcells)
+        print("VFAS CELL VOLT : ", currentSensorVoltageValue[context])
+        print("VFAS Expected Cells: ",countCell[context])
 
-        print("VFAS BAT LOW VOLT: ", BatLowVolt)
-        print("VFAS BAT HIGH VOLT: ", BatHighVolt)
+        print("VFAS BAT LOW VOLT: ", batTypeLowHighValues[typeBattery[context]][1])
+        print("VFAS BAT HIGH VOLT: ", batTypeLowHighValues[typeBattery[context]][2])
 
-        perc = ((celvolt - BatLowVolt) / (BatHighVolt - BatLowVolt)) * 100
+        perc = ((celvolt - batTypeLowHighValues[typeBattery[context]][1]) / (batTypeLowHighValues[typeBattery[context]][2] - batTypeLowHighValues[typeBattery[context]][1])) * 100
 
         print("VFAS PERCENTAGE: ", perc)
 
       
-        print(string.format("vfas: %f", voltageSensorValue))
+        print(string.format("vfas: %f", currentSensorVoltageValue[context]))
         --(string.format("vfas value: %d", voltageSensorValue))
-        if perc < thresh then
+        if perc < BatNotFullThresh[typeBattery[context]] then
           --print("vfas cell not full detected")
           --playBatNotFullWarning = true
-          return true
+          lowBat = true
         end
         --CheckBatNotFull = false  -- since we have done the check, set to false so it is not ran again
       end
@@ -1221,34 +1246,45 @@ local function check_for_full_battery(voltageSensorValue, thresh, expectedcells,
     
     --end -- CheckBatNotfull
 
-    return false
+    batteryNotFull[context] = lowBat
 
   end -- BatUsedmAh
+
+end
+
 end
 
 
 -- ####################################################################
-local function check_cell_delta_voltage(voltageSensorValue)
+local function check_cell_delta_voltage(context)
   -- Check to see if all cells are within VoltageDelta volts of each other
   --  default is .3 volts, can be changed above
-  if (type(voltageSensorValue) == "table") then -- check to see if this is the dedicated voltage sensor
-    for i, v1 in ipairs(voltageSensorValue) do
-      for j,v2 in ipairs(voltageSensorValue) do
+
+  --   check_cell_delta_voltage(currentSensorVoltageValue[context])
+-- cellInconsistent[context]
+
+  if (type(currentSensorVoltageValue[context]) == "table") then -- check to see if this is the dedicated voltage sensor
+
+    cellInconsistent[context] = false
+
+    for i, v1 in ipairs(currentSensorVoltageValue[context]) do
+      for j,v2 in ipairs(currentSensorVoltageValue[context]) do
         -- print(string.format("i: %d v: %f j: %d v: %f", i, v1, j,v2))
         if i~=j and (math.abs(v1 - v2) > VoltageDelta) then
           --print(string.format("i: %d v: %f j: %d v: %f", i, v1, j,v2))
-          timeElapsed = HasSecondsElapsed(10)  -- check to see if the 10 second timer has elapsed
-          if PlayFirstInconsistentCellWarning or (PlayInconsistentCellWarning == true and timeElapsed) then -- Play immediately upon detection and then every 10 seconds
-            --playFile(soundDirPath.."icw.wav")
-            queueSound("icw",2)
-
-            PlayFirstInconsistentCellWarning = false -- clear the first play flag, only reset on reset switch toggle
-            PlayInconsistentCellWarning = false -- clear the playing flag, only reset it at 10 second intervals
-          end
-          if not timeElapsed then  -- debounce so the sound is only played once in 10 seconds
-            PlayInconsistentCellWarning = true
-          end
-          return
+          --timeElapsed = HasSecondsElapsed(10)  -- check to see if the 10 second timer has elapsed
+          --if PlayFirstInconsistentCellWarning or (PlayInconsistentCellWarning == true and timeElapsed) then -- Play immediately upon detection and then every 10 seconds
+          --  --playFile(soundDirPath.."icw.wav")
+          --  queueSound("icw",2)
+--
+          --  PlayFirstInconsistentCellWarning = false -- clear the first play flag, only reset on reset switch toggle
+          --  PlayInconsistentCellWarning = false -- clear the playing flag, only reset it at 10 second intervals
+          --end
+          --if not timeElapsed then  -- debounce so the sound is only played once in 10 seconds
+          --  PlayInconsistentCellWarning = true
+          --end
+          --return
+          cellInconsistent[context] = true
         end
       end
     end
@@ -1256,46 +1292,67 @@ local function check_cell_delta_voltage(voltageSensorValue)
 end
 
 -- ####################################################################
-local function check_for_missing_cells(voltageSensorValue, expectedCells )
+local function check_for_missing_cells(context)
+    -- check_for_missing_cells(currentSensorVoltageValue[context], countCell[context])
+    -- local function check_for_missing_cells(voltageSensorValue, expectedCells )
+
+
   -- If the number of cells detected by the voltage sensor does not match the value in GV6 then play the warning message
   -- This is only for the dedicated voltage sensor
-  --print(string.format("CellCount: %d voltageSensorValue:", CellCount))
-  if expectedCells > 0 then
-    missingCellDetected = false
-    if (type(voltageSensorValue) == "table") then
+  --print(string.format("CellCount: %d currentSensorVoltageValue[context]:", CellCount))
+  if countCell[context] > 0 then
+
+    local missingCellDetected = false
+
+    if (type(currentSensorVoltageValue[context]) == "table") then
       --tableSize = 0 -- Initialize the counter for the cell table size
-      --for i, v in ipairs(voltageSensorValue) do
+      --for i, v in ipairs(currentSensorVoltageValue[context]) do
       --  tableSize = tableSize + 1
       --end
       --if tableSize ~= CellCount then
-      if #voltageSensorValue ~= expectedCells then
+      CellsDetectedCurrent[context] = #currentSensorVoltageValue[context]
+      if #currentSensorVoltageValue[context] ~= countCell[context] then
         --print(string.format("CellCount: %d tableSize: %d", CellCount, tableSize))
+        
         missingCellDetected = true
       end
-    --elseif VoltageSensor == "VFAS" and type(voltageSensorValue) == "number" then --this is for the vfas sensor
-    elseif type(voltageSensorValue) == "number" then --this is for the vfas sensor
-      if (expectedCells * 3.2) > (voltageSensorValue) then
-        --print(string.format("vfas missing cell: %d", voltageSensorValue))
+    --elseif VoltageSensor == "VFAS" and type(currentSensorVoltageValue[context]) == "number" then --this is for the vfas sensor
+    elseif type(currentSensorVoltageValue[context]) == "number" then --this is for the vfas sensor
+      CellsDetectedCurrent[context] = math.ceil( currentSensorVoltageValue[context] / ( CellFullVoltage + 0.3) )
+      --CellsDetectedCurrent[context] = math.floor( currentSensorVoltageValue[context] / 3.2 )
+      --if (countCell[context] * 3.2) > (currentSensorVoltageValue[context]) then
+        if CellsDetectedCurrent[context] ~= countCell[context]  then
+          --print(string.format("vfas missing cell: %d", currentSensorVoltageValue[context]))
+        
         missingCellDetected = true
       end
     end
 
-    if missingCellDetected then
-      --print("tableSize =~= CellCount: missing cell detected")
-      timeElapsed = HasSecondsElapsed(10)
-      if PlayFirstMissingCellWarning or (PlayMissingCellWarning and timeElapsed) then -- Play immediately and then every 10 seconds
-        --playFile(soundDirPath.."mcw.wav")
-        queueSound("mcw",2)
+    --if missingCellDetected then
+    --  --print("tableSize =~= CellCount: missing cell detected")
+    --  timeElapsed = HasSecondsElapsed(10)
+    --  if PlayFirstMissingCellWarning or (PlayMissingCellWarning and timeElapsed) then -- Play immediately and then every 10 seconds
+    --    --playFile(soundDirPath.."mcw.wav")
+    --    queueSound("mcw",2)
+--
+    --    --print("play missing cell wav")
+    --    PlayMissingCellWarning = false
+    --    PlayFirstMissingCellWarning = false
+    --  end
+    --  if not timeElapsed then  -- debounce so the sound is only played once in 10 seconds
+    --    PlayMissingCellWarning = true
+    --  end
+    --end
 
-        --print("play missing cell wav")
-        PlayMissingCellWarning = false
-        PlayFirstMissingCellWarning = false
-      end
-      if not timeElapsed then  -- debounce so the sound is only played once in 10 seconds
-        PlayMissingCellWarning = true
-      end
+    cellMissing[context] = missingCellDetected
+
+    if not cellMissing[context] then
+      CellsDetected[context] = true
     end
+
+
   end
+
 end
 
 
@@ -1399,6 +1456,12 @@ local function init_func()
 
   CellsDetected = {}
 
+  -- todo --- build variables using context switching
+
+  CellsDetectedCurrent = {}
+  CellsDetectedCurrent["main"]      = 0
+  CellsDetectedCurrent["receiver"]  = 0
+
   detectedBattery = {}
   detectedBatteryValid = {}
 
@@ -1408,6 +1471,8 @@ local function init_func()
   modelName = modelDetails.modelName
   modelImage = modelDetails.modelImage
   modelWav = modelDetails.modelWav
+
+  queueSound(modelWav,2)
 
   print("MODEL NAME: ", modelName)
   print("MODEL IMAGE: ",modelImage)
@@ -1453,6 +1518,22 @@ local function init_func()
   valueVoltsPercentRemaining["main"] = 0
   valueVoltsPercentRemaining["receiver"] = 0
 
+  preFlightStatusTele = "unknown"
+  preFlightStatusBat = "unknown"
+
+  cellMissing = {}
+  cellMissing["main"] = false
+  cellMissing["receiver"] = false
+
+  cellInconsistent = {}
+  cellInconsistent["main"] = false
+  cellInconsistent["receiver"] = false
+
+  batteryNotFull = {}
+  batteryNotFull["main"] = nil -- nil means not determined yet / on init
+  batteryNotFull["receiver"] = nil -- nil means not determined yet / on init
+
+
 
   switchReset                   = modelDetails.resetSwitch
   --statusTele                    = modelDetails.telemetryStatus
@@ -1473,6 +1554,8 @@ local function init_func()
   detectedBatteryValid["main"] = false
   detectedBatteryValid["receiver"] = false
 
+  batCheckPassed = false
+
 
 --todo remove/change  
   VoltsNow = 0
@@ -1490,19 +1573,23 @@ local function init_func()
 
 
 
-
+  numOfBatPassedCellCheck = 0
 
   -- todo: maybe consider/adapt to use cases with only current and/or mah sensors
   if sensorVoltage["main"] ~= nil then
     table.insert(contexts, "main")
     CellsDetected["main"] = false
-    numberOfBatteries = numberOfBatteries + 1
+    --numberOfBatteries = numberOfBatteries + 1
+  else
+    CellsDetected["main"] = true -- needed to pass sanity check / statuspage
   end
 
   if sensorVoltage["receiver"] ~= nil then
     table.insert(contexts, "receiver")
     CellsDetected["receiver"] = false
-    numberOfBatteries = numberOfBatteries + 1
+    --numberOfBatteries = numberOfBatteries + 1
+  else
+    CellsDetected["receiver"] = true -- needed to pass sanity check / statuspage
   end
 
 
@@ -1515,10 +1602,10 @@ local function init_func()
 
   bmpModelImage = Bitmap.open("/IMAGES/" .. modelImage)
 
-  bmpSizedModelImage = Bitmap.resize(bmpModelImage, 300, 200)
+  bmpSizedModelImage = Bitmap.resize(bmpModelImage, 400, 300)
 
 
-
+-- modelWav
   
 
   
@@ -1751,7 +1838,7 @@ local function reset_if_needed()
       RxAmpsLow  = 0
       RxAmpsHigh = 0
 
-      FirstModelInit = false -- todo maybe there is a better place to put this ... maybe init ?
+      FirstModelInit = true -- todo maybe there is a better place to put this ... maybe init ?
 
       
       --print("reset event")
@@ -1765,9 +1852,25 @@ end
 
 
 -- ####################################################################
+local function checkForTelemetry()
+  statusTele = getSwitchValue(idstatusTele)
+
+  if not statusTele then
+    currentVoltageValueCurrent["main"]     = "--.--"
+    currentCurrentValueCurrent["main"]     = "--.--"
+
+    currentVoltageValueCurrent["receiver"] = "--.--"
+    currentCurrentValueCurrent["receiver"] = "--.--"
+    preFlightStatusTele = "NOT OK. Waiting"
+  else
+    preFlightStatusTele = "OK"
+  end
+
+end
+
+-- ####################################################################
 local function updateSensorValues(context)
 
-  statusTele = getSwitchValue(idstatusTele)
 
   currentSensorVoltageValue[context] = getValue(sensorVoltage[context])
   currentSensorCurrentValue[context] = getValue(sensorCurrent[context])
@@ -1777,9 +1880,12 @@ local function updateSensorValues(context)
   -- currentVoltageValueLatest[context] = getCellVoltage(currentSensorVoltageValue[context])
   -- currentCurrentValueLatest[context] = getAmp(sensorCurrent[context]) --todo .. function calls getValue again
 
-  currentVoltageValueCurrent[context] = getCellVoltage(currentSensorVoltageValue[context])  -- this will hold the current value ... even if no telemetry --> = 0
-  currentCurrentValueCurrent[context] = getAmp(sensorCurrent[context]) --todo .. function calls getValue again -- this will hold the current value ... even if no telemetry --> = 0
+  currentVoltageValueCurrent[context] = math.floor(getCellVoltage(currentSensorVoltageValue[context])  * 100) / 100   -- this will hold the current value ... even if no telemetry --> = 0
+  currentCurrentValueCurrent[context] = math.floor(getAmp(sensorCurrent[context])   * 100) / 100 --todo .. function calls getValue again -- this will hold the current value ... even if no telemetry --> = 0
 
+  -- local truncatedNumber = math.floor(number * 100) / 100
+
+  -- string.format("%.2f", number)
 
   print(string.format("Updated Sensor Values: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, sensorVoltage[context], volts , sensorCurrent[context], sensorMah[context], currentSensorVoltageValue[context], currentSensorCurrentValue[context], currentSensorMahValue[context]))
 
@@ -1791,13 +1897,13 @@ local function updateSensorValues(context)
     currentVoltageValueLatest[context] = currentVoltageValueCurrent[context]
   end
 
-  if currentVoltageValueHigh[context] == 0 or ( currentVoltageValueCurrent[context] > currentVoltageValueHigh[context] and currentVoltageValueCurrent[context] ~= 0 ) then
+  if currentVoltageValueHigh[context] == 0 or ( currentVoltageValueCurrent[context] > currentVoltageValueHigh[context] and currentVoltageValueCurrent[context] ~= 0.00 ) then
     currentVoltageValueHigh[context] = currentVoltageValueCurrent[context]
   end
 
-  if currentVoltageValueLow[context] == 0 or ( currentVoltageValueCurrent[context] < currentVoltageValueLow[context] and currentVoltageValueCurrent[context] ~= 0 ) then
+  if currentVoltageValueLow[context] == 0 or ( currentVoltageValueCurrent[context] < currentVoltageValueLow[context] and currentVoltageValueCurrent[context] ~= 0.00 ) then
     currentVoltageValueLow[context] = currentVoltageValueCurrent[context]
-    print(string.format("Updated Sensor Values Low: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, sensorVoltage[context], volts , sensorCurrent[context], sensorMah[context], currentSensorVoltageValue[context], currentSensorCurrentValue[context], currentSensorMahValue[context]))
+    print(string.format("Updated Sensor Values Low: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, sensorVoltage[context], currentVoltageValueCurrent[context] , sensorCurrent[context], sensorMah[context], currentSensorVoltageValue[context], currentSensorCurrentValue[context], currentSensorMahValue[context]))
 -- Updated Sensor Values Low: Context: main Sensor Voltage: Cels ( get Cell: nil ) Sensor Current: Curr Sensor mah:  Volt: 0 Current: 0 mAh: 0
   end
 
@@ -1808,21 +1914,21 @@ local function updateSensorValues(context)
   currentCurrentValueLatest[context] = currentCurrentValueCurrent[context]
   end
 
-  if currentCurrentValueHigh[context] == 0 or ( currentCurrentValueCurrent[context] > currentCurrentValueHigh[context] and currentCurrentValueCurrent[context] ~= 0 )   then
+  if currentCurrentValueHigh[context] == 0 or ( currentCurrentValueCurrent[context] > currentCurrentValueHigh[context] and currentCurrentValueCurrent[context] ~= 0.00 )   then
     currentCurrentValueHigh[context] = currentCurrentValueCurrent[context]
   end
 
-  if currentCurrentValueLow[context] == 0 or ( currentCurrentValueCurrent[context] < currentCurrentValueLow[context]  and currentCurrentValueCurrent[context] ~= 0 )  then
+  if currentCurrentValueLow[context] == 0 or ( currentCurrentValueCurrent[context] < currentCurrentValueLow[context]  and currentCurrentValueCurrent[context] ~= 0.00 )  then
     currentCurrentValueLow[context] = currentCurrentValueCurrent[context]
   end
 
 
   
 
-  if CellsDetected[context] then
+  --if not cellMissing[context] then
     valueVoltsPercentRemaining[context]  = findPercentRem( currentVoltageValueLatest[context]/countCell[context],  typeBattery[context])
     print(string.format("SUPD: Got Percent: %s for Context: %s", valueVoltsPercentRemaining[context], context))
-  end
+  --end
 
 
   -- if VoltsNow < 1 or volts > 1 then
@@ -1906,7 +2012,7 @@ local function checkTelemetryAndBatteryCells(context)
       -- playFile(soundDirPath.."cellbatdetect.wav")
       -- playNumber(mainvolts, 1, 0 ,5 )
 
-      screenshot(1)
+      -- screenshot(1)
 
       t = 7
       queueSound(context, 0)
@@ -2088,10 +2194,12 @@ local function bg_func()
 -- print("TEST3:", test3)
 
 -- updateTelemetryStatus()
+processQueue()
+
+checkForTelemetry()
 
 switchAnnounce()
 
-  processQueue()
 
 
 
@@ -2107,16 +2215,16 @@ switchAnnounce()
 
  -- for the current context
 
- updateSensorValues(currentContext)
 
  if statusTele then -- if we have no telemetry .... don't waste time doing anything that requires telemetry
 
+  updateSensorValues(currentContext)
 
 
   -- make sure we have cells/voltage availablwe
 
 
-  checkTelemetryAndBatteryCells(currentContext)
+  -- checkTelemetryAndBatteryCells(currentContext)
 
   -- queueSound("main", 5)
   -- queueNumber(12, 0, 0, 5)
@@ -2290,25 +2398,30 @@ switchAnnounce()
 
   -- voltage_sensor_tests(currentContext)
 
-  check_for_full_battery(currentSensorVoltageValue[currentContext], BatNotFullThresh[typeBattery[currentContext]], countCell[currentContext], batTypeLowHighValues[typeBattery[currentContext]][1], batTypeLowHighValues[typeBattery[currentContext]][2])
+  -- check_for_missing_cells(currentSensorVoltageValue[currentContext], countCell[currentContext])
+  check_for_missing_cells(currentContext)
 
-  check_cell_delta_voltage(currentSensorVoltageValue[currentContext])
+  if not cellMissing[currentContext] then -- if cell number is fine we have got voltage and can do the rest of the checks
 
-  check_for_missing_cells(currentSensorVoltageValue[currentContext], countCell[currentContext])
+  -- check_for_full_battery(currentSensorVoltageValue[currentContext], BatNotFullThresh[typeBattery[currentContext]], countCell[currentContext], batTypeLowHighValues[typeBattery[currentContext]][1], batTypeLowHighValues[typeBattery[currentContext]][2])
+  check_for_full_battery(currentContext)
 
+  check_cell_delta_voltage(currentContext)
+
+  end
 
 
   --if AnnouncePercentRemaining and Timer("initdone", initTime) then -- don't announce anything until init is done
-  if AnnouncePercentRemaining then -- don't announce anything until init is done
-  -- CheckPercentRemaining(BatRemPer, mainbattype, "main")
-  -- CheckPercentRemaining(RxBatRemPer, rxbatType, "receiver")
-
-  CheckPercentRemaining(valueVoltsPercentRemaining[currentContext], typeBattery[currentContext], currentContext)
-
-  -- valueVoltsPercentRemaining[context]
-  
-
-end
+-- disabled --   if AnnouncePercentRemaining and valueVoltsPercentRemaining[currentContext] ~= 0 then -- don't announce anything until init is done
+-- disabled --   -- CheckPercentRemaining(BatRemPer, mainbattype, "main")
+-- disabled --   -- CheckPercentRemaining(RxBatRemPer, rxbatType, "receiver")
+-- disabled -- 
+-- disabled --   CheckPercentRemaining(valueVoltsPercentRemaining[currentContext], typeBattery[currentContext], currentContext)
+-- disabled -- 
+-- disabled --   -- valueVoltsPercentRemaining[context]
+-- disabled --   
+-- disabled -- 
+-- disabled -- end
 
   -- disabled -- if WriteGVBatRemmAh == true then
   -- disabled --   model.setGlobalVariable(GVBatRemmAh, GVFlightMode, math.floor(BatRemainmAh/100))
@@ -2323,7 +2436,17 @@ end
   --print(string.format("VoltsMax: %d", VoltsMax))
   --print(string.format("BatUsedmAh: %d", BatUsedmAh))
 
-end
+  if CellsDetected["main"] and CellsDetected["receiver"] then -- sanity checks passed ... we can move to normal operation and switch the status widget
+   batCheckPassed = true
+   preFlightStatusBat = "OK"
+  else
+    preFlightStatusBat = "Check Battery"
+  end
+
+  doAnnouncements(currentContext)
+
+end -- end of if telemetry
+
       -- Update the index to cycle through the contexts using the modulo operator
       currentContextIndex = (currentContextIndex % #contexts) + 1
 
@@ -2573,7 +2696,34 @@ local function refreshZoneXLarge(wgt)
     BlinkWhenZero = BLINK
   end
 
-  if not FirstModelInit or not ShowPreFlightStatus then
+  if type(currentVoltageValueCurrent["main"]) ~= "number" or currentVoltageValueCurrent["main"] == 0 then -- Blink
+    mainVoltBlink = BLINK
+  else
+    mainVoltBlink = 0
+  end
+
+  if type(currentCurrentValueCurrent["main"]) ~= "number" or currentCurrentValueCurrent["main"] == 0 then -- Blink
+    mainCurrentBlink = BLINK
+  else
+    mainCurrentBlink = 0
+  end
+
+
+  if type(currentVoltageValueCurrent["receiver"]) ~= "number" or currentVoltageValueCurrent["receiver"] == 0 then -- Blink
+    rxVoltBlink = BLINK
+  else
+    rxVoltBlink = 0
+  end
+
+  if type(currentCurrentValueCurrent["receiver"]) ~= "number" or currentCurrentValueCurrent["receiver"] == 0 then -- Blink
+    rxCurrentBlink = BLINK
+  else
+    rxCurrentBlink = 0
+  end
+
+
+
+  if batCheckPassed or not ShowPreFlightStatus then
 
 
   -- Draw the top-left 1/4 of the screen
@@ -2595,14 +2745,14 @@ local function refreshZoneXLarge(wgt)
     --maincur = getValue(VoltageSensor)
     --maincurmax = getValue(VoltageSensor.."+")
   
-    lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 40, string.format("C: %.2fV", currentVoltageValueCurrent["main"]), MIDSIZE + COLOR_THEME_SECONDARY1)
+    lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 40, string.format("C: %sV", currentVoltageValueCurrent["main"]), MIDSIZE + COLOR_THEME_SECONDARY1 + mainVoltBlink )
     --lcd.drawText(wgt.zone.x + 95, wgt.zone.y + 35, "/", MIDSIZE + Color)
-    lcd.drawText(wgt.zone.x + 120, wgt.zone.y + 40, string.format("L: %.2fV", currentVoltageValueLow["main"]), MIDSIZE + Color)
+    lcd.drawText(wgt.zone.x + 120, wgt.zone.y + 40, string.format("L: %sV", currentVoltageValueLow["main"]), MIDSIZE + Color)
     
 
-    lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 70, string.format("C: %.1fA", currentCurrentValueCurrent["main"]), MIDSIZE + COLOR_THEME_SECONDARY1)
+    lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 70, string.format("C: %sA", currentCurrentValueCurrent["main"]), MIDSIZE + COLOR_THEME_SECONDARY1 + mainCurrentBlink)
     --lcd.drawText(wgt.zone.x + 95, wgt.zone.y + 65, "/", MIDSIZE + Color)
-    lcd.drawText(wgt.zone.x + 120, wgt.zone.y + 70, string.format("H: %.1fA", currentCurrentValueHigh["main"]), MIDSIZE + Color)
+    lcd.drawText(wgt.zone.x + 120, wgt.zone.y + 70, string.format("H: %sA", currentCurrentValueHigh["main"]), MIDSIZE + Color)
 
 
 
@@ -2628,13 +2778,13 @@ local function refreshZoneXLarge(wgt)
 
   --lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 40, string.format("%.2fV / %.2fV", RxVoltsNow, RxVoltsMax), MIDSIZE + Color)
 
-  lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 40, string.format("C: %.2fV", currentVoltageValueCurrent["receiver"]), MIDSIZE + COLOR_THEME_SECONDARY1)
+  lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 40, string.format("C: %sV", currentVoltageValueCurrent["receiver"]), MIDSIZE + COLOR_THEME_SECONDARY1 + rxVoltBlink)
   --lcd.drawText(wgt.zone.x + 95, wgt.zone.y + 35, "/", MIDSIZE + Color)
-  lcd.drawText(wgt.zone.x + 350, wgt.zone.y + 40, string.format("L: %.2fV", currentVoltageValueLow["receiver"]), MIDSIZE + Color)
+  lcd.drawText(wgt.zone.x + 350, wgt.zone.y + 40, string.format("L: %sV", currentVoltageValueLow["receiver"]), MIDSIZE + Color)
 
-  lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 70, string.format("C: %.1fA",  currentCurrentValueCurrent["receiver"]), MIDSIZE + COLOR_THEME_SECONDARY1)
+  lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 70, string.format("C: %sA",  currentCurrentValueCurrent["receiver"]), MIDSIZE + COLOR_THEME_SECONDARY1 + rxCurrentBlink)
   --lcd.drawText(wgt.zone.x + 95, wgt.zone.y + 65, "/", MIDSIZE + Color)
-  lcd.drawText(wgt.zone.x + 350, wgt.zone.y + 70, string.format("H: %.1fA", currentCurrentValueHigh["receiver"]), MIDSIZE + Color)
+  lcd.drawText(wgt.zone.x + 350, wgt.zone.y + 70, string.format("H: %sA", currentCurrentValueHigh["receiver"]), MIDSIZE + Color)
 
 
 
@@ -2642,13 +2792,17 @@ local function refreshZoneXLarge(wgt)
 
 else
 
+
+
+  lcd.drawText(wgt.zone.x + 200, wgt.zone.y + -5, modelName, MIDSIZE + COLOR_THEME_PRIMARY1)
+  lcd.drawBitmap(bmpSizedModelImage, 200, 20, 50 )
+
+
+  local xlineStart = 10
+
   local ylineStart = 25
   local ylineinc = 20
 
-  local xlineStart = 200
-
-  lcd.drawText(wgt.zone.x + 10, wgt.zone.y + -5, modelName, MIDSIZE + COLOR_THEME_PRIMARY1)
-  lcd.drawBitmap(bmpSizedModelImage, 10, 20, 50 )
 
   lcd.drawText(wgt.zone.x + xlineStart, wgt.zone.y + -5, "Main Battery", MIDSIZE + COLOR_THEME_PRIMARY1)
 
@@ -2666,15 +2820,37 @@ else
   xline = xline + 100
   lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, ":",  COLOR_THEME_PRIMARY2 + BOLD )
   xline = xline + 20
-  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["main"],  GREEN + BOLD )
+  -- lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["main"],  GREEN + BOLD )
+  --lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["main"],  GREEN + BOLD )
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, string.format("%s (%s)", countCell["main"], CellsDetectedCurrent["main"]), GREEN + BOLD)
+
+  xline = xlineStart
+  yline = yline + ylineinc
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, "Voltage",  COLOR_THEME_PRIMARY3 + BOLD )
+  xline = xline + 100
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, ":",  COLOR_THEME_PRIMARY2 + BOLD )
+  xline = xline + 20
+  -- lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["main"],  GREEN + BOLD )
+  --lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["main"],  GREEN + BOLD )
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, currentVoltageValueCurrent["main"], GREEN + BOLD)
+  
+  xline = xlineStart
+  yline = yline + ylineinc
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, "Percentage",  COLOR_THEME_PRIMARY3 + BOLD )
+  xline = xline + 100
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, ":",  COLOR_THEME_PRIMARY2 + BOLD )
+  xline = xline + 20
+  -- lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["main"],  GREEN + BOLD )
+  --lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["main"],  GREEN + BOLD )
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, valueVoltsPercentRemaining["main"], GREEN + BOLD)
 
 
 
-  yline = yline + ylineinc + 20
+
+  yline = yline + ylineinc + 0
   lcd.drawText(wgt.zone.x + xlineStart, wgt.zone.y + yline, "Receiver Battery", MIDSIZE + COLOR_THEME_PRIMARY1)
 
   yline = yline + ylineinc + 10
-
   xline = xlineStart
   lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, "Battery Type",  COLOR_THEME_PRIMARY3 + BOLD )
   xline = xline + 100
@@ -2688,9 +2864,80 @@ else
   xline = xline + 100
   lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, ":",  COLOR_THEME_PRIMARY2 + BOLD )
   xline = xline + 20
-  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["receiver"],  GREEN + BOLD )
+  --lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["receiver"],  GREEN + BOLD )
+  --lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["receiver"],  GREEN + BOLD )
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, string.format("%s (%s)", countCell["receiver"], CellsDetectedCurrent["receiver"]), GREEN + BOLD)
+
+  xline = xlineStart
+  yline = yline + ylineinc
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, "Voltage",  COLOR_THEME_PRIMARY3 + BOLD )
+  xline = xline + 100
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, ":",  COLOR_THEME_PRIMARY2 + BOLD )
+  xline = xline + 20
+  --lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["receiver"],  GREEN + BOLD )
+  --lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["receiver"],  GREEN + BOLD )
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, currentVoltageValueCurrent["receiver"], GREEN + BOLD)
+
+  xline = xlineStart
+  yline = yline + ylineinc
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, "Percentage",  COLOR_THEME_PRIMARY3 + BOLD )
+  xline = xline + 100
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, ":",  COLOR_THEME_PRIMARY2 + BOLD )
+  xline = xline + 20
+  --lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["receiver"],  GREEN + BOLD )
+  --lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["receiver"],  GREEN + BOLD )
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, valueVoltsPercentRemaining["receiver"], GREEN + BOLD)
 
 
+
+  -- preFlightStatusBat
+
+
+
+  xline = 10
+  yline = yline  + 20
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, "Telemetry Status", MIDSIZE + COLOR_THEME_PRIMARY1)
+  xline = xline + 190
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, ":",  MIDSIZE + COLOR_THEME_PRIMARY2  )
+
+if string.find(preFlightStatusTele, "NOT") then
+  statusBlink = BLINK
+  statusColor = RED
+--elseif string.find(inputString, "keyword2") then
+--  result = "value2"
+else
+  statusBlink = 0
+ statusColor = GREEN
+end
+
+
+  xline = xline + 15
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, preFlightStatusTele, MIDSIZE + statusColor + statusBlink )
+
+
+
+
+  xline = 10
+  yline = yline  + 25
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, "Battery Status", MIDSIZE + COLOR_THEME_PRIMARY1)
+  xline = xline + 190
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, ":",  MIDSIZE + COLOR_THEME_PRIMARY2  )
+
+if string.find(preFlightStatusBat, "Check") then
+  statusBlink = BLINK
+  statusColor = RED
+--elseif string.find(inputString, "keyword2") then
+--  result = "value2"
+
+else
+  statusBlink = 0
+  statusColor = GREEN
+
+end
+
+
+  xline = xline + 15
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, preFlightStatusBat, MIDSIZE + statusColor + statusBlink )
 
 
 
