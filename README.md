@@ -17,7 +17,7 @@ EdgeTX/OpenTX Battery and Telemetry Monitoring LUA Widget which tries to rely as
 - **Other Sensors**: Monitor and show other Sensors
 - **Switch State Announcements**: Voice Announcements for any Switch Position (like Armed, Disarmed, Flightmode, and so on)
 - **Status Pages**: Show pre, post and in flight Statuspage (widget)
-- **Pre-Flight Checks**: Check for missings/inconsistent Cells, Battery not full conditions before flight
+- **Pre-Flight Checks**: Check for missing/inconsistent Cells, Battery not full conditions before flight
 - **Voice Announcements**: Get Voice Announcements for any Condition including haptic Feedback if needed
 - **Logging**: Take Screenshot of the Statuspage after flight or turn on logging if/as needed based on Conditions (like Battery at 30%)
 
