@@ -297,6 +297,7 @@ local rxbatwarn = false
 local PlayRxBatFirstWarning = true
 local PlayRxBatWarning = true
 
+local statusTable = {}
 
 
 
@@ -420,12 +421,205 @@ BatNotFullThresh["buffer"] = 98
 
 
 
+local announcementConfig = {
+  telemetry = {
+    normal = {
+      mode = "disable", -- "disable", "change", or an interval in seconds
+      gracePeriod = 1 -- Grace period in seconds for "change" mode
+    },
+    warning = {
+      threshold = false, -- Threshold for warning level
+      mode = "change" -- "disable", "change", or an interval in seconds
+    },
+    critical = {
+      threshold = "undef", -- Threshold for critical level
+      mode = "disable", -- "disable", "change", or an interval in seconds
+    }
+  },
+
+  BatteryMissingCell = {
+    normal = {
+      mode = "disable", -- "disable", "change", or an interval in seconds
+      gracePeriod = 1 -- Grace period in seconds for "change" mode
+    },
+    warning = {
+      threshold = -1, -- Threshold for warning level
+      mode = 10 -- "disable", "change", or an interval in seconds
+    },
+    critical = {
+      threshold = -2, -- Threshold for critical level
+      mode = 10 -- "disable", "change", or an interval in seconds
+    }
+  },
+
+  CellDelta = {
+    normal = {
+      mode = "disable", -- "disable", "change", or an interval in seconds
+      gracePeriod = 3 -- Grace period in seconds for "change" mode
+    },
+    warning = {
+      threshold = "undef", -- Threshold for warning level
+      mode = 10 -- "disable", "change", or an interval in seconds
+    },
+    critical = {
+      threshold = true, -- Threshold for critical level
+      mode = 10 -- "disable", "change", or an interval in seconds
+    }
+  },  
+
+
+  BatteryNotFull = {
+    main = {
+      normal = {
+        mode = "disable", -- "disable", "change", or an interval in seconds
+        gracePeriod = 0 -- Grace period in seconds for "change" mode
+      },
+      warning = {
+        --threshold = 98, -- Threshold for warning level
+        threshold = "useBatTypeDefault", -- Threshold for warning level --- for defaults see below
+        mode = "change" -- "disable", "change", or an interval in seconds
+      },
+      critical = {
+        --threshold = 96, -- Threshold for critical level
+        threshold = "useBatTypeDefault", -- Threshold for critical level
+        mode = "change" -- "disable", "change", or an interval in seconds
+      }
+    },
+    receiver = {
+      normal = {
+        mode = "disable", -- "disable", "change", or an interval in seconds
+        gracePeriod = 1 -- Grace period in seconds for "change" mode
+      },
+      warning = {
+        --threshold = 99, -- Threshold for warning level
+        threshold = "useBatTypeDefault", -- Threshold for warning level
+        mode = "change" -- "disable", "change", or an interval in seconds
+      },
+      critical = {
+        --threshold = 98, -- Threshold for critical level
+        threshold = "useBatTypeDefault", -- Threshold for critical level
+        mode = "change" -- "disable", "change", or an interval in seconds
+      }
+    }
+  },
+
+
+  Battery = {
+    main = {
+      normal = {
+        mode = 20, -- "disable", "change", or an interval in seconds
+        gracePeriod = 4 -- Grace period in seconds for "change" mode
+      },
+      warning = {
+        --threshold = 20, -- Threshold for warning level
+        threshold = "useBatTypeDefault", -- Threshold for warning level
+        mode = "change" -- "disable", "change", or an interval in seconds
+      },
+      critical = {
+        --threshold = 15, -- Threshold for critical level
+        threshold = "useBatTypeDefault", -- Threshold for critical level
+        mode = "change" -- "disable", "change", or an interval in seconds
+      }
+    },
+    receiver = {
+      normal = {
+        mode = 30, -- "disable", "change", or an interval in seconds
+        gracePeriod = 2 -- Grace period in seconds for "change" mode
+      },
+      warning = {
+        --threshold = 97, -- Threshold for warning level
+        threshold = "useBatTypeDefault", -- Threshold for warning level
+        mode = "change" -- "disable", "change", or an interval in seconds
+      },
+      critical = {
+        --threshold = 95, -- Threshold for critical level
+        threshold = "useBatTypeDefault", -- Threshold for critical level
+        mode = "change" -- "disable", "change", or an interval in seconds
+      }
+    }
+  }  
 
 
 
 
 
 
+  -- Add other items with their respective configurations
+}
+
+local announcementConfigDefault = {
+  normal = {
+    mode = "change", -- "disable", "change", or an interval in seconds
+    gracePeriod = 4 -- Default grace period in seconds
+  },
+  warning = {
+    threshold = 80, -- Default threshold for warning level
+    mode = "change" -- "disable", "change", or an interval in seconds
+  },
+  critical = {
+    threshold = 50, -- Default threshold for critical level
+    mode = "change" -- "disable", "change", or an interval in seconds
+}
+}
+
+local statusTable = {}
+
+
+
+
+
+-- Define default discharge curves and other parameters per battery type
+local BatteryTypeDefaults = {
+  lipo = {
+      dischargeCurve = {
+          {4.20, 100}, {4.17, 97.5}, {4.15, 95}, {4.13, 92.5},
+          {4.11, 90}, {4.10, 87.5}, {4.08, 85}, {4.05, 82.5},
+          {4.02, 80}, {4.00, 77.5}, {3.98, 75}, {3.97, 72.5},
+          {3.95, 70}, {3.93, 67.5}, {3.91, 65}, {3.89, 62.5},
+          {3.87, 60}, {3.86, 57.5}, {3.85, 55}, {3.85, 52.5},
+          {3.84, 50}, {3.83, 47.5}, {3.82, 45}, {3.81, 42.5},
+          {3.80, 40}, {3.80, 37.5}, {3.79, 35}, {3.78, 32.5},
+          {3.77, 30}, {3.76, 27.5}, {3.75, 25}, {3.74, 22.5},
+          {3.73, 20}, {3.72, 17.5}, {3.71, 15}, {3.70, 12.5},
+          {3.69, 10}, {3.67, 7.5}, {3.61, 5}, {3.49, 2.5},
+          {3.27, 0}
+      },
+      criticalThreshold = 15,   -- Critical threshold in percentage
+      warningThreshold = 20,    -- Warning threshold in percentage
+      notFullCriticalThreshold = 96,  -- Not full critical threshold in percentage
+      notFullWarningThreshold = 98,   -- Not full warning threshold in percentage
+      highVoltage = 4.20,       -- High voltage
+      lowVoltage = 3.27,        -- Low voltage
+      cellDeltaVoltage = 0.07   -- Cell delta voltage
+  },
+  buffer = {
+      
+      dischargeCurve = nil,     -- This will be dynamically calculated based on voltage range
+      criticalThreshold = 96,  -- Critical threshold in percentage
+      warningThreshold = 97,   -- Warning threshold in percentage
+      notFullCriticalThreshold = 98,   -- Not full critical threshold in percentage
+      notFullWarningThreshold = 99,    -- Not full warning threshold in percentage
+      highVoltage = 4.1,      -- High voltage
+      lowVoltage = 3,         -- Low voltage
+      cellDeltaVoltage = nil  -- Cell delta voltage -- irrelevant for buffer
+  }
+}
+
+
+
+
+
+
+
+
+-- local announcementPhrases = {
+-- 
+--   telemetry = {
+--     { type = }
+--   }
+-- 
+-- 
+-- }
 
 --local RxBtVoltageWarning = (RxBtVoltage / 100) * (100-RxBtVoltagePercentageWarning)
 
@@ -719,6 +913,25 @@ local function processQueue()
   end
 
   return 0  -- Keep the script running
+end
+
+
+
+-- Helper function to calculate linear discharge curve
+-- BatteryTypeDefaults.buffer.dischargeCurve = calculateLinearDischargeCurve(low, high)
+
+local function calculateLinearDischargeCurve(lowVoltage, highVoltage)
+  local numberOfPoints = 41  -- Adjust as needed
+  local curve = {}
+  local step = (highVoltage - lowVoltage) / (numberOfPoints - 1)
+
+  for i = 0, numberOfPoints - 1 do
+      local voltage = highVoltage - (i * step)
+      local percent = (i / (numberOfPoints - 1)) * 100
+      table.insert(curve, {voltage, 100 - percent})
+  end
+
+  return curve
 end
 
 
@@ -1078,7 +1291,234 @@ local function HasSecondsElapsed(numSeconds)
 end
 
 
+-- ####################################################################
+-- ####################################################################
+-- ####################################################################
+
+local function checkChangedInterval(currentStatus, item, context)
+  -- Get the configuration for the item or use announcementConfigDefault
+  --local config = announcementConfig[item] or announcementConfigDefault
+
+  -- Determine if the item has context-specific configurations
+  local config = announcementConfig[item]
+  if config then
+    if context and config[context] then
+      -- Use the context-specific configuration if available
+      config = config[context]
+    end
+  else
+    -- Use the default configuration if item-specific configuration is not found
+    config = announcementConfigDefault
+  end
+  
+  
+  context = context or "global"
+
+  local itemNameWithContext = context .. item
+
+  -- Initialize statusTable entry for the item if it doesn't exist
+  if not statusTable[itemNameWithContext] then
+    statusTable[itemNameWithContext] = { lastStatus = nil, lastAnnounceTime = 0, changeStartTime = 0, context = context }
+  end
+
+  local itemStatus = statusTable[itemNameWithContext]
+  local currentTime = getTime() / 100  -- Get current time in seconds
+
+  print("STCHDET: TEST Status:", currentStatus, "match:", config.warning.threshold, "Context:", context)
+  
+  -- Determine severity and mode
+  local severity, mode = "normal", config.normal.mode
+  if type(currentStatus) == "number" then
+    if currentStatus <= config.critical.threshold then
+      severity, mode = "critical", config.critical.mode
+    elseif currentStatus <= config.warning.threshold then
+      severity, mode = "warning", config.warning.mode
+    end
+  elseif type(currentStatus) == "boolean" then
+    if currentStatus == config.warning.threshold then
+      severity, mode = "warning", config.warning.mode
+    elseif currentStatus == config.critical.threshold then
+      severity, mode = "critical", config.critical.mode
+    end
+  end
+
+  print("STCHDET: Item:", item, "Current Status:", currentStatus, "Severity Level:", severity, "Mode:", mode, "Context:", context)
+
+  if mode == "disable" then
+    -- Do nothing if announcements are disabled
+    print("STCHDET: Announcements are disabled for item:", item, "Context:", context)
+    return
+  end
+
+  local announceNow = false
+
+  if mode == "change" then
+    if itemStatus.lastStatus ~= currentStatus then
+      if itemStatus.changeStartTime == 0 then
+        -- Start the grace period
+        itemStatus.changeStartTime = currentTime
+        print("STCHDET: Change detected for item:", item, "Starting grace period at time:", currentTime, "Context:", context)
+      else
+        local elapsedGracePeriod = currentTime - itemStatus.changeStartTime
+        print(string.format("STCHDET: Elapsed grace period for item %s: %.2f seconds", item, elapsedGracePeriod), "Context:", context)
+        if elapsedGracePeriod >= config.normal.gracePeriod then
+          -- Announce if grace period has passed (config.normal.gracePeriod is in seconds)
+          announceNow = true
+          print("STCHDET: Grace period passed for item:", item, "Announcing change", "Context:", context)
+          itemStatus.lastStatus = currentStatus
+        end
+      end
+    else
+      -- Reset grace period if status reverts to previous within grace period
+      if itemStatus.changeStartTime ~= 0 then
+        print("STCHDET: Status reverted to previous within grace period for item:", item, "Resetting grace period", "Context:", context)
+        itemStatus.changeStartTime = 0
+      end
+    end
+  elseif type(mode) == "number" then
+    -- Interval mode
+    interval = mode
+    if (currentTime - itemStatus.lastAnnounceTime) >= interval then
+      announceNow = true
+      print("STCHDET: Interval passed for item:", item, "Announcing at interval", "Context:", context)
+    end
+  end
+
+  -- Collect announcements
+  if announceNow then
+    print("STCHDET: Adding announcement for item:", item, "Current status:", currentStatus, "Severity level:", severity, "Context:", context)
+    table.insert(announcements, { item = item, status = currentStatus, severity = severity, context = context })
+    itemStatus.lastAnnounceTime = currentTime
+  end
+end
+
 local function doAnnouncements(context)
+  -- checkChangedInterval(85, "telemetry", context) -- Numerical status example
+  -- checkChangedInterval("online", "telemetry", context) -- Boolean status example
+  -- checkChangedInterval(45, "unknownItem", context) -- Example with an item not in the config
+
+  announcements = {}  -- Clear announcements table at the start of each call
+
+
+  checkChangedInterval(statusTele, "telemetry")
+  checkChangedInterval(cellMissing[context], "BatteryMissingCell", context)
+  checkChangedInterval(valueVoltsPercentRemaining[context], "BatteryNotFull", context)
+  checkChangedInterval(cellInconsistent[context], "CellDelta", context)
+  checkChangedInterval(valueVoltsPercentRemaining[context], "Battery", context)
+
+
+  
+
+    -- Process collected announcements
+    if next(announcements) ~= nil then
+      print("STCHDET: Found announcements to be done.")
+
+      local contextAnnounceDone = false
+
+      for _, announcement in ipairs(announcements) do
+        print(string.format("STCHDET: Announcing item: %s, Severity: %s, Current value: %s", announcement.item, announcement.severity, announcement.status))
+        -- Perform announcement logic here
+        -- You can access announcement.item, announcement.severity, and announcement.status
+
+
+      if announcement.item == "telemetry" then
+        if announcement.severity == "normal" then
+          queueSound("tele",0)
+          queueSound("normal",1)
+        else
+        queueSound("wtf",0)
+        queueSound("tele",1)
+        end
+      end
+
+      if announcement.item ~= "telemetry" and not contextAnnounceDone then
+        queueSound(context,0)
+        queueSound("battery",0)
+        contextAnnounceDone = true
+      end
+
+      if announcement.item == "BatteryMissingCell" then
+        if announcement.severity == "critical" or announcement.severity == "warning" then
+
+          local reverseValue = math.abs(cellMissing[context])
+
+          --queueSound(context,0)
+          --queueSound("battery",0)
+          queueSound(announcement.severity,0)
+          queueSound("missing",0)
+          queueNumber(reverseValue, 0, 0 , 0 )
+          queueSound("of",0)
+          queueNumber(countCell[context], 0, 0 , 0 )
+          queueSound("cell",0)
+
+
+        end
+      end
+
+
+      if announcement.item == "CellDelta" then
+        if announcement.severity == "critical" or announcement.severity == "warning" then
+          --queueSound(context,0)
+          --queueSound("battery",0)
+          queueSound(announcement.severity,0)
+          queueSound("icw",0)
+        end
+      end
+
+
+      if announcement.item == "BatteryNotFull" then
+        if announcement.severity == "critical" or announcement.severity == "warning" then
+
+          --queueSound(context,0)
+          --queueSound("battery",0)
+          queueSound(announcement.severity,0)
+          queueSound("notfull",0)
+
+        end
+      end
+      
+      
+
+      if announcement.item == "Battery" then
+        if announcement.severity == "critical" or announcement.severity == "warning" then
+
+          --queueSound(context,0)
+          --queueSound("battery",0)
+          queueSound(announcement.severity,0)
+          queueNumber(valueVoltsPercentRemaining[context], 13, 0 , 0 )
+
+        else
+
+          --queueSound(context,0)
+          --queueSound("battery",0)
+          queueNumber(valueVoltsPercentRemaining[context], 13, 0 , 0 )
+
+        end
+      end
+      
+      
+
+      --waiting for,wtf.wav
+      --Telemetry,tele.wav
+
+
+
+
+
+      end
+    else
+      print("STCHDET: No announcements to be done.")
+    end
+
+    
+end
+
+-- -- Example usage
+-- doAnnouncements("example_context")
+
+
+
+
 
   -- worst case scenario how events should be played on first init/tele
   -- main battery
@@ -1089,7 +1529,14 @@ local function doAnnouncements(context)
   -- current voltage 22 volts
   -- 55%
 
-end
+
+
+
+-- ####################################################################
+-- ####################################################################
+-- ####################################################################
+-- ####################################################################
+
 
 -- -- ####################################################################
 -- local function check_for_full_battery(voltageSensorValue)
@@ -1344,7 +1791,8 @@ local function check_for_missing_cells(context)
     --  end
     --end
 
-    cellMissing[context] = missingCellDetected
+    -- cellMissing[context] = missingCellDetected
+    cellMissing[context] =  CellsDetectedCurrent[context]  - countCell[context]
 
     if not cellMissing[context] then
       CellsDetected[context] = true
@@ -1403,6 +1851,64 @@ local function voltage_sensor_tests(context)
 
 end
 
+
+local function printHumanReadableTable(tbl, indent)
+  indent = indent or 0
+  local function indentStr(level)
+      return string.rep("  ", level)
+  end
+
+  for key, value in pairs(tbl) do
+      local keyStr = tostring(key)
+      local valueStr = tostring(value)
+
+      if type(value) == "table" then
+          print(indentStr(indent) .. "TBLDBG: " .. keyStr .. " = {")
+          printHumanReadableTable(value, indent + 1)
+          print(indentStr(indent) .. "TBLDBG: }")
+      else
+          print(indentStr(indent) .. "TBLDBG: " .. keyStr .. " = " .. valueStr)
+      end
+  end
+end
+
+
+-- todooooo
+local function resolveDynamicValues()
+  if modelNameMatch == "heli" then
+      -- Resolve BatteryNotFull thresholds based on BattType
+      local mainBatteryType = BattType.main[1]
+      local receiverBatteryType = BattType.receiver[1]
+
+      -- Check if the user has specified to use default values
+      local useDefaultForBatteryNotFullMainWarning      = announcementConfig.BatteryNotFull.main.warning.threshold      == "useBatTypeDefault"
+      local useDefaultForBatteryNotFullMainCritical     = announcementConfig.BatteryNotFull.main.critical.threshold     == "useBatTypeDefault"
+      local useDefaultForBatteryNotFullReceiverWarning  = announcementConfig.BatteryNotFull.receiver.warning.threshold  == "useBatTypeDefault"
+      local useDefaultForBatteryNotFullReceiverCritical = announcementConfig.BatteryNotFull.receiver.critical.threshold == "useBatTypeDefault"
+
+      local useDefaultForBatteryMainWarning      =        announcementConfig.Battery.main.warning.threshold              == "useBatTypeDefault"
+      local useDefaultForBatteryMainCritical     =        announcementConfig.Battery.main.critical.threshold             == "useBatTypeDefault"
+      local useDefaultForBatteryReceiverWarning  =        announcementConfig.Battery.receiver.warning.threshold          == "useBatTypeDefault"
+      local useDefaultForBatteryReceiverCritical =        announcementConfig.Battery.receiver.critical.threshold          == "useBatTypeDefault"
+
+
+      -- Resolve thresholds based on user's choice
+      announcementConfig.BatteryNotFull.main.warning.threshold =      useDefaultForBatteryNotFullMainWarning      and (battwarnthreshold[mainBatteryType]     or announcementConfig.BatteryNotFull.main.warning.threshold)      or announcementConfig.BatteryNotFull.main.warning.threshold
+      announcementConfig.BatteryNotFull.main.critical.threshold =     useDefaultForBatteryNotFullMainCritical     and (battcrithreshold[mainBatteryType]      or announcementConfig.BatteryNotFull.main.critical.threshold)     or announcementConfig.BatteryNotFull.main.critical.threshold
+      announcementConfig.BatteryNotFull.receiver.warning.threshold =  useDefaultForBatteryNotFullReceiverWarning  and (battwarnthreshold[receiverBatteryType] or announcementConfig.BatteryNotFull.receiver.warning.threshold)  or announcementConfig.BatteryNotFull.receiver.warning.threshold
+      announcementConfig.BatteryNotFull.receiver.critical.threshold = useDefaultForBatteryNotFullReceiverCritical and (battcrithreshold[receiverBatteryType]  or announcementConfig.BatteryNotFull.receiver.critical.threshold) or announcementConfig.BatteryNotFull.receiver.critical.threshold
+
+      announcementConfig.Battery.main.warning.threshold = useDefaultForMainWarning and (battwarnthreshold[mainBatteryType] or announcementConfig.Battery.main.warning.threshold) or announcementConfig.Battery.main.warning.threshold
+      announcementConfig.Battery.main.critical.threshold = useDefaultForMainCritical and (battcrithreshold[mainBatteryType] or announcementConfig.Battery.main.critical.threshold) or announcementConfig.Battery.main.critical.threshold
+      announcementConfig.Battery.receiver.warning.threshold = useDefaultForReceiverWarning and (battwarnthreshold[receiverBatteryType] or announcementConfig.Battery.receiver.warning.threshold) or announcementConfig.Battery.receiver.warning.threshold
+      announcementConfig.Battery.receiver.critical.threshold = useDefaultForReceiverCritical and (battcrithreshold[receiverBatteryType] or announcementConfig.Battery.receiver.critical.threshold) or announcementConfig.Battery.receiver.critical.threshold
+
+    end
+end
+
+
+
+
 -- ####################################################################
 local function init_func()
 
@@ -1413,6 +1919,12 @@ local function init_func()
   print ("TEST MODEL:" , currentModelName)
 
   modelDetails = getModelDetails(currentModelName)
+
+
+-- Call the resolve function to update thresholds based on BattType
+resolveDynamicValues()
+
+printHumanReadableTable(announcementConfig)
 
 
 
@@ -1522,8 +2034,8 @@ local function init_func()
   preFlightStatusBat = "unknown"
 
   cellMissing = {}
-  cellMissing["main"] = false
-  cellMissing["receiver"] = false
+  cellMissing["main"] = 0
+  cellMissing["receiver"] = 0
 
   cellInconsistent = {}
   cellInconsistent["main"] = false
@@ -2401,7 +2913,7 @@ switchAnnounce()
   -- check_for_missing_cells(currentSensorVoltageValue[currentContext], countCell[currentContext])
   check_for_missing_cells(currentContext)
 
-  if not cellMissing[currentContext] then -- if cell number is fine we have got voltage and can do the rest of the checks
+  if cellMissing[currentContext] == 0 then -- if cell number is fine we have got voltage and can do the rest of the checks
 
   -- check_for_full_battery(currentSensorVoltageValue[currentContext], BatNotFullThresh[typeBattery[currentContext]], countCell[currentContext], batTypeLowHighValues[typeBattery[currentContext]][1], batTypeLowHighValues[typeBattery[currentContext]][2])
   check_for_full_battery(currentContext)
@@ -2443,9 +2955,11 @@ switchAnnounce()
     preFlightStatusBat = "Check Battery"
   end
 
-  doAnnouncements(currentContext)
 
 end -- end of if telemetry
+
+doAnnouncements(currentContext)
+
 
       -- Update the index to cycle through the contexts using the modulo operator
       currentContextIndex = (currentContextIndex % #contexts) + 1
@@ -2794,6 +3308,8 @@ else
 
 
 
+  local valueColor = WHITE
+
   lcd.drawText(wgt.zone.x + 200, wgt.zone.y + -5, modelName, MIDSIZE + COLOR_THEME_PRIMARY1)
   lcd.drawBitmap(bmpSizedModelImage, 200, 20, 50 )
 
@@ -2812,7 +3328,7 @@ else
   xline = xline + 100
   lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, ":",  COLOR_THEME_PRIMARY2 + BOLD )
   xline = xline + 20
-  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, typeBattery["main"],  GREEN + BOLD )
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, typeBattery["main"],  valueColor + BOLD )
 
   xline = xlineStart
   yline = yline + ylineinc
@@ -2822,7 +3338,7 @@ else
   xline = xline + 20
   -- lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["main"],  GREEN + BOLD )
   --lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["main"],  GREEN + BOLD )
-  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, string.format("%s (%s)", countCell["main"], CellsDetectedCurrent["main"]), GREEN + BOLD)
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, string.format("%s (%s)", countCell["main"], CellsDetectedCurrent["main"]), valueColor + BOLD)
 
   xline = xlineStart
   yline = yline + ylineinc
@@ -2832,7 +3348,7 @@ else
   xline = xline + 20
   -- lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["main"],  GREEN + BOLD )
   --lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["main"],  GREEN + BOLD )
-  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, currentVoltageValueCurrent["main"], GREEN + BOLD)
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, currentVoltageValueCurrent["main"], valueColor + BOLD)
   
   xline = xlineStart
   yline = yline + ylineinc
@@ -2842,7 +3358,7 @@ else
   xline = xline + 20
   -- lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["main"],  GREEN + BOLD )
   --lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["main"],  GREEN + BOLD )
-  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, valueVoltsPercentRemaining["main"], GREEN + BOLD)
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, valueVoltsPercentRemaining["main"], valueColor + BOLD)
 
 
 
@@ -2856,7 +3372,7 @@ else
   xline = xline + 100
   lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, ":",  COLOR_THEME_PRIMARY2 + BOLD )
   xline = xline + 20
-  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, typeBattery["receiver"],  GREEN + BOLD )
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, typeBattery["receiver"],  valueColor + BOLD )
 
   xline = xlineStart
   yline = yline + ylineinc
@@ -2866,7 +3382,7 @@ else
   xline = xline + 20
   --lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["receiver"],  GREEN + BOLD )
   --lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["receiver"],  GREEN + BOLD )
-  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, string.format("%s (%s)", countCell["receiver"], CellsDetectedCurrent["receiver"]), GREEN + BOLD)
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, string.format("%s (%s)", countCell["receiver"], CellsDetectedCurrent["receiver"]), valueColor + BOLD)
 
   xline = xlineStart
   yline = yline + ylineinc
@@ -2876,7 +3392,7 @@ else
   xline = xline + 20
   --lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["receiver"],  GREEN + BOLD )
   --lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["receiver"],  GREEN + BOLD )
-  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, currentVoltageValueCurrent["receiver"], GREEN + BOLD)
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, currentVoltageValueCurrent["receiver"], valueColor + BOLD)
 
   xline = xlineStart
   yline = yline + ylineinc
@@ -2886,7 +3402,7 @@ else
   xline = xline + 20
   --lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["receiver"],  GREEN + BOLD )
   --lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, countCell["receiver"],  GREEN + BOLD )
-  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, valueVoltsPercentRemaining["receiver"], GREEN + BOLD)
+  lcd.drawText(wgt.zone.x + xline, wgt.zone.y + yline, valueVoltsPercentRemaining["receiver"], valueColor + BOLD)
 
 
 

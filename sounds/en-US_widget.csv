@@ -1,0 +1,32 @@
+normal,normal.wav
+warning,warning.wav
+critical,critical.wav
+used,used.wav
+receiver,receiver.wav
+Receiver Battery Alarm,rbatw.wav
+notfull,notfull.wav
+missing cell warning,mcw.wav
+main,main.wav
+inconsistent cell warning,icw.wav
+detected,detected.wav
+cell Battery detected with a current voltage of,cellbatdetect.wav
+not,not.wav
+battery,battery.wav
+full,full.wav
+empty,empty.wav
+missing,missing.wav
+cell,cell.wav
+SAB Goblin 630,sg630.wav
+T-Rex 600,t600.wav
+Goosky RS 7,grs7.wav
+Goosky RS 4,grs4.wav
+YU Xiang F280,yu280.wav
+Assault 700,a700.wav
+SAB Raw 580,sr580.wav
+T-rex 550,t550.wav
+waiting for,wtf.wav
+Telemetry,tele.wav
+of,of.wav
+cells detected,cdt.wav
+cell missing,cm.wav
+ok,ok.wav
