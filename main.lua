@@ -379,131 +379,185 @@ BatNotFullThresh["buffer"] = 98
 
 
 
+-- local announcementConfig = {
+--   telemetry = {
+--     normal = {
+--       mode = "disable", -- "disable", "change", or an interval in seconds
+--       gracePeriod = 1 -- Grace period in seconds for "change" mode
+--     },
+--     warning = {
+--       threshold = false, -- Threshold for warning level
+--       mode = "change" -- "disable", "change", or an interval in seconds
+--     },
+--     critical = {
+--       threshold = "undef", -- Threshold for critical level
+--       mode = "disable", -- "disable", "change", or an interval in seconds
+--     }
+--   },
+-- 
+--   BatteryMissingCell = {
+--     normal = {
+--       mode = "disable", -- "disable", "change", or an interval in seconds
+--       gracePeriod = 1 -- Grace period in seconds for "change" mode
+--     },
+--     warning = {
+--       threshold = -1, -- Threshold for warning level
+--       mode = 10 -- "disable", "change", or an interval in seconds
+--     },
+--     critical = {
+--       threshold = -2, -- Threshold for critical level
+--       mode = 10 -- "disable", "change", or an interval in seconds
+--     }
+--   },
+-- 
+--   CellDelta = {
+--     normal = {
+--       mode = "disable", -- "disable", "change", or an interval in seconds
+--       gracePeriod = 3 -- Grace period in seconds for "change" mode
+--     },
+--     warning = {
+--       threshold = "undef", -- Threshold for warning level
+--       mode = 10 -- "disable", "change", or an interval in seconds
+--     },
+--     critical = {
+--       threshold = true, -- Threshold for critical level
+--       mode = 10 -- "disable", "change", or an interval in seconds
+--     }
+--   },  
+-- 
+-- 
+--   BatteryNotFull = {
+--     main = {
+--       normal = {
+--         mode = "disable", -- "disable", "change", or an interval in seconds
+--         gracePeriod = 0 -- Grace period in seconds for "change" mode
+--       },
+--       warning = {
+--         --threshold = 98, -- Threshold for warning level
+--         threshold = "useBatTypeDefault", -- Threshold for warning level --- for defaults see below
+--         mode = "change" -- "disable", "change", or an interval in seconds
+--       },
+--       critical = {
+--         --threshold = 96, -- Threshold for critical level
+--         threshold = "useBatTypeDefault", -- Threshold for critical level
+--         mode = "change" -- "disable", "change", or an interval in seconds
+--       }
+--     },
+--     receiver = {
+--       normal = {
+--         mode = "disable", -- "disable", "change", or an interval in seconds
+--         gracePeriod = 1 -- Grace period in seconds for "change" mode
+--       },
+--       warning = {
+--         --threshold = 99, -- Threshold for warning level
+--         threshold = "useBatTypeDefault", -- Threshold for warning level
+--         mode = "change" -- "disable", "change", or an interval in seconds
+--       },
+--       critical = {
+--         --threshold = 98, -- Threshold for critical level
+--         threshold = "useBatTypeDefault", -- Threshold for critical level
+--         mode = "change" -- "disable", "change", or an interval in seconds
+--       }
+--     }
+--   },
+-- 
+-- 
+--   Battery = {
+--     main = {
+--       normal = {
+--         mode = 20, -- "disable", "change", or an interval in seconds
+--         gracePeriod = 4 -- Grace period in seconds for "change" mode
+--       },
+--       warning = {
+--         --threshold = 20, -- Threshold for warning level
+--         threshold = "useBatTypeDefault", -- Threshold for warning level
+--         mode = "change" -- "disable", "change", or an interval in seconds
+--       },
+--       critical = {
+--         --threshold = 15, -- Threshold for critical level
+--         threshold = "useBatTypeDefault", -- Threshold for critical level
+--         mode = "change" -- "disable", "change", or an interval in seconds
+--       }
+--     },
+--     receiver = {
+--       normal = {
+--         mode = 30, -- "disable", "change", or an interval in seconds
+--         gracePeriod = 2 -- Grace period in seconds for "change" mode
+--       },
+--       warning = {
+--         --threshold = 97, -- Threshold for warning level
+--         threshold = "useBatTypeDefault", -- Threshold for warning level
+--         mode = "change" -- "disable", "change", or an interval in seconds
+--       },
+--       critical = {
+--         --threshold = 95, -- Threshold for critical level
+--         threshold = "useBatTypeDefault", -- Threshold for critical level
+--         mode = "change" -- "disable", "change", or an interval in seconds
+--       }
+--     }
+--   }  
+-- 
+-- 
+-- 
+-- 
+-- 
+-- 
+--   -- Add other items with their respective configurations
+-- }
+
 local announcementConfig = {
+  -- Telemetry configuration
   telemetry = {
-    normal = {
-      mode = "disable", -- "disable", "change", or an interval in seconds
-      gracePeriod = 1 -- Grace period in seconds for "change" mode
-    },
-    warning = {
-      threshold = false, -- Threshold for warning level
-      mode = "change" -- "disable", "change", or an interval in seconds
-    },
-    critical = {
-      threshold = "undef", -- Threshold for critical level
-      mode = "disable", -- "disable", "change", or an interval in seconds
-    }
+      normal   = { mode = "disable",           gracePeriod = 1 }, -- Mode to disable telemetry in normal state
+      warning  = { mode = "change",            threshold = false }, -- Mode to change telemetry in warning state
+      critical = { mode = "disable",           threshold = "undef" }  -- Mode to disable telemetry in critical state
   },
 
+  -- Battery Missing Cell configuration
   BatteryMissingCell = {
-    normal = {
-      mode = "disable", -- "disable", "change", or an interval in seconds
-      gracePeriod = 1 -- Grace period in seconds for "change" mode
-    },
-    warning = {
-      threshold = -1, -- Threshold for warning level
-      mode = 10 -- "disable", "change", or an interval in seconds
-    },
-    critical = {
-      threshold = -2, -- Threshold for critical level
-      mode = 10 -- "disable", "change", or an interval in seconds
-    }
+      normal   = { mode = "disable",           gracePeriod = 1 }, -- Mode to disable in normal state
+      warning  = { mode = 10,                  threshold = -1 },   -- Mode to change in warning state after threshold
+      critical = { mode = 10,                  threshold = -2 }    -- Mode to change in critical state after threshold
   },
 
+  -- Cell Delta configuration
   CellDelta = {
-    normal = {
-      mode = "disable", -- "disable", "change", or an interval in seconds
-      gracePeriod = 3 -- Grace period in seconds for "change" mode
-    },
-    warning = {
-      threshold = "undef", -- Threshold for warning level
-      mode = 10 -- "disable", "change", or an interval in seconds
-    },
-    critical = {
-      threshold = true, -- Threshold for critical level
-      mode = 10 -- "disable", "change", or an interval in seconds
-    }
-  },  
-
-
-  BatteryNotFull = {
-    main = {
-      normal = {
-        mode = "disable", -- "disable", "change", or an interval in seconds
-        gracePeriod = 0 -- Grace period in seconds for "change" mode
-      },
-      warning = {
-        --threshold = 98, -- Threshold for warning level
-        threshold = "useBatTypeDefault", -- Threshold for warning level --- for defaults see below
-        mode = "change" -- "disable", "change", or an interval in seconds
-      },
-      critical = {
-        --threshold = 96, -- Threshold for critical level
-        threshold = "useBatTypeDefault", -- Threshold for critical level
-        mode = "change" -- "disable", "change", or an interval in seconds
-      }
-    },
-    receiver = {
-      normal = {
-        mode = "disable", -- "disable", "change", or an interval in seconds
-        gracePeriod = 1 -- Grace period in seconds for "change" mode
-      },
-      warning = {
-        --threshold = 99, -- Threshold for warning level
-        threshold = "useBatTypeDefault", -- Threshold for warning level
-        mode = "change" -- "disable", "change", or an interval in seconds
-      },
-      critical = {
-        --threshold = 98, -- Threshold for critical level
-        threshold = "useBatTypeDefault", -- Threshold for critical level
-        mode = "change" -- "disable", "change", or an interval in seconds
-      }
-    }
+      normal   = { mode = "disable",           gracePeriod = 3 }, -- Mode to disable in normal state
+      warning  = { mode = 10,                  threshold = "undef" }, -- Mode to change in warning state after threshold
+      critical = { mode = 10,                  threshold = true }   -- Mode to change in critical state after threshold
   },
 
+  -- Battery Not Full configuration
+  BatteryNotFull = {
+      main = {
+          normal   = { mode = "disable",       gracePeriod = 0 }, -- Mode to disable when battery not full (main)
+          warning  = { mode = "change",        threshold = "useBatTypeDefault" }, -- Mode to change when nearing warning level (main)
+          critical = { mode = "change",        threshold = "useBatTypeDefault" }  -- Mode to change when nearing critical level (main)
+      },
+      receiver = {
+          normal   = { mode = "disable",       gracePeriod = 1 }, -- Mode to disable when battery not full (receiver)
+          warning  = { mode = "change",        threshold = "useBatTypeDefault" }, -- Mode to change when nearing warning level (receiver)
+          critical = { mode = "change",        threshold = "useBatTypeDefault" }  -- Mode to change when nearing critical level (receiver)
+      }
+  },
 
+  -- Battery configuration
   Battery = {
-    main = {
-      normal = {
-        mode = 20, -- "disable", "change", or an interval in seconds
-        gracePeriod = 4 -- Grace period in seconds for "change" mode
+      main = {
+          normal   = { mode = 20,              gracePeriod = 4 }, -- Mode with an interval of 20 seconds when battery level is normal (main)
+          warning  = { mode = "change",        threshold = "useBatTypeDefault" }, -- Mode to change when nearing warning level (main)
+          critical = { mode = "change",        threshold = "useBatTypeDefault" }  -- Mode to change when nearing critical level (main)
       },
-      warning = {
-        --threshold = 20, -- Threshold for warning level
-        threshold = "useBatTypeDefault", -- Threshold for warning level
-        mode = "change" -- "disable", "change", or an interval in seconds
-      },
-      critical = {
-        --threshold = 15, -- Threshold for critical level
-        threshold = "useBatTypeDefault", -- Threshold for critical level
-        mode = "change" -- "disable", "change", or an interval in seconds
+      receiver = {
+          normal   = { mode = 30,              gracePeriod = 2 }, -- Mode with an interval of 30 seconds when battery level is normal (receiver)
+          warning  = { mode = "change",        threshold = "useBatTypeDefault" }, -- Mode to change when nearing warning level (receiver)
+          critical = { mode = "change",        threshold = "useBatTypeDefault" }  -- Mode to change when nearing critical level (receiver)
       }
-    },
-    receiver = {
-      normal = {
-        mode = 30, -- "disable", "change", or an interval in seconds
-        gracePeriod = 2 -- Grace period in seconds for "change" mode
-      },
-      warning = {
-        --threshold = 97, -- Threshold for warning level
-        threshold = "useBatTypeDefault", -- Threshold for warning level
-        mode = "change" -- "disable", "change", or an interval in seconds
-      },
-      critical = {
-        --threshold = 95, -- Threshold for critical level
-        threshold = "useBatTypeDefault", -- Threshold for critical level
-        mode = "change" -- "disable", "change", or an interval in seconds
-      }
-    }
-  }  
-
-
-
-
-
+  }
 
   -- Add other items with their respective configurations
 }
+
 
 local announcementConfigDefault = {
   normal = {
@@ -526,10 +580,9 @@ local statusTable = {}
 
 
 
--- Define default discharge curves and other parameters per battery type
 local BatteryTypeDefaults = {
   lipo = {
-      dischargeCurve = {
+      dischargeCurve           = {
           {4.20, 100}, {4.17, 97.5}, {4.15, 95}, {4.13, 92.5},
           {4.11, 90}, {4.10, 87.5}, {4.08, 85}, {4.05, 82.5},
           {4.02, 80}, {4.00, 77.5}, {3.98, 75}, {3.97, 72.5},
@@ -542,39 +595,38 @@ local BatteryTypeDefaults = {
           {3.69, 10}, {3.67, 7.5}, {3.61, 5}, {3.49, 2.5},
           {3.27, 0}
       },
-      criticalThreshold = 15,   -- Critical threshold in percentage
-      warningThreshold = 20,    -- Warning threshold in percentage
-      notFullCriticalThreshold = 96,  -- Not full critical threshold in percentage
-      notFullWarningThreshold = 98,   -- Not full warning threshold in percentage
-      highVoltage = 4.20,       -- High voltage
-      lowVoltage = 3.27,        -- Low voltage
-      cellDeltaVoltage = 0.07   -- Cell delta voltage
+      criticalThreshold        = 15,     -- Critical threshold in percentage
+      warningThreshold         = 20,     -- Warning threshold in percentage
+      notFullCriticalThreshold = 96,     -- Not full critical threshold in percentage
+      notFullWarningThreshold  = 98,     -- Not full warning threshold in percentage
+      highVoltage              = 4.20,   -- High voltage
+      lowVoltage               = 3.27,   -- Low voltage
+      cellDeltaVoltage         = 0.07    -- Cell delta voltage
   },
+
   buffer = {
-      
-      dischargeCurve = nil,     -- This will be dynamically calculated based on voltage range
-      criticalThreshold = 96,  -- Critical threshold in percentage
-      warningThreshold = 97,   -- Warning threshold in percentage
-      notFullCriticalThreshold = 98,   -- Not full critical threshold in percentage
-      notFullWarningThreshold = 99,    -- Not full warning threshold in percentage
-      highVoltage = nil,      -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
-      lowVoltage = 6,         -- Low voltage -- where your buffer pack shuts off completely ... all hope is lost after this ;-) .. please note... in the case of buffer packs ... we will device this value by 2 in order to get a theoretical 2s per cell value for the alerts and percentage left -- todo
-      cellDeltaVoltage = nil  -- Cell delta voltage -- irrelevant for buffer
+      dischargeCurve           = nil,    -- This will be dynamically calculated based on voltage range
+      criticalThreshold        = 96,     -- Critical threshold in percentage
+      warningThreshold         = 97,     -- Warning threshold in percentage
+      notFullCriticalThreshold = 98,     -- Not full critical threshold in percentage
+      notFullWarningThreshold  = 99,     -- Not full warning threshold in percentage
+      highVoltage              = nil,    -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
+      lowVoltage               = 6,      -- Low voltage -- where your buffer pack shuts off completely ... all hope is lost after this ;-) .. please note... in the case of buffer packs ... we will device this value by 2 in order to get a theoretical 2s per cell value for the alerts and percentage left -- todo
+      cellDeltaVoltage         = nil     -- Cell delta voltage -- irrelevant for buffer or bec
   },
 
   beconly = {
-      
-    dischargeCurve = nil,     -- This will be dynamically calculated based on voltage range
-    criticalThreshold = 96,  -- Critical threshold in percentage
-    warningThreshold = 97,   -- Warning threshold in percentage
-    notFullCriticalThreshold = 98,   -- Not full critical threshold in percentage
-    notFullWarningThreshold = 99,    -- Not full warning threshold in percentage
-    highVoltage = nil,      -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
-    lowVoltage = 5,         -- Low voltage -- there is not such a thing as "lowvoltage" if only using a bec ... if you loose your bec you will recognize it before we can announce anything ... so lets set this to anything below what is "normal" ... like 5
-    cellDeltaVoltage = nil  -- Cell delta voltage -- irrelevant for buffer
-}
+      dischargeCurve           = nil,    -- This will be dynamically calculated based on voltage range
+      criticalThreshold        = 96,     -- Critical threshold in percentage
+      warningThreshold         = 97,     -- Warning threshold in percentage
+      notFullCriticalThreshold = 98,     -- Not full critical threshold in percentage
+      notFullWarningThreshold  = 99,     -- Not full warning threshold in percentage
+      highVoltage              = nil,    -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
+      lowVoltage               = 5,      -- Low voltage -- there is not such a thing as "lowvoltage" if only using a bec ... if you loose your bec you will recognize it before we can announce anything ... so lets set this to anything below what is "normal" ... like 5
+      cellDeltaVoltage         = nil     -- Cell delta voltage -- irrelevant for buffer or bec
+    },
+  }
 
-}
 
 
 
