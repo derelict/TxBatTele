@@ -189,6 +189,7 @@ local modelTable = {
     modelName = "DEFAULT",
     modelImage = "goblin.png",
     modelWav = "sg630",
+    rxReferenceVoltage = 8.2, -- will only be used for battery types like buffer or "BEC only" in order to calculate the discharge curve .... if you are only using a BEC you will recognize power loss soon enough and you don't need any discharge curves at all :-) 
     VoltageSensor = { 
       main = { "Cels" }, 
       receiver = { "RxBt" }
@@ -225,6 +226,7 @@ local modelTable = {
     modelName = "SAB Goblin 630",
     modelImage = "goblin.png",
     modelWav = "sg630",
+    rxReferenceVoltage = 8.2, -- will only be used for battery types like buffer or "BEC only" in order to calculate the discharge curve .... if you are only using a BEC you will recognize power loss soon enough and you don't need any discharge curves at all :-) -- todo 
     --telemetryStatus = "TELE",
     --resetSwitch = "SD" .. CHAR_DOWN ,
     resetSwitch = "TELE" ,
@@ -599,10 +601,23 @@ local BatteryTypeDefaults = {
       warningThreshold = 97,   -- Warning threshold in percentage
       notFullCriticalThreshold = 98,   -- Not full critical threshold in percentage
       notFullWarningThreshold = 99,    -- Not full warning threshold in percentage
-      highVoltage = 4.1,      -- High voltage
-      lowVoltage = 3,         -- Low voltage
+      highVoltage = nil,      -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
+      lowVoltage = 6,         -- Low voltage -- where your buffer pack shuts off completely ... all hope is lost after this ;-) .. please note... in the case of buffer packs ... we will device this value by 2 in order to get a theoretical 2s per cell value for the alerts and percentage left -- todo
       cellDeltaVoltage = nil  -- Cell delta voltage -- irrelevant for buffer
-  }
+  },
+
+  beconly = {
+      
+    dischargeCurve = nil,     -- This will be dynamically calculated based on voltage range
+    criticalThreshold = 96,  -- Critical threshold in percentage
+    warningThreshold = 97,   -- Warning threshold in percentage
+    notFullCriticalThreshold = 98,   -- Not full critical threshold in percentage
+    notFullWarningThreshold = 99,    -- Not full warning threshold in percentage
+    highVoltage = nil,      -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
+    lowVoltage = 5,         -- Low voltage -- there is not such a thing as "lowvoltage" if only using a bec ... if you loose your bec you will recognize it before we can announce anything ... so lets set this to anything below what is "normal" ... like 5
+    cellDeltaVoltage = nil  -- Cell delta voltage -- irrelevant for buffer
+}
+
 }
 
 
@@ -937,6 +952,62 @@ end
 
 
 -- ########################## TESTING ##########################
+
+
+
+
+
+local function updateAnnouncementConfig(config, batteryDefaults, mainBatType, receiverBatType)
+
+  local function updateBatteryThresholds(section, batType, batTypeDefaults)
+      for _, level in pairs({"normal", "warning", "critical"}) do
+          if section[level] and section[level].threshold == "useBatTypeDefault" then
+              if level == "warning" then
+                  section[level].threshold = batTypeDefaults[batType].warningThreshold
+              elseif level == "critical" then
+                  section[level].threshold = batTypeDefaults[batType].criticalThreshold
+              end
+          end
+      end
+  end
+
+  local function updateBatteryNotFullThresholds(section, batType, batTypeDefaults)
+      for _, level in pairs({"normal", "warning", "critical"}) do
+          if section[level] and section[level].threshold == "useBatTypeDefault" then
+              if level == "warning" then
+                  section[level].threshold = batTypeDefaults[batType].notFullWarningThreshold
+              elseif level == "critical" then
+                  section[level].threshold = batTypeDefaults[batType].notFullCriticalThreshold
+              end
+          end
+      end
+  end
+
+  -- Update Battery section
+  if config.Battery then
+      if config.Battery.main then
+          updateBatteryThresholds(config.Battery.main, mainBatType, batteryDefaults)
+      end
+      if config.Battery.receiver then
+          updateBatteryThresholds(config.Battery.receiver, receiverBatType, batteryDefaults)
+      end
+  end
+
+  -- Update BatteryNotFull section
+  if config.BatteryNotFull then
+      if config.BatteryNotFull.main then
+          updateBatteryNotFullThresholds(config.BatteryNotFull.main, mainBatType, batteryDefaults)
+      end
+      if config.BatteryNotFull.receiver then
+          updateBatteryNotFullThresholds(config.BatteryNotFull.receiver, receiverBatType, batteryDefaults)
+      end
+  end
+end
+
+
+
+
+
 
 -- Simplified wildcard matching function
 local function matchModelName(mname, pattern)
@@ -1873,40 +1944,6 @@ local function printHumanReadableTable(tbl, indent)
 end
 
 
--- todooooo
-local function resolveDynamicValues()
-  if modelNameMatch == "heli" then
-      -- Resolve BatteryNotFull thresholds based on BattType
-      local mainBatteryType = BattType.main[1]
-      local receiverBatteryType = BattType.receiver[1]
-
-      -- Check if the user has specified to use default values
-      local useDefaultForBatteryNotFullMainWarning      = announcementConfig.BatteryNotFull.main.warning.threshold      == "useBatTypeDefault"
-      local useDefaultForBatteryNotFullMainCritical     = announcementConfig.BatteryNotFull.main.critical.threshold     == "useBatTypeDefault"
-      local useDefaultForBatteryNotFullReceiverWarning  = announcementConfig.BatteryNotFull.receiver.warning.threshold  == "useBatTypeDefault"
-      local useDefaultForBatteryNotFullReceiverCritical = announcementConfig.BatteryNotFull.receiver.critical.threshold == "useBatTypeDefault"
-
-      local useDefaultForBatteryMainWarning      =        announcementConfig.Battery.main.warning.threshold              == "useBatTypeDefault"
-      local useDefaultForBatteryMainCritical     =        announcementConfig.Battery.main.critical.threshold             == "useBatTypeDefault"
-      local useDefaultForBatteryReceiverWarning  =        announcementConfig.Battery.receiver.warning.threshold          == "useBatTypeDefault"
-      local useDefaultForBatteryReceiverCritical =        announcementConfig.Battery.receiver.critical.threshold          == "useBatTypeDefault"
-
-
-      -- Resolve thresholds based on user's choice
-      announcementConfig.BatteryNotFull.main.warning.threshold =      useDefaultForBatteryNotFullMainWarning      and (battwarnthreshold[mainBatteryType]     or announcementConfig.BatteryNotFull.main.warning.threshold)      or announcementConfig.BatteryNotFull.main.warning.threshold
-      announcementConfig.BatteryNotFull.main.critical.threshold =     useDefaultForBatteryNotFullMainCritical     and (battcrithreshold[mainBatteryType]      or announcementConfig.BatteryNotFull.main.critical.threshold)     or announcementConfig.BatteryNotFull.main.critical.threshold
-      announcementConfig.BatteryNotFull.receiver.warning.threshold =  useDefaultForBatteryNotFullReceiverWarning  and (battwarnthreshold[receiverBatteryType] or announcementConfig.BatteryNotFull.receiver.warning.threshold)  or announcementConfig.BatteryNotFull.receiver.warning.threshold
-      announcementConfig.BatteryNotFull.receiver.critical.threshold = useDefaultForBatteryNotFullReceiverCritical and (battcrithreshold[receiverBatteryType]  or announcementConfig.BatteryNotFull.receiver.critical.threshold) or announcementConfig.BatteryNotFull.receiver.critical.threshold
-
-      announcementConfig.Battery.main.warning.threshold = useDefaultForMainWarning and (battwarnthreshold[mainBatteryType] or announcementConfig.Battery.main.warning.threshold) or announcementConfig.Battery.main.warning.threshold
-      announcementConfig.Battery.main.critical.threshold = useDefaultForMainCritical and (battcrithreshold[mainBatteryType] or announcementConfig.Battery.main.critical.threshold) or announcementConfig.Battery.main.critical.threshold
-      announcementConfig.Battery.receiver.warning.threshold = useDefaultForReceiverWarning and (battwarnthreshold[receiverBatteryType] or announcementConfig.Battery.receiver.warning.threshold) or announcementConfig.Battery.receiver.warning.threshold
-      announcementConfig.Battery.receiver.critical.threshold = useDefaultForReceiverCritical and (battcrithreshold[receiverBatteryType] or announcementConfig.Battery.receiver.critical.threshold) or announcementConfig.Battery.receiver.critical.threshold
-
-    end
-end
-
-
 
 
 -- ####################################################################
@@ -1920,11 +1957,37 @@ local function init_func()
 
   modelDetails = getModelDetails(currentModelName)
 
-
+  rxReferenceVoltage = modelDetails.rxReferenceVoltage
 -- Call the resolve function to update thresholds based on BattType
-resolveDynamicValues()
+--resolveDynamicValues()
 
-printHumanReadableTable(announcementConfig)
+-- printHumanReadableTable(announcementConfig)
+
+typeBattery["main"]           = table.concat(modelDetails.BattType["main"])
+typeBattery["receiver"]       = table.concat(modelDetails.BattType["receiver"])
+
+if typeBattery["receiver"] == "buffer" then --todo the user may name this differently ... like buffer1, buffer2 for different buffer packs ... add a category to BatteryTypeDefaults for buffer and not rely on the name itself
+
+  local low = BatteryTypeDefaults.buffer.lowVoltage / 2
+  local high = rxReferenceVoltage / 2
+
+    BatteryTypeDefaults.buffer.dischargeCurve = calculateLinearDischargeCurve(low, high)
+
+end
+
+if typeBattery["receiver"] == "beconly" then --todo the user may name this differently ... like beconly1, beconly2 for different beconly configs ... add a category to BatteryTypeDefaults for buffer and not rely on the name itself
+
+  local low = BatteryTypeDefaults.beconly.lowVoltage / 2
+  local high = rxReferenceVoltage / 2
+
+    BatteryTypeDefaults.beconly.dischargeCurve = calculateLinearDischargeCurve(low, high)
+
+end
+
+ 
+
+-- Call the function to update the config
+updateAnnouncementConfig(announcementConfig, BatteryTypeDefaults, typeBattery["main"], typeBattery["receiver"])
 
 
 
@@ -1998,8 +2061,7 @@ printHumanReadableTable(announcementConfig)
   sensorMah["main"]             = table.concat(modelDetails.MahSensor["main"])
   sensorMah["receiver"]         = table.concat(modelDetails.MahSensor["receiver"])
 
-  typeBattery["main"]           = table.concat(modelDetails.BattType["main"])
-  typeBattery["receiver"]       = table.concat(modelDetails.BattType["receiver"])
+
 
   countCell["main"]             = tonumber(table.concat(modelDetails.CellCount["main"]))
   countCell["receiver"]         = tonumber(table.concat(modelDetails.CellCount["receiver"]))
