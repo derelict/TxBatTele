@@ -106,7 +106,7 @@
 
 local Title = "Flight Telemetry and Battery Monitor"
 
-local DEBUG_ENABLED = false
+local DEBUG_ENABLED = true
 
 -- Sensors
 -- 	Use Voltage and or mAh consumed calculated sensor based on VFAS, FrSky FAS-40
@@ -401,6 +401,10 @@ local function debugPrint(message)
   if DEBUG_ENABLED then
       print(message)
   end
+end
+
+function setDebug(enabled)
+  DEBUG_ENABLED = enabled
 end
 
 -- Function to add sound files to the queue
@@ -830,6 +834,8 @@ local function doAnnouncements(context)
   announcements = {}  -- Clear announcements table at the start of each call
 
 
+  --setDebug(true)
+
   checkChangedInterval(statusTele, "telemetry")
 
 
@@ -937,7 +943,8 @@ local function doAnnouncements(context)
       debugPrint("STCHDET: No announcements to be done.")
     end
 
-    
+    --setDebug(false)
+
 end
 
 
@@ -1364,6 +1371,11 @@ local function reset_if_needed()
     --debugPrint(string.format("RESET: State change Triggered ... Trigger State: %s at Count: %s",ResetSwitchState, AutomaticResetStateChangeCount))
 
     debugPrint("RESET: no telemetry for longer than 4 seconds... will reset at next telemetry on")
+
+    if maj >= 2 and minor >= 11 then
+      debugPrint("RESET: Taking Screenshot")
+    screenshot()
+    end
 
     AutomaticResetOnNextChange = true
       end
