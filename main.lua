@@ -182,87 +182,43 @@ local BattPackSelectorSwitch = {
 
 
 local modelTable = {
-
-
-  { 
-    modelNameMatch = "DEFAULT",
-    modelName = "DEFAULT",
-    modelImage = "goblin.png",
-    modelWav = "sg630",
-    rxReferenceVoltage = 8.2, -- will only be used for battery types like buffer or "BEC only" in order to calculate the discharge curve .... if you are only using a BEC you will recognize power loss soon enough and you don't need any discharge curves at all :-) 
-    VoltageSensor = { 
-      main = "Cels" , 
-      receiver =  "RxBt" 
-    }, 
-    CurrentSensor = { 
-      main = "Curr" , 
-      receiver =  "Curr" 
-    }, 
-    MahSensor = { 
-      main = "", 
-      receiver = ""
-    }, 
-    BattType = { 
-      main = "lipo" , 
-      receiver =  "buffer" 
-    }, 
-    CellCount = { 
-      main =   12 , 
-      receiver =   2 
-    },        
-    capacities = {
-      main = { 500, 1000, 1500, 2000, 2500, 3000 },
-      receiver = { 500, 1000, 1500, 2000, 2500, 3000 }
-    },
-    switchAnnounces = SwitchAnnounceTable,
-    line1statsensors = line1statsensors,
-    line2statsensors = line2statsensors,
-    BattPackSelectorSwitch = BattPackSelectorSwitch
+  {
+      modelNameMatch         = "DEFAULT",
+      modelName              = "DEFAULT",
+      modelImage             = "goblin.png",
+      modelWav               = "sg630",
+      rxReferenceVoltage     = 8.2,
+      VoltageSensor          = { main = "Cels",    receiver = "RxBt" },
+      CurrentSensor          = { main = "Curr",    receiver = "Curr" },
+      MahSensor              = { main = "",        receiver = "" },
+      BattType               = { main = "lipo",    receiver = "buffer" },
+      CellCount              = { main = 12,        receiver = 2 },
+      capacities             = { main = { 500, 1000, 1500, 2000, 2500, 3000 }, receiver = { 500, 1000, 1500, 2000, 2500, 3000 } },
+      switchAnnounces        = SwitchAnnounceTable,
+      line1statsensors       = line1statsensors,
+      line2statsensors       = line2statsensors,
+      BattPackSelectorSwitch = BattPackSelectorSwitch
   },
-  
-  
-  { 
-    modelNameMatch = "heli",
-    modelName = "SAB Goblin 630",
-    modelImage = "goblin.png",
-    modelWav = "sg630",
-    rxReferenceVoltage = 8.2, -- will only be used for battery types like buffer or "BEC only" in order to calculate the discharge curve .... if you are only using a BEC you will recognize power loss soon enough and you don't need any discharge curves at all :-) -- todo 
-    --telemetryStatus = "TELE",
-    --resetSwitch = "SD" .. CHAR_DOWN ,
-    resetSwitch = "TELE" ,
-    VoltageSensor = { 
-      main = "Cels" , 
-      receiver =  "RxBt" 
-    }, 
-    CurrentSensor = { 
-      main =  "Curr" , 
-      receiver =  "Curr" 
-    }, 
-    MahSensor = { 
-      main = "", 
-      receiver = ""
-    }, 
-    BattType = { 
-      main = "lipo" , 
-      receiver = "buffer" 
-    }, 
-    CellCount = { 
-      main =  8 , 
-      receiver =  2 
-    },        
-    capacities = {
-      main = { 500, 1000, 1500, 2000, 2500, 3000 },
-      receiver = { 500, 1000, 1500, 2000, 2500, 3000 }
-    },
-    switchAnnounces = SwitchAnnounceTable,
-    line1statsensors = line1statsensors,
-    line2statsensors = line2statsensors,
-    BattPackSelectorSwitch = BattPackSelectorSwitch
-  },
-
-
-  
+  {
+      modelNameMatch         = "heli",
+      modelName              = "SAB Goblin 630",
+      modelImage             = "goblin.png",
+      modelWav               = "sg630",
+      rxReferenceVoltage     = 8.2,
+      resetSwitch            = "TELE",
+      VoltageSensor          = { main = "Cels",    receiver = "RxBt" },
+      CurrentSensor          = { main = "Curr",    receiver = "Curr" },
+      MahSensor              = { main = "",        receiver = "" },
+      BattType               = { main = "lipo",    receiver = "buffer" },
+      CellCount              = { main = 8,         receiver = 2 },
+      capacities             = { main = { 500, 1000, 1500, 2000, 2500, 3000 }, receiver = { 500, 1000, 1500, 2000, 2500, 3000 } },
+      switchAnnounces        = SwitchAnnounceTable,
+      line1statsensors       = line1statsensors,
+      line2statsensors       = line2statsensors,
+      BattPackSelectorSwitch = BattPackSelectorSwitch
+  }
 }
+
 
 
 local priorizeSwitchAnnouncements = true
