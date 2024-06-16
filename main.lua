@@ -1,5 +1,5 @@
 -- License https://www.gnu.org/licenses/gpl-3.0.en.html
--- OpenTX Lua script
+-- OpenTX/EdgeTX Lua script
 -- TELEMETRY
 
 -- File Locations On The Transmitter's SD Card
@@ -104,10 +104,9 @@
 -- make battery capacities selectable using switch(es) or 6 mode buttons
 ------------------------------------------------------------------------------------------------------------
 
--- Configurations
---  For help using telemetry scripts
---    http://rcdiy.ca/telemetry-scripts-getting-started/
 local Title = "Flight Telemetry and Battery Monitor"
+
+local DEBUG_ENABLED = true
 
 -- Sensors
 -- 	Use Voltage and or mAh consumed calculated sensor based on VFAS, FrSky FAS-40
@@ -120,24 +119,8 @@ local Title = "Flight Telemetry and Battery Monitor"
 
 -- Change as desired
 
-local contexts = {"main", "receiver"}
-
 local verbosity = 3 --todo verbosity levels
 
--- local currentContext = contexts[currentContextIndex]
--- 
--- -- Use the current context variables
--- print("Voltage Sensor (" .. currentContext .. "): " .. table.concat(modelDetails.VoltageSensor[currentContext], ", "))
--- print("Current Sensor (" .. currentContext .. "): " .. table.concat(modelDetails.CurrentSensor[currentContext], ", "))
--- print("Capacity (" .. currentContext .. "): " .. table.concat(modelDetails.capacities[currentContext], ", "))
--- 
--- -- Perform other operations based on current context
--- -- ...
--- 
--- -- Cycle to the next context
--- currentContextIndex = (currentContextIndex % #contexts) + 1
-
-local statusTele = false
 
 idstatusTele = getSwitchIndex("TELE")
 
@@ -225,40 +208,11 @@ local modelTable = {
 local priorizeSwitchAnnouncements = true
 
 
-local FirstModelInit = true
-local ModelImageBM = Bitmap.open("/IMAGES/280.png")
---local ModelName = model.getInfo().name
-
-
 local ShowPostFlightSummary = true --todo
 local ShowPreFlightStatus = true -- todo
 local ActiveFlightIndicator = "choose switch" -- todo ... use arm switch or maybe there is a good tele sensor for this
 
-
-
--- Main Battery
---local VoltageSensor = "VFAS" -- optional set to "" to ignore
-local VoltageSensor = "Cels" -- optional set to "" to ignore
-local CurrentSensor = "Curr"
-local mAhSensor = "" -- optional set to "" to ignore
-
--- Receiver Battery
-local RxBatVoltSensor = "RxBt"
-local RxBatCurrSensor = "Curr"
-
-local Battery_Cap = 3500 --todo
-
-
--- local RxBtVoltageWarningDelay = 10 --todo-done add delay to percentage alerts -
-
--- Receiver Battery
-local rxbatwarn = false
-local PlayRxBatFirstWarning = true
-local PlayRxBatWarning = true
-
 local statusTable = {}
-
-
 
 -- to support future functions like taking screenshot and logging on/off
 local ver, radio, maj, minor, rev, osname = getVersion()
@@ -270,247 +224,18 @@ if rev then print ("version rev: "..rev) end
 if osname then print ("version osname: "..osname) end
 
 
-
-
--- local TelemetryStatusSwitch = "TELE"
--- local TelemetryStatusSwitch_ID  = getSwitchIndex(TelemetryStatusSwitch)
--- 
--- 
--- local resetSwitch = TelemetryStatusSwitch
--- local resetSwitch = "SD" .. CHAR_DOWN
--- local resetSwitch_ID  = getSwitchIndex(resetSwitch)
-
---local resetSwitch_ID  = getFieldInfo(resetSwitch).id
-
--- local tele_switch_ID  = getSwitchIndex("TELE")
-
 local AutomaticResetOnResetSwitchToggle = 4 -- 5 seconds for TELE Trigger .... maybe 1 second for switch trigger
-
-local AutomaticResetOnResetPrevState = nil
-
-local AutomaticResetStateChangeCount = 0
 
 local AutomaticResetOnNextChange = true
 
-
--- don't go equal or below 3 seconds for intervals .... otherwise announcements will have no time to play
---                      Announce Remaining / Annouce Warning (repeat/sing) / Announce Critical (repeat/single) / Trigger Delay in S
---batAnnounce["main"] =      { 4, 30 , 5 , 0 , 2.5 , 5 , 2.5 }
---batAnnounce["receiver"] = { 10, 50 , 5 , 0 , 2.5 , 5 , 2.5 }
-local batAnnounce = {}
-
-batAnnounce["main"] =      { 4, 30 , 5 , 0 , 2.5 , 0 , 2.5 }
-batAnnounce["receiver"] = { 4, 50 , 5 , 0 , 2.5 , 0 , 2.5 }
-
--- -1 = off / 0 = single/on change
--- Step 2.5 is the lowest
-
 local TriggerTimers = {}
 
--- todo read from live sensor and do the calc later ( volt - volt below) --> only for buffer !!!
--- local RxBtVoltage = 8.0
-
--- local RxBtVoltageDropWarning = 0.5
--- local RxBtVoltageWarning = RxBtVoltage - RxBtVoltageDropWarning
-
--- Used to calculate batt full percentage (linear curve)
--- local LipoBatLowVolt = 3.27
--- local LipoBatHighVolt = 4.2
-
-
-local rxbatType = "buffer"
-local mainbattype = "lipo"
-
--- if rxbatType == "buffer" then
---   RxBattWarnThresld = 97
---   RxBattCritThresld = 95
---   -- todo-done see below ... this devided by two is lame
---   RxBatLowVolt = 6 / 2
---   RxBatHighVolt = RxBtVoltage / 2
--- else
---   RxBattWarnThresld = 20
---   RxBattCritThresld = 15
---   RxBatLowVolt = LipoBatLowVolt
---   RxBatHighVolt = LipoBatHighVolt
--- end
-
-local bufferLowVol = 6 --normally the value where the buffer shuts down completely
-local bufferHighVol = 8.2 --normally the value your BEC is set to -- todo add to model definition above
-
--- do not change ... we are basing our calculations based on theoretical cells values
-local bufferLowPerCellValue = bufferLowVol / 2
-local bufferHighPerCellValue = bufferHighVol / 2
-
-local batTypeLowHighValues = {}
-local batTypeWarnCritThresh = {}
-
-batTypeLowHighValues["lipo"] = {3.27, 4.2}
-batTypeLowHighValues["buffer"] = {bufferLowPerCellValue, bufferHighPerCellValue}
-
-batTypeWarnCritThresh["lipo"] = {20, 15}
-batTypeWarnCritThresh["buffer"] = {97, 95}
-
--- todo getPercentColor uses this ... maybe adapt for critical
-local BattWarnThresld = 20
-local BattCritThresld = 15
-
---local BattAnnounceSteps = 10
---local BattAnnounceStepsWarn = 2.5
--- todo-done maybe add critical too
-
-local MainBatNotFullThresh = 97
-local RxBatNotFullThresh = 98
-
-local BatNotFullThresh = {}
-BatNotFullThresh["lipo"] = 97
-BatNotFullThresh["buffer"] = 98
-
-
---local CellsDetected = false
-
-
--- local SwitchAnnounceTable = {
---   {"SF" .. CHAR_UP, "armed"},
---   {"SF" .. CHAR_DOWN, "disarm"},
---   {"SE" .. CHAR_UP, "fm-nrm"},
---   {"SE-" , "fm-1"},
---   {"SE" .. CHAR_DOWN, "fm-2"}
--- }
-
-
-
-
--- local announcementConfig = {
---   telemetry = {
---     normal = {
---       mode = "disable", -- "disable", "change", or an interval in seconds
---       gracePeriod = 1 -- Grace period in seconds for "change" mode
---     },
---     warning = {
---       threshold = false, -- Threshold for warning level
---       mode = "change" -- "disable", "change", or an interval in seconds
---     },
---     critical = {
---       threshold = "undef", -- Threshold for critical level
---       mode = "disable", -- "disable", "change", or an interval in seconds
---     }
---   },
--- 
---   BatteryMissingCell = {
---     normal = {
---       mode = "disable", -- "disable", "change", or an interval in seconds
---       gracePeriod = 1 -- Grace period in seconds for "change" mode
---     },
---     warning = {
---       threshold = -1, -- Threshold for warning level
---       mode = 10 -- "disable", "change", or an interval in seconds
---     },
---     critical = {
---       threshold = -2, -- Threshold for critical level
---       mode = 10 -- "disable", "change", or an interval in seconds
---     }
---   },
--- 
---   CellDelta = {
---     normal = {
---       mode = "disable", -- "disable", "change", or an interval in seconds
---       gracePeriod = 3 -- Grace period in seconds for "change" mode
---     },
---     warning = {
---       threshold = "undef", -- Threshold for warning level
---       mode = 10 -- "disable", "change", or an interval in seconds
---     },
---     critical = {
---       threshold = true, -- Threshold for critical level
---       mode = 10 -- "disable", "change", or an interval in seconds
---     }
---   },  
--- 
--- 
---   BatteryNotFull = {
---     main = {
---       normal = {
---         mode = "disable", -- "disable", "change", or an interval in seconds
---         gracePeriod = 0 -- Grace period in seconds for "change" mode
---       },
---       warning = {
---         --threshold = 98, -- Threshold for warning level
---         threshold = "useBatTypeDefault", -- Threshold for warning level --- for defaults see below
---         mode = "change" -- "disable", "change", or an interval in seconds
---       },
---       critical = {
---         --threshold = 96, -- Threshold for critical level
---         threshold = "useBatTypeDefault", -- Threshold for critical level
---         mode = "change" -- "disable", "change", or an interval in seconds
---       }
---     },
---     receiver = {
---       normal = {
---         mode = "disable", -- "disable", "change", or an interval in seconds
---         gracePeriod = 1 -- Grace period in seconds for "change" mode
---       },
---       warning = {
---         --threshold = 99, -- Threshold for warning level
---         threshold = "useBatTypeDefault", -- Threshold for warning level
---         mode = "change" -- "disable", "change", or an interval in seconds
---       },
---       critical = {
---         --threshold = 98, -- Threshold for critical level
---         threshold = "useBatTypeDefault", -- Threshold for critical level
---         mode = "change" -- "disable", "change", or an interval in seconds
---       }
---     }
---   },
--- 
--- 
---   Battery = {
---     main = {
---       normal = {
---         mode = 20, -- "disable", "change", or an interval in seconds
---         gracePeriod = 4 -- Grace period in seconds for "change" mode
---       },
---       warning = {
---         --threshold = 20, -- Threshold for warning level
---         threshold = "useBatTypeDefault", -- Threshold for warning level
---         mode = "change" -- "disable", "change", or an interval in seconds
---       },
---       critical = {
---         --threshold = 15, -- Threshold for critical level
---         threshold = "useBatTypeDefault", -- Threshold for critical level
---         mode = "change" -- "disable", "change", or an interval in seconds
---       }
---     },
---     receiver = {
---       normal = {
---         mode = 30, -- "disable", "change", or an interval in seconds
---         gracePeriod = 2 -- Grace period in seconds for "change" mode
---       },
---       warning = {
---         --threshold = 97, -- Threshold for warning level
---         threshold = "useBatTypeDefault", -- Threshold for warning level
---         mode = "change" -- "disable", "change", or an interval in seconds
---       },
---       critical = {
---         --threshold = 95, -- Threshold for critical level
---         threshold = "useBatTypeDefault", -- Threshold for critical level
---         mode = "change" -- "disable", "change", or an interval in seconds
---       }
---     }
---   }  
--- 
--- 
--- 
--- 
--- 
--- 
---   -- Add other items with their respective configurations
--- }
 
 local announcementConfig = {
   -- Telemetry configuration
   telemetry = {
       normal   = { mode = "disable",           gracePeriod = 1 }, -- Mode to disable telemetry in normal state
-      warning  = { mode = "change",            threshold = false }, -- Mode to change telemetry in warning state
+      warning  = { mode = 10,            threshold = false }, -- Mode to change telemetry in warning state
       critical = { mode = "disable",           threshold = "undef" }  -- Mode to disable telemetry in critical state
   },
 
@@ -526,37 +251,8 @@ local announcementConfig = {
       normal   = { mode = "disable",           gracePeriod = 3 }, -- Mode to disable in normal state
       warning  = { mode = 10,                  threshold = "undef" }, -- Mode to change in warning state after threshold
       critical = { mode = 10,                  threshold = true }   -- Mode to change in critical state after threshold
-  },
-
-  -- Battery Not Full configuration
-  BatteryNotFull = {
-      main = {
-          normal   = { mode = "disable",       gracePeriod = 0 }, -- Mode to disable when battery not full (main)
-          warning  = { mode = "change",        threshold = "useBatTypeDefault" }, -- Mode to change when nearing warning level (main)
-          critical = { mode = "change",        threshold = "useBatTypeDefault" }  -- Mode to change when nearing critical level (main)
-      },
-      receiver = {
-          normal   = { mode = "disable",       gracePeriod = 1 }, -- Mode to disable when battery not full (receiver)
-          warning  = { mode = "change",        threshold = "useBatTypeDefault" }, -- Mode to change when nearing warning level (receiver)
-          critical = { mode = "change",        threshold = "useBatTypeDefault" }  -- Mode to change when nearing critical level (receiver)
-      }
-  },
-
-  -- Battery configuration
-  Battery = {
-      main = {
-          normal   = { mode = 20,              gracePeriod = 4 }, -- Mode with an interval of 20 seconds when battery level is normal (main)
-          warning  = { mode = "change",        threshold = "useBatTypeDefault" }, -- Mode to change when nearing warning level (main)
-          critical = { mode = "change",        threshold = "useBatTypeDefault" }  -- Mode to change when nearing critical level (main)
-      },
-      receiver = {
-          normal   = { mode = 30,              gracePeriod = 2 }, -- Mode with an interval of 30 seconds when battery level is normal (receiver)
-          warning  = { mode = "change",        threshold = "useBatTypeDefault" }, -- Mode to change when nearing warning level (receiver)
-          critical = { mode = "change",        threshold = "useBatTypeDefault" }  -- Mode to change when nearing critical level (receiver)
-      }
   }
 
-  -- Add other items with their respective configurations
 }
 
 
@@ -575,12 +271,13 @@ local announcementConfigDefault = {
 }
 }
 
-local statusTable = {}
 
 
+-- Based on results from http://rcdiy.ca/taranis-q-x7-battery-run-time/
+-- https://blog.ampow.com/lipo-voltage-chart/
 
-
-
+-- BatteryDefinition
+-- todo only announce in steps of N
 local BatteryTypeDefaults = {
   lipo = {
       dischargeCurve           = {
@@ -596,35 +293,56 @@ local BatteryTypeDefaults = {
           {3.69, 10}, {3.67, 7.5}, {3.61, 5}, {3.49, 2.5},
           {3.27, 0}
       },
-      criticalThreshold        = 15,     -- Critical threshold in percentage
-      warningThreshold         = 20,     -- Warning threshold in percentage
-      notFullCriticalThreshold = 96,     -- Not full critical threshold in percentage
-      notFullWarningThreshold  = 98,     -- Not full warning threshold in percentage
-      highVoltage              = 4.20,   -- High voltage
-      lowVoltage               = 3.27,   -- Low voltage
-      cellDeltaVoltage         = 0.07    -- Cell delta voltage
+      graceperiod                 = 4,      -- grace period for fluctuations 
+      criticalThreshold           = 15,     -- Critical threshold in percentage
+      warningThreshold            = 20,     -- Warning threshold in percentage
+      notFullCriticalThreshold    = 96,     -- Not full critical threshold in percentage
+      notFullWarningThreshold     = 98,     -- Not full warning threshold in percentage
+      announceNotFullCriticalMode = "change", -- change, disable or integer intervall
+      announceNotFullWarningMode  = "change", -- change, disable or integer intervall
+      announceNormalMode          = 20, -- change, disable or integer intervall
+      announceWarningMode         = "change", -- change, disable or integer intervall
+      announceCriticalMode        = "change", -- change, disable or integer intervall
+      highVoltage                 = 4.20,   -- High voltage
+      lowVoltage                  = 3.27,   -- Low voltage
+      cellDeltaVoltage            = 0.1,    -- Cell delta voltage
+      isNotABattery               = false   -- DO NOT CHANGE for any Battery !!!
   },
 
   buffer = {
-      dischargeCurve           = nil,    -- This will be dynamically calculated based on voltage range
-      criticalThreshold        = 96,     -- Critical threshold in percentage
-      warningThreshold         = 97,     -- Warning threshold in percentage
-      notFullCriticalThreshold = 98,     -- Not full critical threshold in percentage
-      notFullWarningThreshold  = 99,     -- Not full warning threshold in percentage
-      highVoltage              = nil,    -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
-      lowVoltage               = 6,      -- Low voltage -- where your buffer pack shuts off completely ... all hope is lost after this ;-) .. please note... in the case of buffer packs ... we will device this value by 2 in order to get a theoretical 2s per cell value for the alerts and percentage left -- todo
-      cellDeltaVoltage         = nil     -- Cell delta voltage -- irrelevant for buffer or bec
-  },
+      dischargeCurve              = nil,    -- This will be dynamically calculated based on voltage range
+      graceperiod                 = 4,      -- grace period for fluctuations 
+      criticalThreshold           = 96,     -- Critical threshold in percentage
+      warningThreshold            = 97,     -- Warning threshold in percentage
+      notFullCriticalThreshold    = 98,     -- Not full critical threshold in percentage
+      notFullWarningThreshold     = 99,     -- Not full warning threshold in percentage
+      announceNotFullCriticalMode = "change", -- change, disable or integer intervall
+      announceNotFullWarningMode  = "change", -- change, disable or integer intervall
+      announceNormalMode          = 20, -- change, disable or integer intervall
+      announceWarningMode         = "change", -- change, disable or integer intervall
+      announceCriticalMode        = "change", -- change, disable or integer intervall      highVoltage              = nil,    -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
+      highVoltage                 = nil,   -- if nil will use model rxReferenceVoltage
+      lowVoltage                  = 6,      -- Low voltage -- where your buffer pack shuts off completely ... all hope is lost after this ;-) .. please note... in the case of buffer packs ... we will device this value by 2 in order to get a theoretical 2s per cell value for the alerts and percentage left -- todo
+      cellDeltaVoltage            = nil,     -- Cell delta voltage -- irrelevant for buffer or bec
+      isNotABattery               = true   -- buffer is not a battery and values for high and low voltage represent real voltages and will be devided by 2 by the script to get a theoretical cell value
+    },
 
   beconly = {
-      dischargeCurve           = nil,    -- This will be dynamically calculated based on voltage range
-      criticalThreshold        = 96,     -- Critical threshold in percentage
-      warningThreshold         = 97,     -- Warning threshold in percentage
-      notFullCriticalThreshold = 98,     -- Not full critical threshold in percentage
-      notFullWarningThreshold  = 99,     -- Not full warning threshold in percentage
-      highVoltage              = nil,    -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
-      lowVoltage               = 5,      -- Low voltage -- there is not such a thing as "lowvoltage" if only using a bec ... if you loose your bec you will recognize it before we can announce anything ... so lets set this to anything below what is "normal" ... like 5
-      cellDeltaVoltage         = nil     -- Cell delta voltage -- irrelevant for buffer or bec
+      dischargeCurve              = nil,    -- This will be dynamically calculated based on voltage range
+      graceperiod                 = 4,      -- grace period for fluctuations 
+      criticalThreshold           = 96,     -- Critical threshold in percentage
+      warningThreshold            = 97,     -- Warning threshold in percentage
+      notFullCriticalThreshold    = 98,     -- Not full critical threshold in percentage
+      notFullWarningThreshold     = 99,     -- Not full warning threshold in percentage
+      announceNotFullCriticalMode = "change", -- change, disable or integer intervall
+      announceNotFullWarningMode  = "change", -- change, disable or integer intervall
+      announceNormalMode          = 20, -- change, disable or integer intervall
+      announceWarningMode         = "change", -- change, disable or integer intervall
+      announceCriticalMode        = "change", -- change, disable or integer intervall      highVoltage              = nil,    -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
+      highVoltage                 = nil,   -- if nil will use model rxReferenceVoltage
+      lowVoltage                  = 5,      -- Low voltage -- there is not such a thing as "lowvoltage" if only using a bec ... if you loose your bec you will recognize it before we can announce anything ... so lets set this to anything below what is "normal" ... like 5
+      cellDeltaVoltage            = nil,     -- Cell delta voltage -- irrelevant for buffer or bec
+      isNotABattery               = true   -- BEC is not a battery and values for high and low voltage represent real voltages and will be devided by 2 by the script to get a theoretical cell value
     },
   }
 
@@ -632,79 +350,15 @@ local BatteryTypeDefaults = {
 
 
 
-
-
-
-
--- local announcementPhrases = {
--- 
---   telemetry = {
---     { type = }
---   }
--- 
--- 
--- }
-
---local RxBtVoltageWarning = (RxBtVoltage / 100) * (100-RxBtVoltagePercentageWarning)
-
-
--- Reserve Capacity
--- 	Remaining % Displayed = Calculated Remaining % - Reserve %
--- Change as desired
--- todo
+-- todo -- really needed ?
 local CapacityReservePercent = 0 -- set to zero to disable
 
--- Switch used to reset the voltage checking features.
---  typically set to the same switch used to reset timers
-local SwReset = "sh" --todo intersting ?
-
---   Value used when checking to see if the cell is full for the check_for_full_battery check
---local CellFullVoltage = 4.0
-local CellFullVoltage = 4.2
-
-local CellFullVoltageTolerance = 0.2
-
---   Value used to when comparing cell voltages to each other.
---    if any cell gets >= VoltageDelta volts of the other cells
---    then play the Inconsistent Cell Warning message
-local VoltageDelta = .3
-
--- Announcements
 local soundDirPath = "/WIDGETS/TxBatTele/sounds/" -- where you put the sound files
-local AnnouncePercentRemaining = true -- true to turn on, false for off
-local SillyStuff = false  -- Play some silly/fun sounds
+
+-- todo
 
 -- Do not change the next line
 local GV = {[1] = 0, [2] = 1, [3] = 2,[4] = 3,[5] = 4,[6] = 5, [7] = 6, [8] = 7, [9] = 8}
-
-
-local BatNotFullWarn = {}
-BatNotFullWarn["main"]   = nil
-BatNotFullWarn["receiver"]   = nil
-
--- OpenTX Global Variables (GV)
---	These are global to the model and not between models.
---
---	Each flight mode (FM) has its own set of GVs. Using this script you could
---		be flying in FM 0 but access variables from FM 8. This is useful when
---		when running out of GVs available to use.
---		Most users can leave the flight mode setting at the default value.
---
---	If you have configured mAhSensor = "" then ignore GVBatCap
--- 	GVBatCap - Battery capacity provided as mAh/100,
---									2800 mAh would be 28, 800 mAh would be 8
---
--- Change as desired
--- Use GV[6] for GV6, GV[7] for GV7 and so on
-
-local GVCellCount = GV[6] -- Read the number of cells
-local GVBatCap = GV[7] 	-- Read Battery Capacity, 8 for 800mAh, 22 for 2200mAh
--- The corresponding must be set under the FLIGHT MODES
--- screen on the Tx.
--- If the GV is 0 or not set on the Tx then
--- % remaining is calculated based on battery voltage
--- which may not be as accurate.
-local GVFlightMode = 0 -- Use a different flight mode if running out of GVs
 
 local WriteGVBatRemmAh = true -- set to false to turn off write
 local WriteGVBatRemPer = true
@@ -721,69 +375,10 @@ local GVBatRemPer = GV[9] -- Write remaining percentage, 76.7% will be writen as
 -- ----------------------------------------------------------------------------------------
 -- AVOID EDITING BELOW HERE
 --
-local DEBUG = false
 
 local CanCallInitFuncAgain = false		-- updated in bg_func
 
--- Calculations
-local UseVoltsNotmAh	-- updated in init_func
-local BatCapFullmAh		-- updated in init_func
-local BatCapmAh				-- updated in init_func
-local BatUsedmAh = 0			-- updated in bg_func
-local BatRemainmAh 		-- updated in init_func, bg_func
-local BatRemPer 			-- updated in init_func, bg_func
-local VoltsPercentRem -- updated in init_func, bg_func
-local rxVoltsPercentRem -- updated in init_func, bg_func
---local VoltsNow 	= 0			-- updated in bg_func
---local RxVoltsNow 	= 0			-- updated in bg_func
-local CellCount 			-- updated in init_func, bg_func
---local VoltsMax 				-- updated in bg_func
 local VoltageHistory = {}   -- updated in bg_func
-
-
-
-local VoltsNow = 0
-local VoltsMax = 0
-local VoltsLow = 0
-
-local RxVoltsNow = 0
-local RxVoltsMax = 0
-local RxVoltsLow = 0
-
-local MainAmpsNow  = 0
-local MainAmpsLow  = 0
-local MainAmpsHigh = 0
-
-local RxAmpsNow  = 0
-local RxAmpsLow  = 0
-local RxAmpsHigh = 0
-
-
-
--- Voltage Checking flags
-local CheckBatNotFull = true
-local StartTime = getTime()
-local PlayFirstInconsistentCellWarning = true
-local PlayInconsistentCellWarning = false
-local PlayFirstMissingCellWarning = true
-local PlayMissingCellWarning = true
-local InconsistentCellVoltageDetected = false
-local ResetDebounced = true
-local MaxWatts = "-----"
-local MaxAmps = "-----"
-
--- Announcements
-local BatRemPerFileName = 0		-- updated in PlayPercentRemaining
-local BatRemPerPlayed = 0			-- updated in PlayPercentRemaining
-local AtZeroPlayedCount				-- updated in init_func, PlayPercentRemaining
-local PlayAtZero = 1
---local RxOperational = false
---local BatteryFound = false
-
-local CurrentBatLevelPerc = {}			-- updated in PlayPercentRemaining
-
---BatRemPerPlayed["main"] = 0
---BatRemPerPlayed["receiver"] = 0
 
 -- Display
 local x, y, fontSize, yColumn2
@@ -792,85 +387,6 @@ local xAlign = 0
 local BlinkWhenZero = 0 -- updated in run_func
 local Color = BLACK
 
--- Based on results from http://rcdiy.ca/taranis-q-x7-battery-run-time/
--- https://blog.ampow.com/lipo-voltage-chart/
-
--- local VoltToPercentTable = {
---   {3.27, 0},{3.61, 5},
---   {3.69, 10},{3.71, 15},{3.73, 20},{3.75, 25},
---   {3.77, 30},{3.79, 35},{3.80, 40},{3.82, 45},
---   {3.84, 50},{3.85, 55},{3.87, 60},{3.91, 65},
---   {3.95, 70},{3.98, 75},{4.02, 80},{4.08, 85},
---   {4.11, 90},{4.15, 95},{4.20, 100}
--- }
-
---local VoltToPercentTable = {
---  {4.20, 100},{4.15, 95},{4.11, 90},{4.08, 85},
---  {4.02, 80},{3.98, 75},{3.95, 70},{3.91, 65},
---  {3.87, 60},{3.85, 55},{3.84, 50},{3.82, 45},
---  {3.80, 40},{3.79, 35},{3.77, 30},{3.75, 25},
---  {3.73, 20},{3.71, 15},{3.69, 10},{3.61, 5},
---  {3.27, 0}
---}
-
-local BatteryTypeDischargeCurves = {}
-
--- todo .. maybe improve to make steps less (0.1) but still take the curve into account
-BatteryTypeDischargeCurves["lipo"] = {
-  {4.20, 100}, {4.17, 97.5}, {4.15, 95}, {4.13, 92.5}, 
-  {4.11, 90}, {4.10, 87.5}, {4.08, 85}, {4.05, 82.5}, 
-  {4.02, 80}, {4.00, 77.5}, {3.98, 75}, {3.97, 72.5}, 
-  {3.95, 70}, {3.93, 67.5}, {3.91, 65}, {3.89, 62.5}, 
-  {3.87, 60}, {3.86, 57.5}, {3.85, 55}, {3.85, 52.5}, 
-  {3.84, 50}, {3.83, 47.5}, {3.82, 45}, {3.81, 42.5}, 
-  {3.80, 40}, {3.80, 37.5}, {3.79, 35}, {3.78, 32.5}, 
-  {3.77, 30}, {3.76, 27.5}, {3.75, 25}, {3.74, 22.5}, 
-  {3.73, 20}, {3.72, 17.5}, {3.71, 15}, {3.70, 12.5}, 
-  {3.69, 10}, {3.67, 7.5}, {3.61, 5}, {3.49, 2.5}, 
-  {3.27, 0}
-}
-
-
-if rxbatType == "buffer" then
-
-  local numberOfPoints = 41 -- this results in steps of 2.5 to match the steps of the lipo definition above
-  local bufferbatcurve = {}
-
-  local low = batTypeLowHighValues["buffer"][1]
-  local high = batTypeLowHighValues["buffer"][2]
-
-  local step = (high - low) / (numberOfPoints - 1)
-
-  for i = 0, numberOfPoints - 1 do
-      local voltage = high - (i * step)
-      local percent = (i / (numberOfPoints - 1)) * 100
-      print("buffertable voltage: ", voltage)
-
-      table.insert(bufferbatcurve, {voltage, 100 - percent})
-  end
-
-  BatteryTypeDischargeCurves["buffer"] = bufferbatcurve
-
-end
-
-
-
-
-
-local SoundsTable = {[5] = "Bat5L.wav",[10] = "Bat10L.wav",[20] = "Bat20L.wav"
-  ,[30] = "Bat30L.wav",[40] = "Bat40L.wav",[50] = "Bat50L.wav"
-  ,[60] = "Bat60L.wav",[70] = "Bat70L.wav",[80] = "Bat80L.wav"
-  ,[90] = "Bat90L.wav"}
-
-
--- -- Example usage
--- local currentModelName = "ModelB123" -- This would be dynamically obtained in a real script
--- local sensor1, sensor2, cellCount = getModelDetails(currentModelName)
--- 
--- -- Print the variables (for debugging)
--- print("Sensor1: " .. sensor1)
--- print("Sensor2: " .. sensor2)
--- print("Cell Count: " .. cellCount)
 
 
 -- ########################## TESTING ##########################
@@ -962,59 +478,25 @@ end
 
 -- ########################## TESTING ##########################
 
-
-
-
-
-local function updateAnnouncementConfig(config, batteryDefaults, mainBatType, receiverBatType)
-
-  local function updateBatteryThresholds(section, batType, batTypeDefaults)
-      for _, level in pairs({"normal", "warning", "critical"}) do
-          if section[level] and section[level].threshold == "useBatTypeDefault" then
-              if level == "warning" then
-                  section[level].threshold = batTypeDefaults[batType].warningThreshold
-              elseif level == "critical" then
-                  section[level].threshold = batTypeDefaults[batType].criticalThreshold
-              end
-          end
-      end
+local function printHumanReadableTable(tbl, indent)
+  indent = indent or 0
+  local function indentStr(level)
+      return string.rep("  ", level)
   end
 
-  local function updateBatteryNotFullThresholds(section, batType, batTypeDefaults)
-      for _, level in pairs({"normal", "warning", "critical"}) do
-          if section[level] and section[level].threshold == "useBatTypeDefault" then
-              if level == "warning" then
-                  section[level].threshold = batTypeDefaults[batType].notFullWarningThreshold
-              elseif level == "critical" then
-                  section[level].threshold = batTypeDefaults[batType].notFullCriticalThreshold
-              end
-          end
-      end
-  end
+  for key, value in pairs(tbl) do
+      local keyStr = tostring(key)
+      local valueStr = tostring(value)
 
-  -- Update Battery section
-  if config.Battery then
-      if config.Battery.main then
-          updateBatteryThresholds(config.Battery.main, mainBatType, batteryDefaults)
-      end
-      if config.Battery.receiver then
-          updateBatteryThresholds(config.Battery.receiver, receiverBatType, batteryDefaults)
-      end
-  end
-
-  -- Update BatteryNotFull section
-  if config.BatteryNotFull then
-      if config.BatteryNotFull.main then
-          updateBatteryNotFullThresholds(config.BatteryNotFull.main, mainBatType, batteryDefaults)
-      end
-      if config.BatteryNotFull.receiver then
-          updateBatteryNotFullThresholds(config.BatteryNotFull.receiver, receiverBatType, batteryDefaults)
+      if type(value) == "table" then
+          print(indentStr(indent) .. "TBLDBG: " .. keyStr .. " = {")
+          printHumanReadableTable(value, indent + 1)
+          print(indentStr(indent) .. "TBLDBG: }")
+      else
+          print(indentStr(indent) .. "TBLDBG: " .. keyStr .. " = " .. valueStr)
       end
   end
 end
-
-
-
 
 
 
@@ -1084,22 +566,6 @@ local function getCellVoltage( cellResult  )
   --return cellSum
 end
 
--- ####################################################################
-local function getMaxWatts(sensor)
-  if sensor ~= "" then
-    amps = getValue( sensor )
-    if type(amps) == "number" then
-      if type(MaxAmps) == "string" or (type(MaxAmps) == "number" and amps > MaxAmps) then
-        MaxAmps = amps
-      end
-      --watts = amps * voltsNow
-      --if type(MaxWatts) == "string" or watts > MaxWatts then
-      --  MaxWatts = watts
-      --end
-    end
-  end
-end
-
 local function getAmp(sensor)
   if sensor ~= "" then
     amps = getValue( sensor )
@@ -1130,35 +596,20 @@ end
 
 
 -- ####################################################################
--- local function findPercentRem( cellVoltage )
--- 
---   print("Cell Voltage")
---   print(cellVoltage)
--- 
---   if cellVoltage > 4.2 then
---     return 100
---   elseif	cellVoltage < 3.27 then
---     return 0
---   else
---     -- method of finding percent in my array provided by on4mh (Mike)
---     for i, v in ipairs( VoltToPercentTable ) do
---       print(v[ 1 ])
---       if cellVoltage >= v[ 1 ] then
---         return v[ 2 ]
---       end
---     end
---   end
--- end
 
 local function findPercentRem( cellVoltage, battype )
 
   print("findPercentRem Cell Voltage: ", cellVoltage)
   print("findPercentRem BatType: ", battype)
 
-  local low = batTypeLowHighValues[battype][1]
-  local high = batTypeLowHighValues[battype][2]
+  --local low = batTypeLowHighValues[battype][1]
+  --local high = batTypeLowHighValues[battype][2]
 
-  local discharcurve = BatteryTypeDischargeCurves[battype]
+  local low = BatteryDefinition[battype].lowVoltage
+  local high = BatteryDefinition[battype].highVoltage
+
+  --local discharcurve = BatteryTypeDischargeCurves[battype]
+  local discharcurve = BatteryDefinition[battype].dischargeCurve
 
   if cellVoltage > high then
     return 100
@@ -1204,194 +655,84 @@ end
 
 end
 
-
-
-
--- if not BatFull[device] then
---   --playFile(soundDirPath.."BNFull.wav")
--- 
---   queueSound("warning",0)
--- 
---   print("BATT NOT FULL WARN")
--- 
---   if battype == "m" then
---     queueSound("main",0)
---   else
---     queueSound("receiver",0)
---   end
--- 
---   queueSound("battery",0)
---   queueSound("notfull",0)
--- 
---   
---   --playBatNotFullWarning = false
--- 
--- end
-
-
-
-local function PlayPercentRemaining(myperc, mydevice, myseverity)
-
-  local ts = 3
--- todo add haptic feedback option
-
-  queueSound(mydevice ,0)
-  queueSound("battery",0)
-
-  if BatNotFullWarn[mydevice] then
-    myseverity = "warning"
-  end
-
-
-  if myseverity ~= "normal" then
-    queueSound(myseverity, 0)
-    ts = ts + 1
-  end
-
-  if BatNotFullWarn[mydevice] then
-    ts = ts + 1
-  queueSound("battery",0)
-  queueSound("notfull",0)
-  end
-
-  queueNumber(myperc, 13, 0 , ts )
-
-  BatNotFullWarn[mydevice] = false -- we have done our duty ... now leave it for good -- will be reset on reset
-
-end
-
--- ####################################################################
-local function CheckPercentRemaining(perc, battype, device)
-  -- Announces percent remaining using the accompanying sound files.
-  -- Announcements ever 10% change when percent remaining is above 10 else
-  --	every 5%
-
-  local batAnnouceInterval      = batAnnounce[device][2]
-  local batWarnAnnounceInterval = batAnnounce[device][4]
-  local batCritAnnounceInterval = batAnnounce[device][6]
-
-    -- Intervalls =  -1 = off / 0 = single/on change
-
-  print(string.format("Check Perc Remain: perc: %s battype: %s device: %s", perc, battype, device))  
-
-  if batAnnouceInterval == -1 and batWarnAnnounceInterval == -1 and batCritAnnounceInterval == -1 then
-    return -- all intervals set to disable ... so no need to announce anything
-  end
-
-
-    -- prevent "flapping" here
-    local batTriggerDelay         = batAnnounce[device][1]
-
-    if CurrentBatLevelPerc[device] ~= perc and not Timer(device.."delay", batTriggerDelay) and CurrentBatLevelPerc[device] ~= nil then
-      print(string.format("PPR DEBUG: delay at perc: %s ... state: %s device: %s", perc, currentState, device ))
-       -- Timer(device) -- start timer -- timer already started by the if statement above
-      return
-    end
-  
-    TriggerTimers[device.."delay"] = 0 --reset timer
-    -- delay passed
-
-  local myModVal
-
-  local warn = batTypeWarnCritThresh[battype][1]
-  local crit = batTypeWarnCritThresh[battype][2]
-
-  local batNormSteps            = batAnnounce[device][3]
-  local batWarnSteps            = batAnnounce[device][5]
-  local batCritSteps            = batAnnounce[device][7]
-
-  local currentState, currentInterval
-
-  if perc <= crit then
-    myModVal = perc % batCritSteps
-    currentState = "critical"
-    currentInterval = batCritAnnounceInterval
-  elseif perc <= warn then
-    myModVal = perc % batWarnSteps
-    currentState = "warning"
-    currentInterval = batWarnAnnounceInterval
-  else
-    myModVal = perc % batNormSteps
-    currentState = "normal"
-    currentInterval = batAnnouceInterval
-  end
-
-  if CurrentBatLevelPerc[device] == nil then
-    CurrentBatLevelPerc[device] = perc
-    PlayPercentRemaining(perc, device, currentState)
-    return
-  end
-
-  if CurrentBatLevelPerc[device] == perc and currentInterval == 0  then
-    CurrentBatLevelPerc[device] = perc
-    return -- no change ... and on change requested .... so no announce
-  end
-
-  CurrentBatLevelPerc[device] = perc
-
-  if currentInterval < 0 then -- we are not interested to announce at this stage
-    return
-  end
-
-  if currentInterval > 0  then -- we have to make sure we only announce once the interval has passed
-    --CurrentBatLevelPerc[device] = 999 -- special value to make above if statement pass but not trigger the delay timer
-      if not Timer(device,currentInterval) then
-        print(string.format("PPR DEBUG: WAITING Announce: %s Device: %s", currentInterval, device ))
-        return --we have to wait until the announcement interval has been reached
-      end
-        PlayPercentRemaining(perc, device, currentState)
-      return
-  end
-
-  if myModVal ~= 0 then -- we are not interested to play at this level in terms of steps
-    print(string.format("PPR DEBUG: NO PLAY at: %s MODVAL: %s ", perc, myModVal))
-    return
-  end
-
-  PlayPercentRemaining(perc, device, currentState)
-
-end
-
--- ####################################################################
-local function HasSecondsElapsed(numSeconds)
-  -- return true every numSeconds
-  if StartTime == nil then
-    StartTime = getTime()
-  end
-  currTime = getTime()
-  deltaTime = currTime - StartTime
-  deltaSeconds = deltaTime/100 -- convert to seconds
-  deltaTimeMod = deltaSeconds % numSeconds -- return the modulus
-  --print(string.format("deltaTime: %f deltaSeconds: %f deltaTimeMod: %f", deltaTime, deltaSeconds, deltaTimeMod))
-  if math.abs( deltaTimeMod - 0 ) < 1 then
-    return true
-  else
-    return false
-  end
-end
-
-
 -- ####################################################################
 -- ####################################################################
 -- ####################################################################
 
-local function checkChangedInterval(currentStatus, item, context)
+local function checkChangedInterval(currentStatus, item, context )
   -- Get the configuration for the item or use announcementConfigDefault
   --local config = announcementConfig[item] or announcementConfigDefault
 
+  --returnStateOnly = returnStateOnly or false
+
+  -- BatteryDefinition for BatteryNotFull and Battery
+
   -- Determine if the item has context-specific configurations
+
+  local config, critTH, warnTH, critMD, warnMD, normMD, graceP
+
+  if item ~= "Battery" and item ~= "BatteryNotFull" then
+    
+
   local config = announcementConfig[item]
-  if config then
-    if context and config[context] then
-      -- Use the context-specific configuration if available
-      config = config[context]
-    end
-  else
+
+   if not config then
     -- Use the default configuration if item-specific configuration is not found
     config = announcementConfigDefault
   end
+
+  -- if config then
+  --   if context and config[context] then
+  --     -- Use the context-specific configuration if available
+  --     config = config[context]
+  --   end
+  -- else
+  --   -- Use the default configuration if item-specific configuration is not found
+  --   config = announcementConfigDefault
+  -- end
+
+  critTH = config.critical.threshold
+  warnTH = config.warning.threshold
+  critMD = config.critical.mode
+  warnMD = config.warning.mode
+  normMD = config.normal.mode
+  graceP = config.normal.gracePeriod
   
-  
+end
+
+
+
+
+--if item == "Battery" or item == "BatteryNotFull" then
+  if item == "Battery" then
+
+  config = BatteryDefinition[typeBattery[context]]
+
+  critTH = config.criticalThreshold
+  warnTH = config.warningThreshold
+  critMD = config.announceCriticalMode
+  warnMD = config.announceWarningMode
+  normMD = config.announceNormalMode
+  graceP = config.graceperiod
+
+
+end
+
+
+if item == "BatteryNotFull" then
+
+  config = BatteryDefinition[typeBattery[context]]
+
+  critTH = config.notFullCriticalThreshold
+  warnTH = config.notFullWarningThreshold
+  critMD = config.announceNotFullCriticalMode
+  warnMD = config.announceNotFullWarningMode
+  normMD = "disable"
+  graceP = config.graceperiod
+
+
+end
+
   context = context or "global"
 
   local itemNameWithContext = context .. item
@@ -1404,21 +745,22 @@ local function checkChangedInterval(currentStatus, item, context)
   local itemStatus = statusTable[itemNameWithContext]
   local currentTime = getTime() / 100  -- Get current time in seconds
 
-  print("STCHDET: TEST Status:", currentStatus, "match:", config.warning.threshold, "Context:", context)
-  
+  print(string.format("DBGANO: Item: %s, Current Status: %s, Context: %s, Critical Threshold: %s, Warning Threshold: %s, Critical Mode: %s, Warning Mode: %s, Normal Mode: %s, Grace Period: %s",
+  item, tostring(currentStatus), context, tostring(critTH), tostring(warnTH), tostring(critMD), tostring(warnMD), tostring(normMD), tostring(graceP)))
+
   -- Determine severity and mode
-  local severity, mode = "normal", config.normal.mode
+  local severity, mode = "normal", normMD
   if type(currentStatus) == "number" then
-    if currentStatus <= config.critical.threshold then
-      severity, mode = "critical", config.critical.mode
-    elseif currentStatus <= config.warning.threshold then
-      severity, mode = "warning", config.warning.mode
+    if currentStatus <= critTH then
+      severity, mode = "critical", critMD
+    elseif currentStatus <= warnTH then
+      severity, mode = "warning", warnMD
     end
   elseif type(currentStatus) == "boolean" then
-    if currentStatus == config.warning.threshold then
-      severity, mode = "warning", config.warning.mode
-    elseif currentStatus == config.critical.threshold then
-      severity, mode = "critical", config.critical.mode
+    if currentStatus == warnTH then
+      severity, mode = "warning", warnMD
+    elseif currentStatus == critTH then
+      severity, mode = "critical", critMD
     end
   end
 
@@ -1441,7 +783,7 @@ local function checkChangedInterval(currentStatus, item, context)
       else
         local elapsedGracePeriod = currentTime - itemStatus.changeStartTime
         print(string.format("STCHDET: Elapsed grace period for item %s: %.2f seconds", item, elapsedGracePeriod), "Context:", context)
-        if elapsedGracePeriod >= config.normal.gracePeriod then
+        if elapsedGracePeriod >= graceP then
           -- Announce if grace period has passed (config.normal.gracePeriod is in seconds)
           announceNow = true
           print("STCHDET: Grace period passed for item:", item, "Announcing change", "Context:", context)
@@ -1481,11 +823,16 @@ local function doAnnouncements(context)
 
 
   checkChangedInterval(statusTele, "telemetry")
+
+
+  if  statusTele then -- do these only if telemetry true
+
   checkChangedInterval(cellMissing[context], "BatteryMissingCell", context)
   checkChangedInterval(valueVoltsPercentRemaining[context], "BatteryNotFull", context)
   checkChangedInterval(cellInconsistent[context], "CellDelta", context)
   checkChangedInterval(valueVoltsPercentRemaining[context], "Battery", context)
 
+  end
 
   
 
@@ -1577,14 +924,6 @@ local function doAnnouncements(context)
       end
       
       
-
-      --waiting for,wtf.wav
-      --Telemetry,tele.wav
-
-
-
-
-
       end
     else
       print("STCHDET: No announcements to be done.")
@@ -1592,12 +931,6 @@ local function doAnnouncements(context)
 
     
 end
-
--- -- Example usage
--- doAnnouncements("example_context")
-
-
-
 
 
   -- worst case scenario how events should be played on first init/tele
@@ -1618,170 +951,6 @@ end
 -- ####################################################################
 
 
--- -- ####################################################################
--- local function check_for_full_battery(voltageSensorValue)
---   -- check condition 1: at reset that all voltages > CellFullVoltage volts
--- 
---   --numberofcells = math.ceil(voltageSensorValue / CellFullVoltage)
---   --print("Number of Cells")
---   --print(numberofcells)
--- 
---   print("CHECK BAT FULL")
---   print(BatUsedmAh)
---   print(CheckBatNotFull)
--- 
---   if BatUsedmAh == 0 then -- BatUsedmAh is only 0 at reset
---     --print(string.format("CheckBatNotFull: %s type: %s", CheckBatNotFull, type(voltageSensorValue)))
---     if CheckBatNotFull then  -- global variable to gate this so this check is only done once after reset
---       playBatNotFullWarning = false
--- 
---       if (type(voltageSensorValue) == "table") then -- check to see if this is the dedicated voltage sensor
---         print("flvss cell detection")
---         for i, v in ipairs(voltageSensorValue) do
---           if v < CellFullVoltage then
---             --print(string.format("flvss i: %d v: %f", i,v))
---             playBatNotFullWarning = true
---             break
---           end
---         end
---         CheckBatNotFull = false  -- since we have done the check, set to false so it is not ran again
---       
---       elseif VoltageSensor == "VFAS" and type(voltageSensorValue) == "number" then --this is for the vfas sensor
--- 
---         -- numberofcells = voltageSensorValue / CellFullVoltage
---         -- print("Number of Cells")
---         -- print(numberofcells)
---       
---         print(string.format("vfas: %f", voltageSensorValue))
---         --(string.format("vfas value: %d", voltageSensorValue))
---         if voltageSensorValue < (CellFullVoltage - .001) then
---           --print("vfas cell not full detected")
---           playBatNotFullWarning = true
---         end
---         CheckBatNotFull = false  -- since we have done the check, set to false so it is not ran again
---       end
---       
---       if playBatNotFullWarning then
---         playFile(soundDirPath.."BNFull.wav")
---         playBatNotFullWarning = false
---       
---       end
---     
---     end -- CheckBatNotfull
---   end -- BatUsedmAh
--- end
-
--- ####################################################################
---local function check_for_full_battery(voltageSensorValue, thresh, expectedcells, BatLowVolt, BatHighVolt)
-  local function check_for_full_battery(context)
-
-    if batteryNotFull[context] == nil then -- only perform check once when status has not been determined yet ... otherwise do not waste time
-
--- check_for_full_battery(currentSensorVoltageValue[context], BatNotFullThresh[typeBattery[context]], countCell[context], batTypeLowHighValues[typeBattery[context]][1], batTypeLowHighValues[typeBattery[context]][2])
--- batteryNotFull
-
-    -- check condition 1: at reset that all voltages > CellFullVoltage volts
-
-  --numberofcells = math.ceil(voltageSensorValue / CellFullVoltage)
-  --print("Number of Cells")
-  --print(numberofcells)
-
-  local lowBat = false
-
-
-  if BatUsedmAh == 0 then -- BatUsedmAh is only 0 at reset -- todo
-    --print(string.format("CheckBatNotFull: %s type: %s", CheckBatNotFull, type(voltageSensorValue)))
-    --if CheckBatNotFull then  -- global variable to gate this so this check is only done once after reset
-      --playBatNotFullWarning = false
-
-      print("CHECK BAT FULL", type(currentSensorVoltageValue[context]))
-      print(BatUsedmAh)
-      print(CheckBatNotFull)
-    
-
-      if (type(currentSensorVoltageValue[context]) == "table") then -- check to see if this is the dedicated voltage sensor
-        print("flvss cell detection")
-        for i, v in ipairs(currentSensorVoltageValue[context]) do
-
-          --perc = findPercentRem( v )
-
-
-          perc = ((v - batTypeLowHighValues[typeBattery[context]][1]) / (batTypeLowHighValues[typeBattery[context]][2] - batTypeLowHighValues[typeBattery[context]][1])) * 100
-
-          print("FLVSS PERCENTAGE: ", perc)
-
-          if perc < BatNotFullThresh[typeBattery[context]] then
-            --print(string.format("flvss i: %d v: %f", i,v))
-            --playBatNotFullWarning = true
-            lowBat = true
-
-            --break
-          end
-        end
-        --CheckBatNotFull = false  -- since we have done the check, set to false so it is not ran again
-      
-      --elseif VoltageSensor == "VFAS" and type(voltageSensorValue) == "number" then --this is for the vfas sensor
-      elseif type(currentSensorVoltageValue[context]) == "number" then --this is for the vfas sensor
-
-        -- numberofcells = voltageSensorValue / CellFullVoltage
-        -- print("Number of Cells")
-        -- print(numberofcells)
-        celvolt = currentSensorVoltageValue[context] / countCell[context]
-
-        print("VFAS CELL VOLT CALC: ", celvolt)
-        print("VFAS CELL VOLT : ", currentSensorVoltageValue[context])
-        print("VFAS Expected Cells: ",countCell[context])
-
-        print("VFAS BAT LOW VOLT: ", batTypeLowHighValues[typeBattery[context]][1])
-        print("VFAS BAT HIGH VOLT: ", batTypeLowHighValues[typeBattery[context]][2])
-
-        perc = ((celvolt - batTypeLowHighValues[typeBattery[context]][1]) / (batTypeLowHighValues[typeBattery[context]][2] - batTypeLowHighValues[typeBattery[context]][1])) * 100
-
-        print("VFAS PERCENTAGE: ", perc)
-
-      
-        print(string.format("vfas: %f", currentSensorVoltageValue[context]))
-        --(string.format("vfas value: %d", voltageSensorValue))
-        if perc < BatNotFullThresh[typeBattery[context]] then
-          --print("vfas cell not full detected")
-          --playBatNotFullWarning = true
-          lowBat = true
-        end
-        --CheckBatNotFull = false  -- since we have done the check, set to false so it is not ran again
-      end
-      
-      --if playBatNotFullWarning then
-      --  --playFile(soundDirPath.."BNFull.wav")
---
-      --  queueSound("warning",0)
---
-      --  print("BATT NOT FULL WARN")
---
-      --  if battype == "m" then
-      --    queueSound("main",0)
-      --  else
-      --    queueSound("receiver",0)
-      --  end
---
-      --  queueSound("battery",0)
-      --  queueSound("notfull",0)
---
-      --  
-      --  --playBatNotFullWarning = false
-      --
-      --end
-    
-    --end -- CheckBatNotfull
-
-    batteryNotFull[context] = lowBat
-
-  end -- BatUsedmAh
-
-end
-
-end
-
-
 -- ####################################################################
 local function check_cell_delta_voltage(context)
   -- Check to see if all cells are within VoltageDelta volts of each other
@@ -1790,6 +959,8 @@ local function check_cell_delta_voltage(context)
   --   check_cell_delta_voltage(currentSensorVoltageValue[context])
 -- cellInconsistent[context]
 
+local vDelta = BatteryDefinition[typeBattery[context]].cellDeltaVoltage
+
   if (type(currentSensorVoltageValue[context]) == "table") then -- check to see if this is the dedicated voltage sensor
 
     cellInconsistent[context] = false
@@ -1797,7 +968,7 @@ local function check_cell_delta_voltage(context)
     for i, v1 in ipairs(currentSensorVoltageValue[context]) do
       for j,v2 in ipairs(currentSensorVoltageValue[context]) do
         -- print(string.format("i: %d v: %f j: %d v: %f", i, v1, j,v2))
-        if i~=j and (math.abs(v1 - v2) > VoltageDelta) then
+        if i~=j and (math.abs(v1 - v2) > vDelta) then
           --print(string.format("i: %d v: %f j: %d v: %f", i, v1, j,v2))
           --timeElapsed = HasSecondsElapsed(10)  -- check to see if the 10 second timer has elapsed
           --if PlayFirstInconsistentCellWarning or (PlayInconsistentCellWarning == true and timeElapsed) then -- Play immediately upon detection and then every 10 seconds
@@ -1823,6 +994,7 @@ local function check_for_missing_cells(context)
     -- check_for_missing_cells(currentSensorVoltageValue[context], countCell[context])
     -- local function check_for_missing_cells(voltageSensorValue, expectedCells )
 
+local CfullVolt = BatteryDefinition[typeBattery[context]].highVoltage
 
   -- If the number of cells detected by the voltage sensor does not match the value in GV6 then play the warning message
   -- This is only for the dedicated voltage sensor
@@ -1845,7 +1017,7 @@ local function check_for_missing_cells(context)
       end
     --elseif VoltageSensor == "VFAS" and type(currentSensorVoltageValue[context]) == "number" then --this is for the vfas sensor
     elseif type(currentSensorVoltageValue[context]) == "number" then --this is for the vfas sensor
-      CellsDetectedCurrent[context] = math.ceil( currentSensorVoltageValue[context] / ( CellFullVoltage + 0.3) )
+      CellsDetectedCurrent[context] = math.ceil( currentSensorVoltageValue[context] / ( CfullVolt + 0.3) ) --todo 0.3 ??
       --CellsDetectedCurrent[context] = math.floor( currentSensorVoltageValue[context] / 3.2 )
       --if (countCell[context] * 3.2) > (currentSensorVoltageValue[context]) then
         if CellsDetectedCurrent[context] ~= countCell[context]  then
@@ -1855,26 +1027,12 @@ local function check_for_missing_cells(context)
       end
     end
 
-    --if missingCellDetected then
-    --  --print("tableSize =~= CellCount: missing cell detected")
-    --  timeElapsed = HasSecondsElapsed(10)
-    --  if PlayFirstMissingCellWarning or (PlayMissingCellWarning and timeElapsed) then -- Play immediately and then every 10 seconds
-    --    --playFile(soundDirPath.."mcw.wav")
-    --    queueSound("mcw",2)
---
-    --    --print("play missing cell wav")
-    --    PlayMissingCellWarning = false
-    --    PlayFirstMissingCellWarning = false
-    --  end
-    --  if not timeElapsed then  -- debounce so the sound is only played once in 10 seconds
-    --    PlayMissingCellWarning = true
-    --  end
-    --end
+
 
     -- cellMissing[context] = missingCellDetected
     cellMissing[context] =  CellsDetectedCurrent[context]  - countCell[context]
 
-    if not cellMissing[context] then
+    if cellMissing[context] == 0 then
       CellsDetected[context] = true
     end
 
@@ -1883,74 +1041,6 @@ local function check_for_missing_cells(context)
 
 end
 
-
--- ####################################################################
-local function voltage_sensor_tests(context)
-  -- 1. at reset check to see that the cell voltage is > 4.1 for all cellSum
-  -- 2. check to see that all cells are within VoltageDelta volts of each other
-  -- 3. if number of cells are set in GV6, check to see that all are showing voltage
-
-
-
-  --print("check_initial_battery_voltage")
-  -- disabled --if VoltageSensor ~= "" then
-    --print("getting VoltageSensor data")
-    -- disabled --cellResult = getValue( VoltageSensor )
-
-    -- check condition 1: at reset that all voltages > 4.0 volts
-    --check_for_full_battery(cellResult, MainBatNotFullThresh, CellCount, LipoBatLowVolt, LipoBatHighVolt, "m")
-    if BatNotFullWarn[context] == nil then
-      BatNotFullWarn[context] = check_for_full_battery(currentSensorVoltageValue[context], BatNotFullThresh[typeBattery[context]], countCell[context], batTypeLowHighValues[typeBattery[context]][1], batTypeLowHighValues[typeBattery[context]][2])
-    end
-
-    -- check condition 2: delta voltage
-      check_cell_delta_voltage(currentSensorVoltageValue[context])
-
-    -- check condition 3: all cells present
-      check_for_missing_cells(currentSensorVoltageValue[context], countCell[context])
-  -- disabled --end
-
-  -- disabled -- if RxBatVoltSensor ~= "" then
-  -- disabled --   --print("getting VoltageSensor data")
-  -- disabled --   cellResult = getValue( RxBatVoltSensor )
--- disabled -- 
-  -- disabled --   -- check condition 1: at reset that all voltages > 4.0 volts
-  -- disabled --   --check_for_full_battery(cellResult, RxBatNotFullThresh, RXCellCount, RxBatLowVolt, RxBatHighVolt, "r" )
-  -- disabled --   if BatNotFullWarn["receiver"] == nil then
-  -- disabled --     BatNotFullWarn["receiver"] = check_for_full_battery(cellResult, RxBatNotFullThresh, RXCellCount, batTypeLowHighValues[rxbatType][1], batTypeLowHighValues[rxbatType][2], "r" )
-  -- disabled --   end
-  -- disabled --   -- check condition 2: delta voltage
-  -- disabled --     check_cell_delta_voltage(cellResult)
--- disabled -- 
-  -- disabled --   -- check condition 3: all cells present
-  -- disabled --     check_for_missing_cells(cellResult, RXCellCount)
-  -- disabled -- end
-
-  CheckBatNotFull = false  -- since we have done the check, set to false so it is not ran again
-  playBatNotFullWarning = false
-
-end
-
-
-local function printHumanReadableTable(tbl, indent)
-  indent = indent or 0
-  local function indentStr(level)
-      return string.rep("  ", level)
-  end
-
-  for key, value in pairs(tbl) do
-      local keyStr = tostring(key)
-      local valueStr = tostring(value)
-
-      if type(value) == "table" then
-          print(indentStr(indent) .. "TBLDBG: " .. keyStr .. " = {")
-          printHumanReadableTable(value, indent + 1)
-          print(indentStr(indent) .. "TBLDBG: }")
-      else
-          print(indentStr(indent) .. "TBLDBG: " .. keyStr .. " = " .. valueStr)
-      end
-  end
-end
 
 
 
@@ -1976,29 +1066,77 @@ typeBattery = {}
 typeBattery["main"]           = modelDetails.BattType.main
 typeBattery["receiver"]       = modelDetails.BattType.receiver
 
-if typeBattery["receiver"] == "buffer" then --todo the user may name this differently ... like buffer1, buffer2 for different buffer packs ... add a category to BatteryTypeDefaults for buffer and not rely on the name itself
+-- we are manipulating the battery definitions at runtime when the model is loaded ... let's work on a copy 
+BatteryDefinition = BatteryTypeDefaults
 
-  local low = BatteryTypeDefaults.buffer.lowVoltage / 2
-  local high = rxReferenceVoltage / 2
 
-    BatteryTypeDefaults.buffer.dischargeCurve = calculateLinearDischargeCurve(low, high)
+if BatteryDefinition[typeBattery["main"]].lowVoltage == nil then
+BatteryDefinition[typeBattery["main"]].lowVoltage = 3.27 --todo is this wise todo ?
+end
+
+if BatteryDefinition[typeBattery["main"]].highVoltage == nil then
+BatteryDefinition[typeBattery["main"]].highVoltage = 4.2 --todo is this wise todo ?
+end
+
+if BatteryDefinition[typeBattery["main"]].dischargeCurve == nil then -- we have no discharge curve .... lets build a linear one at runtime
+
+ print("NO DISCHARGE CURVE FOR MAIN")
+ local low = BatteryDefinition[typeBattery["main"]].lowVoltage
+ local high = BatteryDefinition[typeBattery["main"]].highVoltage
+
+ BatteryDefinition[typeBattery["main"]].dischargeCurve = calculateLinearDischargeCurve(low, high)
 
 end
 
-if typeBattery["receiver"] == "beconly" then --todo the user may name this differently ... like beconly1, beconly2 for different beconly configs ... add a category to BatteryTypeDefaults for buffer and not rely on the name itself
 
-  local low = BatteryTypeDefaults.beconly.lowVoltage / 2
-  local high = rxReferenceVoltage / 2
 
-    BatteryTypeDefaults.beconly.dischargeCurve = calculateLinearDischargeCurve(low, high)
+if BatteryDefinition[typeBattery["receiver"]].lowVoltage == nil  then
+ if BatteryDefinition[typeBattery["receiver"]].isNotABattery then
+ BatteryDefinition[typeBattery["receiver"]].lowVoltage = 6 --todo is this wise todo ?
+ else
+  BatteryDefinition[typeBattery["receiver"]].lowVoltage = 3.27
+ end
+end
+
+if BatteryDefinition[typeBattery["receiver"]].highVoltage == nil  then
+ if BatteryDefinition[typeBattery["receiver"]].isNotABattery then
+ BatteryDefinition[typeBattery["receiver"]].highVoltage = rxReferenceVoltage
+ else
+  BatteryDefinition[typeBattery["receiver"]].highVoltage = 4.2
+ end
+end
+
+
+if BatteryDefinition[typeBattery["receiver"]].isNotABattery then
+
+BatteryDefinition[typeBattery["receiver"]].lowVoltage  = BatteryDefinition[typeBattery["receiver"]].lowVoltage / 2
+BatteryDefinition[typeBattery["receiver"]].highVoltage = BatteryDefinition[typeBattery["receiver"]].highVoltage / 2
 
 end
+
+
+
+if BatteryDefinition[typeBattery["receiver"]].dischargeCurve == nil  then-- we have no discharge curve .... lets build a linear one at runtime
+
+print("NO DISCHARGE CURVE FOR RECEIVER")
+
+local low = BatteryDefinition[typeBattery["receiver"]].lowVoltage
+local high = BatteryDefinition[typeBattery["receiver"]].highVoltage
+
+BatteryDefinition[typeBattery["receiver"]].dischargeCurve = calculateLinearDischargeCurve(low, high)
+
+end
+
 
  
 
 -- Call the function to update the config
-updateAnnouncementConfig(announcementConfig, BatteryTypeDefaults, typeBattery["main"], typeBattery["receiver"])
+--updateAnnouncementConfig(announcementConfig, BatteryTypeDefaults, typeBattery["main"], typeBattery["receiver"])
 
+
+printHumanReadableTable(announcementConfig)
+
+printHumanReadableTable(BatteryDefinition)
 
 
   contexts = {}
@@ -2117,6 +1255,7 @@ updateAnnouncementConfig(announcementConfig, BatteryTypeDefaults, typeBattery["m
   batteryNotFull["receiver"] = nil -- nil means not determined yet / on init
 
 
+  statusTele = false
 
   switchReset                   = modelDetails.resetSwitch
   --statusTele                    = modelDetails.telemetryStatus
@@ -2139,20 +1278,6 @@ updateAnnouncementConfig(announcementConfig, BatteryTypeDefaults, typeBattery["m
 
   batCheckPassed = false
 
-
---todo remove/change  
-  VoltsNow = 0
-  VoltsMax = 0
-  VoltsLow = 0
-  RxVoltsNow = 0
-  RxVoltsMax = 0
-  RxVoltsLow = 0
-  MainAmpsNow  = 0
-  MainAmpsLow  = 0
-  MainAmpsHigh = 0
-  RxAmpsNow  = 0
-  RxAmpsLow  = 0
-  RxAmpsHigh = 0
 
 
 
@@ -2193,74 +1318,17 @@ updateAnnouncementConfig(announcementConfig, BatteryTypeDefaults, typeBattery["m
 
   
   -- Called once when model is loaded
-  BatCapFullmAh = model.getGlobalVariable(GVBatCap, GVFlightMode) * 100
+  --BatCapFullmAh = model.getGlobalVariable(GVBatCap, GVFlightMode) * 100
   -- BatCapmAh = BatCapFullmAh
-  BatCapmAh = BatCapFullmAh * (100-CapacityReservePercent)/100
-  BatRemainmAh = BatCapmAh
+  --BatCapmAh = BatCapFullmAh * (100-CapacityReservePercent)/100
+  --BatRemainmAh = BatCapmAh
   --CellCount = model.getGlobalVariable(GVCellCount, GVFlightMode)
 
+  BatRemainmAh = 0 -- todo
 
-  BatNotFullWarn = {}
-  BatNotFullWarn["main"]   = nil
-  BatNotFullWarn["receiver"]   = nil
+  BatRemPer = 0 -- todo remove
 
-
-
-  CellCount = 0
-  RXCellCount = 0
-
-  VoltsPercentRem = 0
-  rxVoltsPercentRem = 0
-
-  BatRemPer = 0
-  RxBatRemPer = 0
-  AtZeroPlayedCount = 0
-  if (mAhSensor == "") or (BatCapmAh == 0) then
-    UseVoltsNotmAh = true
-  else
-    UseVoltsNotmAh = false
-  end
 end
-
--- -- ####################################################################
--- local function reset_if_needed()
---   -- test if the reset switch is toggled, if so then reset all internal flags
---   if SwReset ~= "" then -- Update switch position
--- 
---     --local SwA = "sg"
---     --local SwB = "sh"
--- 
---     --local swValue = getValue(SwReset) -- a value of -1024, 0 or 1024
--- 
---     --print(getValue(SwA))
---     --print(getValue(SwReset))
--- 
---     if ResetDebounced and HasSecondsElapsed(2) and -1024 ~= getValue(SwReset) then -- reset switch
---       print("reset switch toggled")
---       CheckBatNotFull = true
---       StartTime = nil
---       PlayInconsistentCellWarning = true
---       PlayFirstMissingCellWarning = true
---       PlayMissingCellWarning = true
---       PlayFirstInconsistentCellWarning = true
---       InconsistentCellVoltageDetected = false
--- 
---       PlayRxBatFirstWarning = true
---       PlayRxBatWarning = false
--- 
---       VoltageHistory = {}
---       ResetDebounced = false
---       VoltsNow = 0
---       MaxWatts = "-----"
---       MaxAmps = "-----"
---       --print("reset event")
---     end
---     if not HasSecondsElapsed(2) then
---       --print("debounced")
---       ResetDebounced = true
---     end
---   end
--- end
 
 -- ####################################################################
 local function reset_if_needed()
@@ -2294,49 +1362,7 @@ local function reset_if_needed()
 
     end
 
-    --if AutomaticResetOnNextChange then
-    --  -- Perform the reset actions
-    --  AutomaticResetStateChangeCount = AutomaticResetStateChangeCount + 1
-    --  print("RESET: RESETTING")
---
-    --  -- Add your reset actions here
-    --  -- Example: Reset flags, counters, etc.
-    --  AutomaticResetOnNextChange = false
-    --  return
-    --end
 
-
-    --if AutomaticResetStateChangeCount > 2 and not Timer("resetdelay", AutomaticResetOnResetSwitchToggle) then
-    --  print(string.format("RESET: delay at count: %s ", AutomaticResetStateChangeCount ))
-    ----    -- Timer(device) -- start timer -- timer already started by the if statement above
-    --return
-    --end
-    -- # if not Timer("resetdelay", AutomaticResetOnResetSwitchToggle) then
-    -- #   print("RESET: NOT reseting yet ... within delay")
-    -- #   --AutomaticResetOnResetPrevState = ResetSwitchState
-    -- #   --TriggerTimers["resetdelay"] = getTime()
-    -- #   return
-    -- # end
-
- --          -- If we have reached here and the timer has expired before, we mark to reset on next change
- --          if not Timer("resetdelay", AutomaticResetOnResetSwitchToggle) then
- --            --AutomaticResetOnNextChange = true
- --            print("RESET: NOT reseting yet ... within delay")
- --            TriggerTimers["resetdelay"] = getTime()
- --            return
- --        end
-
- --                -- Start or restart the timer on state change
- --      --TriggerTimers["resetdelay"] = getTime()
- --      --print("RESET: Timer started or reset")
-
- --  --AutomaticResetStateChangeCount = AutomaticResetStateChangeCount + 1
-
- --  print("RESET: Delay passed, will reset on next change")
----
- --  AutomaticResetOnNextChange = true
-
- --end
 
   if ResetSwitchState  and AutomaticResetOnNextChange then
     --return
@@ -2347,38 +1373,10 @@ local function reset_if_needed()
 
     TriggerTimers["resetdelay"] = 0
 
-    -- if AutomaticResetStateChangeCount < 10 then
-    --   return
-    -- end
-
-    -- if CurrentBatLevelPerc[device] ~= perc and not Timer(device.."delay", batTriggerDelay) and CurrentBatLevelPerc[device] ~= nil then
-    --   print(string.format("PPR DEBUG: delay at perc: %s ... state: %s device: %s", perc, currentState, device ))
-    --    -- Timer(device) -- start timer -- timer already started by the if statement above
-    --   return
-    -- end
-  
-  --  test = model.getCustomFunction(FUNC_SCREENSHOT)
-  --  print("TEST:", test)
---
-  --  for key, value in pairs(test) do
-  --    print(string.format("TEST KEY: %s VALUE: %s",key, value))
-  --end
-
-    --local SwA = "sg"
-    --local SwB = "sh"
-
-    --local swValue = getValue(SwReset) -- a value of -1024, 0 or 1024
-
-
- 
-
-    --print(getValue(SwA))
-    --print(getValue(SwReset))
-
     --if ResetDebounced and HasSecondsElapsed(2) and -1024 ~= getValue(SwReset) then -- reset switch
       --print("RESET")
       CheckBatNotFull = true
-      StartTime = nil
+      --StartTime = nil
       PlayInconsistentCellWarning = true --todo
       PlayFirstMissingCellWarning = true --todo
       PlayMissingCellWarning = true --todo
@@ -2405,40 +1403,28 @@ local function reset_if_needed()
       -- CellsDetected = false
 
 
-      VoltsNow = 0
-      VoltsMax = 0
-      VoltsLow = 0
-
-      RxVoltsNow = 0
-      RxVoltsMax = 0
-      RxVoltsLow = 0
-
-      MainAmpsNow  = 0
-      MainAmpsLow  = 0
-      MainAmpsHigh = 0
-
-      RxAmpsNow  = 0
-      RxAmpsLow  = 0
-      RxAmpsHigh = 0
 
       FirstModelInit = true -- todo maybe there is a better place to put this ... maybe init ?
 
-      
-      --print("reset event")
-    --end
-    --if not HasSecondsElapsed(2) then
-      --print("debounced")
-    --  ResetDebounced = true
-    --end
+
   end
 end
 
 
 -- ####################################################################
 local function checkForTelemetry()
-  statusTele = getSwitchValue(idstatusTele)
 
-  if not statusTele then
+  local currentStatusTele = getSwitchValue(idstatusTele)
+
+
+
+
+  if not statusTele and currentStatusTele and not Timer("telegrace", 2) then
+    print("TELEDELAY:")
+    return
+  end
+
+  if not currentStatusTele then
     currentVoltageValueCurrent["main"]     = "--.--"
     currentCurrentValueCurrent["main"]     = "--.--"
 
@@ -2448,6 +1434,11 @@ local function checkForTelemetry()
   else
     preFlightStatusTele = "OK"
   end
+
+  TriggerTimers["telegrace"] = 0
+
+  statusTele = getSwitchValue(idstatusTele)
+
 
 end
 
@@ -2517,135 +1508,6 @@ local function updateSensorValues(context)
   -- if VoltsNow < 1 or volts > 1 then
   --   VoltsNow = volts
   -- end
-
-end
-
--- ####################################################################
--- local function updateTelemetryStatus()
--- 
---  statusTele = getSwitchValue(idstatusTele)
--- 
---  print("TELEMETRY STATUS: ", statusTele)
--- 
--- end
-
--- ####################################################################
-local function checkTelemetryAndBatteryCells(context)
-
-  print("DBG: ", CellsDetected[context])
-
-
-  if not CellsDetected[context] and ResetSwitchState then
-
-
-    -- RX Battery
-    --volsenval = getValue( RxBatVoltSensor )
-
-    if (type(currentSensorVoltageValue[context]) == "table") then
-      numberofcells = #currentSensorVoltageValue[context]
-    else
-      numberofcells = math.ceil( currentSensorVoltageValue[context] / CellFullVoltage )
-    end
-  
-
-    -- print("checkTelemetryAndBatteryCells Voltage")
-    -- print(currentSensorVoltageValue[context])
--- 
-    -- print("checkTelemetryAndBatteryCells Number of Cells")
-    -- print(numberofcells)
-
-
-
-    -- -- battery
-    -- volsenval = getValue( VoltageSensor )
-    -- print("TABLE pre:", volsenval)
--- 
-    -- if (type(volsenval) == "table") then
-    --   numberofcells = #volsenval
-    -- else
-    --   numberofcells = math.ceil( volsenval / CellFullVoltage )
-    -- end
--- 
-    -- print("Voltage")
-    -- print(volsenval)
--- 
-    -- print("Number of Cells")
-    -- print(numberofcells)
-
-    --CellCount = numberofcells
---
-    --RXCellCount = numberofRXcells
-
-    -- mainvolts = getCellVoltage(VoltageSensor)
-    -- rxvolts = getCellVoltage(RxBatVoltSensor)
-
-    print(string.format("CTAB: Cell Count: %s expected: %s sensor value: %s cellcounttype: %s expected type: %s",numberofcells, countCell[context],currentSensorVoltageValue[context],type(numberofcells),type(countCell[context])))
-
-    if numberofcells > 0 and numberofcells == countCell[context] then 
-
-      --Timer("initdone") --todo place this at a better place ... maybe tele reset or init_func
-
-      -- CurrentBatLevelPerc = {}			-- updated in PlayPercentRemaining
-
-      -- todo add timers here to wait for init announcements to finish maybe for loop until timer has ended
-      CellsDetected[context] = true
-      -- playFile(soundDirPath.."main.wav")
-      -- playFile(soundDirPath.."battery.wav")
-      -- playNumber(numberofcells, 0, 0 ,5 )
-      -- playFile(soundDirPath.."cellbatdetect.wav")
-      -- playNumber(mainvolts, 1, 0 ,5 )
-
-      -- screenshot(1)
-
-      t = 7
-      queueSound(context, 0)
-      queueSound("battery", 0)
-      queueNumber(numberofcells, 0, 0, 0)
-      queueSound("cellbatdetect", 0)
-      queueNumber(currentVoltageValueLatest[context], 1, 0, t)
-
-      detectedBattery[context] = true
-      detectedBatteryValid[context] = true
-
-      --queueSound("receiver", 0)
-      --queueSound("battery", 0)
-      --queueNumber(numberofRXcells, 0, 0, 0)
-      --queueSound("cellbatdetect", 0)
-      --queueNumber(rxvolts, 1, 0, t)
-
-
-      --wait(5)
-
-      -- todo ...  ... Batt not full truncated if below enabled ???
-      -- todo ...  ... batt levels not played immediately after cell detect
-
-      -- playFile(soundDirPath.."receiver.wav")
-      -- playFile(soundDirPath.."battery.wav")
-      -- playNumber(numberofRXcells, 0, 0 ,5 )
-      -- playFile(soundDirPath.."cellbatdetect.wav")
-      -- playNumber(rxvolts, 1, 0 ,5 )
-
-      --wait(5)
-     elseif numberofcells > 0 and numberofcells ~= countCell[context] then
-       -- todo repeat warning
-       t = 5 
-       queueSound("critical", 0)
-       queueSound(context, 0)
-       queueSound("battery", 0)
-       queueSound("icw", t )
- 
-       print(string.format("ICW: Cell Count: %s expected: %s",numberofcells, countCell[context]))
- 
-       detectedBattery[context] = true
- 
- 
-       --queueNumber(numberofcells, 0, 0, 0)
-       --queueSound("cellbatdetect", 0)
-       --queueNumber(currentVoltageValueLatest[context], 1, 0, t)
- 
-    end
-
-  end
 
 end
 
@@ -2745,38 +1607,7 @@ local function bg_func()
 
   print("Current Context:", currentContext)
 
-  --if HasSecondsElapsed(1) then
-  --  return
-  --end
 
-  --local idBup = getSwitchIndex("SA" .. CHAR_UP)
-  --local idBdown = getSwitchIndex("SA" .. CHAR_DOWN)
-  --local idBmid = getSwitchIndex("SA-")
-  --
-  --local swBup = getSwitchValue(idBup)
-  --local swBdown = getSwitchValue(idBdown)
-  --local swBmid = getSwitchValue(idBmid)
---
-  --local swval = getValue("sa")
-
-
-  -- test = table.concat(modelDetails.VoltageSensor["main"])
-  -- 
-  -- print("TEST2:", test)
-
-
-
--- testid = getSwitchIndex("6POS1")
--- 
--- testval = getSwitchValue(testid)
--- 
--- test3 = getValue("6pos")
--- 
--- print("TEST1:", testid)
--- print("TEST2:", testval)
--- print("TEST3:", test3)
-
--- updateTelemetryStatus()
 processQueue()
 
 checkForTelemetry()
@@ -2784,240 +1615,25 @@ checkForTelemetry()
 switchAnnounce()
 
 
-
-
--- print("TELE VALUE: ", getSwitchValue(idswitchReset))
--- 
--- ResetSwitchState = getSwitchValue(idswitchReset)
--- resetSwitch_ID
-
--- reset if needed
   reset_if_needed() -- test if the reset switch is toggled, if so then reset all internal flags
   
- -- tele_ON = getSwitchValue(resetSwitch_ID)
-
- -- for the current context
-
 
  if statusTele then -- if we have no telemetry .... don't waste time doing anything that requires telemetry
 
   updateSensorValues(currentContext)
 
-
-  -- make sure we have cells/voltage availablwe
-
-
-  -- checkTelemetryAndBatteryCells(currentContext)
-
-  -- queueSound("main", 5)
-  -- queueNumber(12, 0, 0, 5)
-
-  --print("RXBAT")
-  --print(getValue("RxBt"))
-
-  -- Check in battery capacity was changed
-  -- disabled -- if BatCapFullmAh ~= model.getGlobalVariable(GVBatCap, GVFlightMode) * 100 then
-  -- disabled --   init_func()
-  -- disabled -- end
-
-  -- mahSensor
-  -- disabled -- if mAhSensor ~= "" then
-  -- disabled --   BatUsedmAh = getValue(mAhSensor)
-  -- disabled --   if (BatUsedmAh == 0) and CanCallInitFuncAgain then
-  -- disabled --     -- BatUsedmAh == 0 when Telemetry has been reset or model loaded
-  -- disabled --     -- BatUsedmAh == 0 when no battery used which could be a long time
-  -- disabled --     --	so don't keep calling the init_func unnecessarily.
-  -- disabled --     init_func()
-  -- disabled --     CanCallInitFuncAgain = false
-  -- disabled --   elseif BatUsedmAh > 0 then
-  -- disabled --     -- Call init function again when Telemetry has been reset
-  -- disabled --     CanCallInitFuncAgain = true
-  -- disabled --   end
-  -- disabled --   BatRemainmAh = BatCapmAh - BatUsedmAh
-  -- disabled -- end -- mAhSensor ~= ""
-
-
-
-  -- get voltages and bat percentages
-
-  -- disabled --         if VoltageSensor ~= "" then
-  -- disabled --           --volts = getCellVoltage(VoltageSensor)
-  -- disabled --           volts = getCellVoltage(currentSensorVoltageValue[currentContext])
-  -- disabled --           --if VoltsNow < 1 or volts > 1 then
-  -- disabled --           --  VoltsNow = volts
-  -- disabled --           --end
-  -- disabled --           --VoltsNow = getCellVoltage(VoltageSensor)
-  -- disabled --           
-  -- disabled --           --VoltsMax = getCellVoltage(VoltageSensor.."+", VoltsMax)
-  -- disabled --           --VoltsLow = getCellVoltage(VoltageSensor.."-", VoltsLow)
--- disabled --         
-  -- disabled --           print("DBG vol sen: ", currentSensorVoltageValue[currentContext] )
-  -- disabled --           print("DBG: ", volts )
--- disabled --         
-  -- disabled --           if VoltsNow < 1 or volts > 1 then
-  -- disabled --             VoltsNow = volts
-  -- disabled --           end
--- disabled --         
-  -- disabled --           if VoltsMax < 1 or volts > VoltsMax then
-  -- disabled --             VoltsMax = volts
-  -- disabled --           end
--- disabled --         
-  -- disabled --           if VoltsLow < 1 or volts < VoltsLow then
-  -- disabled --             VoltsLow = volts
-  -- disabled --           end
--- disabled --         
--- disabled --         
-  -- disabled --           getMaxWatts(CurrentSensor)
--- disabled --         
-  -- disabled --           amps  = getAmp(CurrentSensor)
-  -- disabled --           --MainAmpsLow  = getAmp(CurrentSensor.."-", MainAmpsLow)
-  -- disabled --           --MainAmpsHigh = getAmp(CurrentSensor.."+", MainAmpsHigh)
--- disabled --         
--- disabled --         
-  -- disabled --           if MainAmpsNow < 1 or amps > 0.00001 then
-  -- disabled --             MainAmpsNow = amps
-  -- disabled --           end
--- disabled --         
-  -- disabled --           if MainAmpsHigh < 1 or amps > MainAmpsHigh then
-  -- disabled --             MainAmpsHigh = amps
-  -- disabled --           end
--- disabled --         
-  -- disabled --           if MainAmpsLow < 1 or amps < MainAmpsLow then
-  -- disabled --             MainAmpsLow = amps
-  -- disabled --           end
--- disabled --         
--- disabled --         
-  -- disabled --           --CellCount = math.ceil(VoltsMax / 4.25)
-  -- disabled --           if CellCount > 0 then
-  -- disabled --             VoltsPercentRem  = findPercentRem( VoltsNow/CellCount,  mainbattype)
-  -- disabled --             print("GOT BAT PERC")
-  -- disabled --             print(VoltsPercentRem)
-  -- disabled --           end
-  -- disabled --         end
--- disabled --         
--- disabled --         
-  -- disabled --         if RxBatVoltSensor ~= "" then
-  -- disabled --           --volts = getCellVoltage(RxBatVoltSensor)
-  -- disabled --           volts = getCellVoltage(currentSensorVoltageValue[currentContext])
--- disabled --         
-  -- disabled --           --if RxVoltsNow < 1 or volts > 1 then
-  -- disabled --           --  RxVoltsNow = volts
-  -- disabled --           --end
-  -- disabled --           --VoltsNow = getCellVoltage(VoltageSensor)
-  -- disabled --           -- RxVoltsMax = getCellVoltage(RxBatVoltSensor.."+", RxVoltsMax)
-  -- disabled --           -- RxVoltsLow = getCellVoltage(RxBatVoltSensor.."-", RxVoltsLow)
--- disabled --         
--- disabled --         
-  -- disabled --           if RxVoltsNow < 1 or volts > 1 then
-  -- disabled --             RxVoltsNow = volts
-  -- disabled --           end
--- disabled --         
-  -- disabled --           if RxVoltsMax < 1 or volts > RxVoltsMax then
-  -- disabled --             RxVoltsMax = volts
-  -- disabled --           end
--- disabled --         
-  -- disabled --           if RxVoltsLow < 1 or volts < RxVoltsLow then
-  -- disabled --             RxVoltsLow = volts
-  -- disabled --           end
--- disabled --         
--- disabled --         
-  -- disabled --           
-  -- disabled --           -- TODO make this cleaner
-  -- disabled --           getMaxWatts(RxBatCurrSensor)
--- disabled --         
-  -- disabled --           amps  = getAmp(RxBatCurrSensor)
-  -- disabled --           --xAmpsLow  = getAmp(RxBatCurrSensor.."-", RxAmpsLow)
-  -- disabled --           --xAmpsHigh = getAmp(RxBatCurrSensor.."+", RxAmpsHigh)
--- disabled --         
--- disabled --         
-  -- disabled --           if RxAmpsNow < 1 or amps > 0.00001 then
-  -- disabled --             RxAmpsNow = amps
-  -- disabled --           end
--- disabled --         
-  -- disabled --           if RxAmpsHigh < 1 or amps > RxAmpsHigh then
-  -- disabled --             RxAmpsHigh = amps
-  -- disabled --           end
--- disabled --         
-  -- disabled --           if RxAmpsLow < 1 or amps < RxAmpsLow then
-  -- disabled --             RxAmpsLow = amps
-  -- disabled --           end
--- disabled --         
--- disabled --         
--- disabled --         
-  -- disabled --           --CellCount = math.ceil(VoltsMax / 4.25)
-  -- disabled --           if RXCellCount > 0 then
-  -- disabled --             rxVoltsPercentRem  = findPercentRem( RxVoltsNow/RXCellCount, rxbatType )
-  -- disabled --             print("GOT RX BAT PERC:", rxVoltsPercentRem)
-  -- disabled --           end
-  -- disabled --         end
-
-
-
-
-  -- if not ResetSwitchState or not CellsDetected[currentContext] then
-  --   return
-  -- end
-
-  --check_rxbat()
-
-  -- Update battery remaining percent
- -- disabled --  if UseVoltsNotmAh then
- -- disabled --    BatRemPer = VoltsPercentRem - CapacityReservePercent
- -- disabled --    --elseif BatCapFullmAh > 0 then
- -- disabled --  elseif BatCapmAh > 0 then
- -- disabled --    -- BatRemPer = math.floor( (BatRemainmAh / BatCapFullmAh) * 100 ) - CapacityReservePercent
- -- disabled --    BatRemPer = math.floor( (BatRemainmAh / BatCapFullmAh) * 100 )
- -- disabled --  end
-
-
-  -- disabled -- -- Update RX battery remaining percent
-  -- disabled -- if UseVoltsNotmAh then
-  -- disabled --   RxBatRemPer = rxVoltsPercentRem - CapacityReservePercent
-  -- disabled --   --elseif BatCapFullmAh > 0 then
-  -- disabled -- elseif BatCapmAh > 0 then
-  -- disabled --   -- BatRemPer = math.floor( (BatRemainmAh / BatCapFullmAh) * 100 ) - CapacityReservePercent
-  -- disabled --   RxBatRemPer = math.floor( (BatRemainmAh / BatCapFullmAh) * 100 )
-  -- disabled -- end
-
-  -- voltage_sensor_tests(currentContext)
-
-  -- check_for_missing_cells(currentSensorVoltageValue[currentContext], countCell[currentContext])
   check_for_missing_cells(currentContext)
 
   if cellMissing[currentContext] == 0 then -- if cell number is fine we have got voltage and can do the rest of the checks
 
   -- check_for_full_battery(currentSensorVoltageValue[currentContext], BatNotFullThresh[typeBattery[currentContext]], countCell[currentContext], batTypeLowHighValues[typeBattery[currentContext]][1], batTypeLowHighValues[typeBattery[currentContext]][2])
-  check_for_full_battery(currentContext)
+  -- check_for_full_battery(currentContext)
 
   check_cell_delta_voltage(currentContext)
 
   end
 
 
-  --if AnnouncePercentRemaining and Timer("initdone", initTime) then -- don't announce anything until init is done
--- disabled --   if AnnouncePercentRemaining and valueVoltsPercentRemaining[currentContext] ~= 0 then -- don't announce anything until init is done
--- disabled --   -- CheckPercentRemaining(BatRemPer, mainbattype, "main")
--- disabled --   -- CheckPercentRemaining(RxBatRemPer, rxbatType, "receiver")
--- disabled -- 
--- disabled --   CheckPercentRemaining(valueVoltsPercentRemaining[currentContext], typeBattery[currentContext], currentContext)
--- disabled -- 
--- disabled --   -- valueVoltsPercentRemaining[context]
--- disabled --   
--- disabled -- 
--- disabled -- end
-
-  -- disabled -- if WriteGVBatRemmAh == true then
-  -- disabled --   model.setGlobalVariable(GVBatRemmAh, GVFlightMode, math.floor(BatRemainmAh/100))
-  -- disabled -- end
--- disabled -- 
-  -- disabled -- if WriteGVBatRemPer == true then
-  -- disabled --   model.setGlobalVariable(GVBatRemPer, GVFlightMode, BatRemPer)
-  -- disabled -- end
-  --print(string.format("\nBatRemainmAh: %d", BatRemainmAh))
-  --print(string.format("BatRemPer: %d", BatRemPer))
-  --print(string.format("CellCount: %d", CellCount))
-  --print(string.format("VoltsMax: %d", VoltsMax))
-  --print(string.format("BatUsedmAh: %d", BatUsedmAh))
 
   if CellsDetected["main"] and CellsDetected["receiver"] then -- sanity checks passed ... we can move to normal operation and switch the status widget
    batCheckPassed = true
@@ -3041,7 +1657,10 @@ end
 local function getPercentColor(cpercent, battype)
   -- This function returns green at 100%, red bellow 30% and graduate in between
 
-  local warn = batTypeWarnCritThresh[battype][1] 
+  --local warn = batTypeWarnCritThresh[battype][1] 
+  local warn = BatteryDefinition[battype].warningThreshold
+
+
 
   if cpercent < warn then
     return lcd.RGB(0xff, 0, 0)
@@ -3324,7 +1943,7 @@ local function refreshZoneXLarge(wgt)
     lcd.drawText(wgt.zone.x + 10, wgt.zone.y + -5, "Main Battery", MIDSIZE + Color + SHADOWED)
     lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 23, "C: Current / L: Lowest / H: Highest", SMLSIZE + Color )
   
-    amps = getValue( CurrentSensor )
+    amps = getValue( sensorCurrent["main"] ) -- todo
     --lcd.drawText(wgt.zone.x + 270, wgt.zone.y + 25, string.format("%.1fA", amps), DBLSIZE + Color)
 
     --maincur = getValue(VoltageSensor)

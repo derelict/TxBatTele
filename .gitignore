@@ -11,6 +11,7 @@
 *.sln.docstates
 *.luac
 temp.lua
+WORK
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
