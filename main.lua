@@ -191,24 +191,24 @@ local modelTable = {
     modelWav = "sg630",
     rxReferenceVoltage = 8.2, -- will only be used for battery types like buffer or "BEC only" in order to calculate the discharge curve .... if you are only using a BEC you will recognize power loss soon enough and you don't need any discharge curves at all :-) 
     VoltageSensor = { 
-      main = { "Cels" }, 
-      receiver = { "RxBt" }
+      main = "Cels" , 
+      receiver =  "RxBt" 
     }, 
     CurrentSensor = { 
-      main = { "Curr" }, 
-      receiver = { "Curr" }
+      main = "Curr" , 
+      receiver =  "Curr" 
     }, 
     MahSensor = { 
-      main = {}, 
-      receiver = {}
+      main = "", 
+      receiver = ""
     }, 
     BattType = { 
-      main = { "lipo" }, 
-      receiver = { "buffer" }
+      main = "lipo" , 
+      receiver =  "buffer" 
     }, 
     CellCount = { 
-      main = { 12 }, 
-      receiver = { 2 }
+      main =   12 , 
+      receiver =   2 
     },        
     capacities = {
       main = { 500, 1000, 1500, 2000, 2500, 3000 },
@@ -231,24 +231,24 @@ local modelTable = {
     --resetSwitch = "SD" .. CHAR_DOWN ,
     resetSwitch = "TELE" ,
     VoltageSensor = { 
-      main = { "Cels" }, 
-      receiver = { "RxBt" }
+      main = "Cels" , 
+      receiver =  "RxBt" 
     }, 
     CurrentSensor = { 
-      main = { "Curr" }, 
-      receiver = { "Curr" }
+      main =  "Curr" , 
+      receiver =  "Curr" 
     }, 
     MahSensor = { 
-      main = {}, 
-      receiver = {}
+      main = "", 
+      receiver = ""
     }, 
     BattType = { 
-      main = { "lipo" }, 
-      receiver = { "buffer" }
+      main = "lipo" , 
+      receiver = "buffer" 
     }, 
     CellCount = { 
-      main = { 8 }, 
-      receiver = { 2 }
+      main =  8 , 
+      receiver =  2 
     },        
     capacities = {
       main = { 500, 1000, 1500, 2000, 2500, 3000 },
@@ -1962,9 +1962,10 @@ local function init_func()
 --resolveDynamicValues()
 
 -- printHumanReadableTable(announcementConfig)
+typeBattery = {}
 
-typeBattery["main"]           = table.concat(modelDetails.BattType["main"])
-typeBattery["receiver"]       = table.concat(modelDetails.BattType["receiver"])
+typeBattery["main"]           = modelDetails.BattType.main
+typeBattery["receiver"]       = modelDetails.BattType.receiver
 
 if typeBattery["receiver"] == "buffer" then --todo the user may name this differently ... like buffer1, buffer2 for different buffer packs ... add a category to BatteryTypeDefaults for buffer and not rely on the name itself
 
@@ -2001,7 +2002,6 @@ updateAnnouncementConfig(announcementConfig, BatteryTypeDefaults, typeBattery["m
   sensorVoltage = {}
   sensorCurrent = {}
   sensorMah = {}
-  typeBattery = {}
   countCell = {}
 
   tableBatCapacity = {}
@@ -2052,19 +2052,19 @@ updateAnnouncementConfig(announcementConfig, BatteryTypeDefaults, typeBattery["m
   print("MODEL NAME: ", modelName)
   print("MODEL IMAGE: ",modelImage)
  
-  sensorVoltage["main"]         = table.concat(modelDetails.VoltageSensor["main"])
-  sensorVoltage["receiver"]     = table.concat(modelDetails.VoltageSensor["receiver"])
+  sensorVoltage["main"]         = modelDetails.VoltageSensor.main
+  sensorVoltage["receiver"]     = modelDetails.VoltageSensor.receiver
 
-  sensorCurrent["main"]         = table.concat(modelDetails.CurrentSensor["main"])
-  sensorCurrent["receiver"]     = table.concat(modelDetails.CurrentSensor["receiver"])
+  sensorCurrent["main"]         = modelDetails.CurrentSensor.main
+  sensorCurrent["receiver"]     = modelDetails.CurrentSensor.receiver
 
-  sensorMah["main"]             = table.concat(modelDetails.MahSensor["main"])
-  sensorMah["receiver"]         = table.concat(modelDetails.MahSensor["receiver"])
+  sensorMah["main"]             = modelDetails.MahSensor.main
+  sensorMah["receiver"]         = modelDetails.MahSensor.receiver
 
 
 
-  countCell["main"]             = tonumber(table.concat(modelDetails.CellCount["main"]))
-  countCell["receiver"]         = tonumber(table.concat(modelDetails.CellCount["receiver"]))
+  countCell["main"]             = tonumber(modelDetails.CellCount.main)
+  countCell["receiver"]         = tonumber(modelDetails.CellCount.receiver)
 
   tableBatCapacity["main"]      = modelDetails.capacities["main"]
   tableBatCapacity["receiver"]  = modelDetails.capacities["receiver"]
