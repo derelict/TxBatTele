@@ -188,6 +188,7 @@ local modelTable = {
       modelImage             = "goblin.png",
       modelWav               = "sg630",
       rxReferenceVoltage     = 8.2,
+      resetSwitch            = "TELE",
       VoltageSensor          = { main = "Cels",    receiver = "RxBt" },
       CurrentSensor          = { main = "Curr",    receiver = "Curr" },
       MahSensor              = { main = "",        receiver = "" },
