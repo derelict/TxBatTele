@@ -106,7 +106,7 @@
 
 local Title = "Flight Telemetry and Battery Monitor"
 
-local DEBUG_ENABLED = true
+local DEBUG_ENABLED = false
 
 -- Sensors
 -- 	Use Voltage and or mAh consumed calculated sensor based on VFAS, FrSky FAS-40
@@ -216,13 +216,15 @@ local statusTable = {}
 
 -- to support future functions like taking screenshot and logging on/off
 local ver, radio, maj, minor, rev, osname = getVersion()
+if DEBUG_ENABLED then
+
 print("version: "..ver)
 if radio then print ("version radio: "..radio) end
 if maj then print ("version maj: "..maj) end
 if minor then print ("version minor: "..minor) end
 if rev then print ("version rev: "..rev) end
 if osname then print ("version osname: "..osname) end
-
+end
 
 local AutomaticResetOnResetSwitchToggle = 4 -- 5 seconds for TELE Trigger .... maybe 1 second for switch trigger
 
@@ -395,13 +397,19 @@ local soundQueue = {}
 local currentState = "idle"
 local waitUntil = 0
 
+local function debugPrint(message)
+  if DEBUG_ENABLED then
+      print(message)
+  end
+end
+
 -- Function to add sound files to the queue
 local function queueSound(file, duration, priority)
 
   priority = priority or false
   local position = priority and 1 or #soundQueue + 1
 
-  print("PQ: insert: ", file)
+  debugPrint("PQ: insert: ", file)
   table.insert(soundQueue, position, {type = "file", value = soundDirPath..file, duration = duration})
 end
 
@@ -410,7 +418,7 @@ local function queueSysSound(file, duration, priority)
   priority = priority or false
   local position = priority and 1 or #soundQueue + 1
 
-  print(string.format("PQ: insert: %s pos: %s", file, position))
+  debugPrint(string.format("PQ: insert: %s pos: %s", file, position))
   table.insert(soundQueue, position, {type = "file", value = file, duration = duration})
 end
 
@@ -435,7 +443,7 @@ local function processQueue()
       end
 
 
-      print(string.format("PQ: Playing: %s Waiting: %s ... ", item.value, item.duration ))
+      debugPrint(string.format("PQ: Playing: %s Waiting: %s ... ", item.value, item.duration ))
       
       waitUntil = now + item.duration * 100  -- Convert duration from seconds to centiseconds
       currentState = "waiting"
@@ -446,7 +454,7 @@ local function processQueue()
     if now >= waitUntil then
           -- table.remove(soundQueue, 1)  -- Remove the processed item from the queue
           currentState = "idle"
-          print("PQ: Idle" )
+          debugPrint("PQ: Idle" )
 
     end
 
@@ -489,11 +497,11 @@ local function printHumanReadableTable(tbl, indent)
       local valueStr = tostring(value)
 
       if type(value) == "table" then
-          print(indentStr(indent) .. "TBLDBG: " .. keyStr .. " = {")
+          debugPrint(indentStr(indent) .. "TBLDBG: " .. keyStr .. " = {")
           printHumanReadableTable(value, indent + 1)
-          print(indentStr(indent) .. "TBLDBG: }")
+          debugPrint(indentStr(indent) .. "TBLDBG: }")
       else
-          print(indentStr(indent) .. "TBLDBG: " .. keyStr .. " = " .. valueStr)
+          debugPrint(indentStr(indent) .. "TBLDBG: " .. keyStr .. " = " .. valueStr)
       end
   end
 end
@@ -506,8 +514,8 @@ local function matchModelName(mname, pattern)
   lmname = string.lower(mname)
   lpattern = string.lower(pattern)
 
-  print("TEST modelName:", mname, "type:", type(mname))
-  print("TEST pattern:", pattern, "type:", type(pattern))
+  debugPrint("TEST modelName:", mname, "type:", type(mname))
+  debugPrint("TEST pattern:", pattern, "type:", type(pattern))
 
  
   -- Check if the pattern is a substring of the currentModelName
@@ -542,7 +550,7 @@ local function getCellVoltage( cellResult  )
     for i, v in ipairs(cellResult) do
       cellSum = cellSum + v
 
-      print(string.format("getcellvoltage: cell: %s volts: %s", i, cellSum))
+      debugPrint(string.format("getcellvoltage: cell: %s volts: %s", i, cellSum))
 
 
       -- update the historical voltage table
@@ -555,7 +563,7 @@ local function getCellVoltage( cellResult  )
     cellSum = cellResult
   end
 
-  print(string.format("getcellvoltage: cellsum: %s", cellSum))
+  debugPrint(string.format("getcellvoltage: cellsum: %s", cellSum))
 
   -- if prevVolt < 1 or cellSum > 1 then
      return cellSum
@@ -579,7 +587,7 @@ local function getAmp(sensor)
       --end
       --return amps
 
-      -- print(string.format("AMPS: P: %s C: %s", prevAmp, amps))
+      -- debugPrint(string.format("AMPS: P: %s C: %s", prevAmp, amps))
 
       --if prevAmp < 0.0001 or amps > 0.0001 then
         return amps
@@ -599,8 +607,8 @@ end
 
 local function findPercentRem( cellVoltage, battype )
 
-  print("findPercentRem Cell Voltage: ", cellVoltage)
-  print("findPercentRem BatType: ", battype)
+  debugPrint("findPercentRem Cell Voltage: ", cellVoltage)
+  debugPrint("findPercentRem BatType: ", battype)
 
   --local low = batTypeLowHighValues[battype][1]
   --local high = batTypeLowHighValues[battype][2]
@@ -618,7 +626,7 @@ local function findPercentRem( cellVoltage, battype )
   else
     -- method of finding percent in my array provided by on4mh (Mike)
     for i, v in ipairs( discharcurve ) do
-      print(string.format("findPercentRem Check Voltage: %s battype %s", v[ 1 ],battype))
+      debugPrint(string.format("findPercentRem Check Voltage: %s battype %s", v[ 1 ],battype))
       if cellVoltage >= v[ 1 ] then
         return v[ 2 ]
       end
@@ -642,7 +650,7 @@ end
   local deltatime = curtime - TriggerTimers[name]
   local deltaseconds = deltatime/100
 
-  print(string.format("TIMER DEBUG: delta: %s time: %s name: %s", deltaseconds, time , name))
+  debugPrint(string.format("TIMER DEBUG: delta: %s time: %s name: %s", deltaseconds, time , name))
 
   if deltaseconds > time then
     --if noreset ~= nil then
@@ -745,7 +753,7 @@ end
   local itemStatus = statusTable[itemNameWithContext]
   local currentTime = getTime() / 100  -- Get current time in seconds
 
-  print(string.format("DBGANO: Item: %s, Current Status: %s, Context: %s, Critical Threshold: %s, Warning Threshold: %s, Critical Mode: %s, Warning Mode: %s, Normal Mode: %s, Grace Period: %s",
+  debugPrint(string.format("DBGANO: Item: %s, Current Status: %s, Context: %s, Critical Threshold: %s, Warning Threshold: %s, Critical Mode: %s, Warning Mode: %s, Normal Mode: %s, Grace Period: %s",
   item, tostring(currentStatus), context, tostring(critTH), tostring(warnTH), tostring(critMD), tostring(warnMD), tostring(normMD), tostring(graceP)))
 
   -- Determine severity and mode
@@ -764,11 +772,11 @@ end
     end
   end
 
-  print("STCHDET: Item:", item, "Current Status:", currentStatus, "Severity Level:", severity, "Mode:", mode, "Context:", context)
+  debugPrint("STCHDET: Item:", item, "Current Status:", currentStatus, "Severity Level:", severity, "Mode:", mode, "Context:", context)
 
   if mode == "disable" then
     -- Do nothing if announcements are disabled
-    print("STCHDET: Announcements are disabled for item:", item, "Context:", context)
+    debugPrint("STCHDET: Announcements are disabled for item:", item, "Context:", context)
     return
   end
 
@@ -779,21 +787,21 @@ end
       if itemStatus.changeStartTime == 0 then
         -- Start the grace period
         itemStatus.changeStartTime = currentTime
-        print("STCHDET: Change detected for item:", item, "Starting grace period at time:", currentTime, "Context:", context)
+        debugPrint("STCHDET: Change detected for item:", item, "Starting grace period at time:", currentTime, "Context:", context)
       else
         local elapsedGracePeriod = currentTime - itemStatus.changeStartTime
-        print(string.format("STCHDET: Elapsed grace period for item %s: %.2f seconds", item, elapsedGracePeriod), "Context:", context)
+        debugPrint(string.format("STCHDET: Elapsed grace period for item %s: %.2f seconds", item, elapsedGracePeriod), "Context:", context)
         if elapsedGracePeriod >= graceP then
           -- Announce if grace period has passed (config.normal.gracePeriod is in seconds)
           announceNow = true
-          print("STCHDET: Grace period passed for item:", item, "Announcing change", "Context:", context)
+          debugPrint("STCHDET: Grace period passed for item:", item, "Announcing change", "Context:", context)
           itemStatus.lastStatus = currentStatus
         end
       end
     else
       -- Reset grace period if status reverts to previous within grace period
       if itemStatus.changeStartTime ~= 0 then
-        print("STCHDET: Status reverted to previous within grace period for item:", item, "Resetting grace period", "Context:", context)
+        debugPrint("STCHDET: Status reverted to previous within grace period for item:", item, "Resetting grace period", "Context:", context)
         itemStatus.changeStartTime = 0
       end
     end
@@ -802,13 +810,13 @@ end
     interval = mode
     if (currentTime - itemStatus.lastAnnounceTime) >= interval then
       announceNow = true
-      print("STCHDET: Interval passed for item:", item, "Announcing at interval", "Context:", context)
+      debugPrint("STCHDET: Interval passed for item:", item, "Announcing at interval", "Context:", context)
     end
   end
 
   -- Collect announcements
   if announceNow then
-    print("STCHDET: Adding announcement for item:", item, "Current status:", currentStatus, "Severity level:", severity, "Context:", context)
+    debugPrint("STCHDET: Adding announcement for item:", item, "Current status:", currentStatus, "Severity level:", severity, "Context:", context)
     table.insert(announcements, { item = item, status = currentStatus, severity = severity, context = context })
     itemStatus.lastAnnounceTime = currentTime
   end
@@ -838,12 +846,12 @@ local function doAnnouncements(context)
 
     -- Process collected announcements
     if next(announcements) ~= nil then
-      print("STCHDET: Found announcements to be done.")
+      debugPrint("STCHDET: Found announcements to be done.")
 
       local contextAnnounceDone = false
 
       for _, announcement in ipairs(announcements) do
-        print(string.format("STCHDET: Announcing item: %s, Severity: %s, Current value: %s", announcement.item, announcement.severity, announcement.status))
+        debugPrint(string.format("STCHDET: Announcing item: %s, Severity: %s, Current value: %s", announcement.item, announcement.severity, announcement.status))
         -- Perform announcement logic here
         -- You can access announcement.item, announcement.severity, and announcement.status
 
@@ -926,7 +934,7 @@ local function doAnnouncements(context)
       
       end
     else
-      print("STCHDET: No announcements to be done.")
+      debugPrint("STCHDET: No announcements to be done.")
     end
 
     
@@ -967,9 +975,9 @@ local vDelta = BatteryDefinition[typeBattery[context]].cellDeltaVoltage
 
     for i, v1 in ipairs(currentSensorVoltageValue[context]) do
       for j,v2 in ipairs(currentSensorVoltageValue[context]) do
-        -- print(string.format("i: %d v: %f j: %d v: %f", i, v1, j,v2))
+        -- debugPrint(string.format("i: %d v: %f j: %d v: %f", i, v1, j,v2))
         if i~=j and (math.abs(v1 - v2) > vDelta) then
-          --print(string.format("i: %d v: %f j: %d v: %f", i, v1, j,v2))
+          --debugPrint(string.format("i: %d v: %f j: %d v: %f", i, v1, j,v2))
           --timeElapsed = HasSecondsElapsed(10)  -- check to see if the 10 second timer has elapsed
           --if PlayFirstInconsistentCellWarning or (PlayInconsistentCellWarning == true and timeElapsed) then -- Play immediately upon detection and then every 10 seconds
           --  --playFile(soundDirPath.."icw.wav")
@@ -998,7 +1006,7 @@ local CfullVolt = BatteryDefinition[typeBattery[context]].highVoltage
 
   -- If the number of cells detected by the voltage sensor does not match the value in GV6 then play the warning message
   -- This is only for the dedicated voltage sensor
-  --print(string.format("CellCount: %d currentSensorVoltageValue[context]:", CellCount))
+  --debugPrint(string.format("CellCount: %d currentSensorVoltageValue[context]:", CellCount))
   if countCell[context] > 0 then
 
     local missingCellDetected = false
@@ -1011,7 +1019,7 @@ local CfullVolt = BatteryDefinition[typeBattery[context]].highVoltage
       --if tableSize ~= CellCount then
       CellsDetectedCurrent[context] = #currentSensorVoltageValue[context]
       if #currentSensorVoltageValue[context] ~= countCell[context] then
-        --print(string.format("CellCount: %d tableSize: %d", CellCount, tableSize))
+        --debugPrint(string.format("CellCount: %d tableSize: %d", CellCount, tableSize))
         
         missingCellDetected = true
       end
@@ -1021,7 +1029,7 @@ local CfullVolt = BatteryDefinition[typeBattery[context]].highVoltage
       --CellsDetectedCurrent[context] = math.floor( currentSensorVoltageValue[context] / 3.2 )
       --if (countCell[context] * 3.2) > (currentSensorVoltageValue[context]) then
         if CellsDetectedCurrent[context] ~= countCell[context]  then
-          --print(string.format("vfas missing cell: %d", currentSensorVoltageValue[context]))
+          --debugPrint(string.format("vfas missing cell: %d", currentSensorVoltageValue[context]))
         
         missingCellDetected = true
       end
@@ -1052,7 +1060,7 @@ local function init_func()
 
   local currentModelName = model.getInfo().name
 
-  print ("TEST MODEL:" , currentModelName)
+  debugPrint ("TEST MODEL:" , currentModelName)
 
   modelDetails = getModelDetails(currentModelName)
 
@@ -1080,7 +1088,7 @@ end
 
 if BatteryDefinition[typeBattery["main"]].dischargeCurve == nil then -- we have no discharge curve .... lets build a linear one at runtime
 
- print("NO DISCHARGE CURVE FOR MAIN")
+ debugPrint("NO DISCHARGE CURVE FOR MAIN")
  local low = BatteryDefinition[typeBattery["main"]].lowVoltage
  local high = BatteryDefinition[typeBattery["main"]].highVoltage
 
@@ -1118,7 +1126,7 @@ end
 
 if BatteryDefinition[typeBattery["receiver"]].dischargeCurve == nil  then-- we have no discharge curve .... lets build a linear one at runtime
 
-print("NO DISCHARGE CURVE FOR RECEIVER")
+debugPrint("NO DISCHARGE CURVE FOR RECEIVER")
 
 local low = BatteryDefinition[typeBattery["receiver"]].lowVoltage
 local high = BatteryDefinition[typeBattery["receiver"]].highVoltage
@@ -1196,8 +1204,8 @@ printHumanReadableTable(BatteryDefinition)
 
   queueSound(modelWav,2)
 
-  print("MODEL NAME: ", modelName)
-  print("MODEL IMAGE: ",modelImage)
+  debugPrint("MODEL NAME: ", modelName)
+  debugPrint("MODEL IMAGE: ",modelImage)
  
   sensorVoltage["main"]         = modelDetails.VoltageSensor.main
   sensorVoltage["receiver"]     = modelDetails.VoltageSensor.receiver
@@ -1304,7 +1312,7 @@ printHumanReadableTable(BatteryDefinition)
   for _, switchInfo in ipairs(tableSwitchAnnounces) do
     local switch = switchInfo[1]
     local switchIndex = getFieldInfo(switch).id
-    print("ANN SW IDX: ", switch)
+    debugPrint("ANN SW IDX: ", switch)
     switchIndexes[switch] = switchIndex
   end
 
@@ -1339,7 +1347,7 @@ local function reset_if_needed()
 
     ResetSwitchState = getSwitchValue(idswitchReset)
 
-    --print("RESET: Switch state :", ResetSwitchState)
+    --debugPrint("RESET: Switch state :", ResetSwitchState)
 
     if ResetSwitchState and not AutomaticResetOnNextChange then
       TriggerTimers["resetdelay"] = 0
@@ -1353,9 +1361,9 @@ local function reset_if_needed()
 
     --TriggerTimers["resetdelay"] = getTime()
 
-    --print(string.format("RESET: State change Triggered ... Trigger State: %s at Count: %s",ResetSwitchState, AutomaticResetStateChangeCount))
+    --debugPrint(string.format("RESET: State change Triggered ... Trigger State: %s at Count: %s",ResetSwitchState, AutomaticResetStateChangeCount))
 
-    print("RESET: no telemetry for longer than 4 seconds... will reset at next telemetry on")
+    debugPrint("RESET: no telemetry for longer than 4 seconds... will reset at next telemetry on")
 
     AutomaticResetOnNextChange = true
       end
@@ -1369,12 +1377,12 @@ local function reset_if_needed()
 
     -- AutomaticResetOnResetPrevState = ResetSwitchState
 
-    print("RESET: RESETTING")
+    debugPrint("RESET: RESETTING")
 
     TriggerTimers["resetdelay"] = 0
 
     --if ResetDebounced and HasSecondsElapsed(2) and -1024 ~= getValue(SwReset) then -- reset switch
-      --print("RESET")
+      --debugPrint("RESET")
       CheckBatNotFull = true
       --StartTime = nil
       PlayInconsistentCellWarning = true --todo
@@ -1420,7 +1428,7 @@ local function checkForTelemetry()
 
 
   if not statusTele and currentStatusTele and not Timer("telegrace", 2) then
-    print("TELEDELAY:")
+    debugPrint("TELEDELAY:")
     return
   end
 
@@ -1461,7 +1469,7 @@ local function updateSensorValues(context)
 
   -- string.format("%.2f", number)
 
-  print(string.format("Updated Sensor Values: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, sensorVoltage[context], volts , sensorCurrent[context], sensorMah[context], currentSensorVoltageValue[context], currentSensorCurrentValue[context], currentSensorMahValue[context]))
+  debugPrint(string.format("Updated Sensor Values: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, sensorVoltage[context], volts , sensorCurrent[context], sensorMah[context], currentSensorVoltageValue[context], currentSensorCurrentValue[context], currentSensorMahValue[context]))
 
   -- disabled --           if VoltsNow < 1 or volts > 1 then
   -- disabled --             VoltsNow = volts
@@ -1477,7 +1485,7 @@ local function updateSensorValues(context)
 
   if currentVoltageValueLow[context] == 0 or ( currentVoltageValueCurrent[context] < currentVoltageValueLow[context] and currentVoltageValueCurrent[context] ~= 0.00 ) then
     currentVoltageValueLow[context] = currentVoltageValueCurrent[context]
-    print(string.format("Updated Sensor Values Low: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, sensorVoltage[context], currentVoltageValueCurrent[context] , sensorCurrent[context], sensorMah[context], currentSensorVoltageValue[context], currentSensorCurrentValue[context], currentSensorMahValue[context]))
+    debugPrint(string.format("Updated Sensor Values Low: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, sensorVoltage[context], currentVoltageValueCurrent[context] , sensorCurrent[context], sensorMah[context], currentSensorVoltageValue[context], currentSensorCurrentValue[context], currentSensorMahValue[context]))
 -- Updated Sensor Values Low: Context: main Sensor Voltage: Cels ( get Cell: nil ) Sensor Current: Curr Sensor mah:  Volt: 0 Current: 0 mAh: 0
   end
 
@@ -1501,7 +1509,7 @@ local function updateSensorValues(context)
 
   --if not cellMissing[context] then
     valueVoltsPercentRemaining[context]  = findPercentRem( currentVoltageValueLatest[context]/countCell[context],  typeBattery[context])
-    print(string.format("SUPD: Got Percent: %s for Context: %s", valueVoltsPercentRemaining[context], context))
+    debugPrint(string.format("SUPD: Got Percent: %s for Context: %s", valueVoltsPercentRemaining[context], context))
   --end
 
 
@@ -1519,12 +1527,12 @@ for _, switchInfo in ipairs(tableSwitchAnnounces) do
   --local switch, action = switchInfo[1], switchInfo[2]
   local switch = switchInfo[1]
 
-  print(string.format("SWITCH: %s", switch))
+  debugPrint(string.format("SWITCH: %s", switch))
 
   --local swidx = getSwitchIndex(switch)
   local swidx = switchIndexes[switch]
 
-  print(string.format("SWITCH IDX: %s", swidx))
+  debugPrint(string.format("SWITCH IDX: %s", swidx))
 
   local state = getValue(swidx)
 
@@ -1550,7 +1558,7 @@ for _, switchInfo in ipairs(tableSwitchAnnounces) do
   end
 
 
-  print(string.format("SWITCH OPTIONS COUNT: %s", optionscount))
+  debugPrint(string.format("SWITCH OPTIONS COUNT: %s", optionscount))
 
 -- SWITCH: sf STATE: 1024 pre State: -1024 downval: 2 midval: 0 upval: 3
 
@@ -1558,20 +1566,20 @@ for _, switchInfo in ipairs(tableSwitchAnnounces) do
   if previousSwitchState[switch] ~= state or previousSwitchState[switch] == nil then
 
     --if previousSwitchState[switch] ~=  nil then
-    --  print(string.format("SWITCH: %s STATE: %s pre State: %s downval: %s midval: %s upval: %s",  switch, state, previousSwitchState[switch],switchInfo[downval],switchInfo[midval],switchInfo[upval] ) )
+    --  debugPrint(string.format("SWITCH: %s STATE: %s pre State: %s downval: %s midval: %s upval: %s",  switch, state, previousSwitchState[switch],switchInfo[downval],switchInfo[midval],switchInfo[upval] ) )
   --
     --  end
 
     if state < 0 and downval ~= 0 then
       queueSysSound(switchInfo[downval], 0, priorizeSwitchAnnouncements)
-      print(string.format("SWITCH: %s STATE: %s pre State: %s downval: %s midval: %s upval: %s Play: %s",  switch, state, previousSwitchState[switch],switchInfo[downval],switchInfo[midval],switchInfo[upval],switchInfo[downval] ) )
+      debugPrint(string.format("SWITCH: %s STATE: %s pre State: %s downval: %s midval: %s upval: %s Play: %s",  switch, state, previousSwitchState[switch],switchInfo[downval],switchInfo[midval],switchInfo[upval],switchInfo[downval] ) )
     elseif state > 0 and upval ~= 0 then
       queueSysSound(switchInfo[upval], 0, priorizeSwitchAnnouncements)
-      print(string.format("SWITCH: %s STATE: %s pre State: %s downval: %s midval: %s upval: %s Play: %s",  switch, state, previousSwitchState[switch],switchInfo[downval],switchInfo[midval],switchInfo[upval],switchInfo[upval] ) )
+      debugPrint(string.format("SWITCH: %s STATE: %s pre State: %s downval: %s midval: %s upval: %s Play: %s",  switch, state, previousSwitchState[switch],switchInfo[downval],switchInfo[midval],switchInfo[upval],switchInfo[upval] ) )
 
     elseif midval ~= 0 then
       queueSysSound(switchInfo[midval], 0, priorizeSwitchAnnouncements)
-      print(string.format("SWITCH: %s STATE: %s pre State: %s downval: %s midval: %s upval: %s Play: %s",  switch, state, previousSwitchState[switch],switchInfo[downval],switchInfo[midval],switchInfo[upval],switchInfo[midval] ) )
+      debugPrint(string.format("SWITCH: %s STATE: %s pre State: %s downval: %s midval: %s upval: %s Play: %s",  switch, state, previousSwitchState[switch],switchInfo[downval],switchInfo[midval],switchInfo[upval],switchInfo[midval] ) )
 
     end
   end
@@ -1601,11 +1609,11 @@ local function bg_func()
 
   --local sdf = getValue("Cels")
 --
-  --print("Updated Sensor Values TEST: ", sdf)
+  --debugPrint("Updated Sensor Values TEST: ", sdf)
   
   local currentContext = contexts[currentContextIndex]
 
-  print("Current Context:", currentContext)
+  debugPrint("Current Context:", currentContext)
 
 
 processQueue()
