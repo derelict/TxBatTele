@@ -132,16 +132,28 @@ local SwitchAnnounceTable = {
 }
 
 local line1statsensors = {
-  {"RPM","rpm"},
-  {"RSSI","RSSI"},
-  {"TMP1","TMP1"},
-  {"TMP2","TMP2"}
+  {"RPM" ,"RPM","clh"},
+  {"RSSI","RSSI","hl"},
+  {"Tmp1","TMP1","c"}
 }
 
 local line2statsensors = {
-  {"CUR","Curr"},
-  {"Fuel","Fuel"}
+  {"Curr","CUR","lh"},
+  {"Fuel","FUL","clh"},
+  {"Tmp2","TMP2","h"}
 }
+
+--local line1statsensors = {
+--  {"RPM", "RPM", "clh", {"white", "green", "red"}},
+--  {"RSSI", "RSSI", "hl", {"red", "green"}},
+--  {"Tmp1", "TMP1", "c", {"white"}}
+--}
+--
+--local line2statsensors = {
+--  {"Curr", "CUR", "lh", {"green", "red"}},
+--  {"Fuel", "FUL", "clh", {"white", "green", "red"}},
+--  {"Tmp2", "TMP2", "h", {"red"}}
+--}
 
 
 local BattPackSelectorSwitch = {
@@ -281,7 +293,7 @@ local announcementConfigDefault = {
 -- BatteryDefinition
 -- todo only announce in steps of N
 local BatteryTypeDefaults = {
-  lipo = {
+  lipo = {  -- normal lipo Battery
       dischargeCurve           = {
           {4.20, 100}, {4.17, 97.5}, {4.15, 95}, {4.13, 92.5},
           {4.11, 90}, {4.10, 87.5}, {4.08, 85}, {4.05, 82.5},
@@ -311,7 +323,7 @@ local BatteryTypeDefaults = {
       isNotABattery               = false   -- DO NOT CHANGE for any Battery !!!
   },
 
-  buffer = {
+  buffer = {  -- Buffer Pack (condensator)
       dischargeCurve              = nil,    -- This will be dynamically calculated based on voltage range
       graceperiod                 = 4,      -- grace period for fluctuations 
       criticalThreshold           = 96,     -- Critical threshold in percentage
@@ -329,7 +341,7 @@ local BatteryTypeDefaults = {
       isNotABattery               = true   -- buffer is not a battery and values for high and low voltage represent real voltages and will be devided by 2 by the script to get a theoretical cell value
     },
 
-  beconly = {
+  beconly = {  -- BEC only Definition
       dischargeCurve              = nil,    -- This will be dynamically calculated based on voltage range
       graceperiod                 = 4,      -- grace period for fluctuations 
       criticalThreshold           = 96,     -- Critical threshold in percentage
@@ -392,6 +404,12 @@ local Color = BLACK
 
 
 -- ########################## TESTING ##########################
+
+function round(num, numDecimalPlaces) -- todo --- quick work arround ---- remove
+  local mult = 10 ^ (numDecimalPlaces or 0)
+  return math.floor(num * mult + 0.5) / mult
+end
+
 
 local soundQueue = {}
 local currentState = "idle"
@@ -466,6 +484,84 @@ local function processQueue()
 
   return 0  -- Keep the script running
 end
+
+
+
+
+
+local function print_table_structure(tbl)
+  for i, v in ipairs(tbl) do
+    debugPrint("TBLS: " .. i .. ": " .. v[1] .. ", " .. v[2])
+  end
+end
+
+-- Function to simulate retrieving sensor values
+local function get_sensor_values(sensor)
+
+  local current_value = getValue(sensor)
+  local lowest_value  = getValue(sensor .. "-")
+  local highest_value = getValue(sensor .. "+")
+
+  return current_value, lowest_value, highest_value
+
+end
+
+local function format_number(number)
+  -- Check if the number has decimals
+  if math.floor(number) == number then
+      return tostring(number)  -- Return the number as-is if it's an integer
+  else
+      return string.format("%.2f", number)  -- Format to two decimal places if it's a float
+  end
+end
+
+-- Function to build the formatted string
+local function build_sensor_line(sensorinput)
+  local result = {}
+
+  for _, sens in ipairs(sensorinput) do
+    local sensor_name = sens[2]
+    local value_spec = sens[3]
+    local sensor = sens[1]
+
+    local current_value, lowest_value, highest_value = get_sensor_values(sensor)
+
+    local sensor_line = sensor_name .. " ["
+
+    -- Ensure correct order of output as per value_spec
+    for i = 1, #value_spec do
+      local spec = string.sub(value_spec, i, i)
+
+      if spec == "c" then
+        sensor_line = sensor_line .. "C: " .. format_number(current_value)
+      elseif spec == "l" then
+        sensor_line = sensor_line .. "L: " .. format_number(lowest_value)
+      elseif spec == "h" then
+        sensor_line = sensor_line .. "H: " .. format_number(highest_value)
+      end
+
+      -- Add space if there are more specs to follow
+      if i < #value_spec then
+        sensor_line = sensor_line .. " "
+      end
+    end
+
+    sensor_line = sensor_line .. "]"
+
+    table.insert(result, sensor_line)
+  end
+  
+  return table.concat(result, " / ")
+end
+   
+
+
+-- string.format("%.2f", number)
+-- string.format("%.2f", number)
+-- string.format("%.2f", number)
+
+
+-- local sensor      = sens[1]  
 
 
 
@@ -1153,6 +1249,7 @@ printHumanReadableTable(announcementConfig)
 
 printHumanReadableTable(BatteryDefinition)
 
+logging(true)
 
   contexts = {}
   currentContextIndex = 1
@@ -1192,6 +1289,9 @@ printHumanReadableTable(BatteryDefinition)
   currentMahValue = {}
 
   CellsDetected = {}
+
+  sensorline1 = nil
+  sensorline2 = nil
 
   -- todo --- build variables using context switching
 
@@ -1384,6 +1484,7 @@ local function reset_if_needed()
 
 
 
+
   if ResetSwitchState  and AutomaticResetOnNextChange then
     --return
 
@@ -1481,7 +1582,7 @@ local function updateSensorValues(context)
 
   -- string.format("%.2f", number)
 
-  debugPrint(string.format("Updated Sensor Values: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, sensorVoltage[context], volts , sensorCurrent[context], sensorMah[context], currentSensorVoltageValue[context], currentSensorCurrentValue[context], currentSensorMahValue[context]))
+  debugPrint(string.format("Updated Sensor Values: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, sensorVoltage[context],  currentVoltageValueCurrent[context] , sensorCurrent[context], sensorMah[context], currentSensorVoltageValue[context], currentSensorCurrentValue[context], currentSensorMahValue[context]))
 
   -- disabled --           if VoltsNow < 1 or volts > 1 then
   -- disabled --             VoltsNow = volts
@@ -1522,7 +1623,16 @@ local function updateSensorValues(context)
   --if not cellMissing[context] then
     valueVoltsPercentRemaining[context]  = findPercentRem( currentVoltageValueLatest[context]/countCell[context],  typeBattery[context])
     debugPrint(string.format("SUPD: Got Percent: %s for Context: %s", valueVoltsPercentRemaining[context], context))
+
+    BatRemPer = valueVoltsPercentRemaining[context] -- todo eliminate
   --end
+
+
+
+  sensorline1 = build_sensor_line(tableLine1StatSensors)
+  sensorline2 = build_sensor_line(tableLine2StatSensors)
+  debugPrint("SENSLINE: " .. sensorline1)
+  debugPrint("SENSLINE: " .. sensorline2)
 
 
   -- if VoltsNow < 1 or volts > 1 then
@@ -1769,6 +1879,40 @@ local function drawBattery(xOrigin, yOrigin, percentage, wgt, battype)
           string.format("%d mAh", BatRemainmAh), MIDSIZE + Color + BlinkWhenZero)
 end
 
+
+
+local function draw_sensor_line(wgt, sensor_line_data, x, y)
+  local line_x = x
+
+  for _, entry in ipairs(sensor_line_data) do
+    local current_x = line_x
+
+    -- Draw sensor name with primary color
+    lcd.setColor(CUSTOM_COLOR, COLOR_THEME_PRIMARY1)
+    lcd.drawText(current_x, y, entry.sensor_name .. " [", SMLSIZE)
+
+    current_x = current_x + #entry.sensor_name * 6  -- Adjust spacing based on your font width
+
+    -- Draw each value segment with its respective color
+    for _, value_str in ipairs(entry.values) do
+      lcd.setColor(CUSTOM_COLOR, value_str.color)
+      lcd.drawText(current_x, y, value_str.text, SMLSIZE)
+
+      current_x = current_x + #value_str.text * 6  -- Adjust spacing based on your font width
+    end
+
+    -- Add closing bracket with primary color
+    lcd.setColor(CUSTOM_COLOR, COLOR_THEME_PRIMARY1)
+    lcd.drawText(current_x, y, "]", SMLSIZE)
+
+    -- Move to the next line (adjust the y position if needed)
+    y = y + 12  -- Adjust vertical spacing as needed
+  end
+end
+
+
+
+
 -- ####################################################################
 local function refreshZoneTiny(wgt)
   -- This size is for top bar wgts
@@ -1805,7 +1949,10 @@ end
 -- ####################################################################
 local function refreshZoneMedium(wgt)
   --- Size is 225x98 1/4th  (no sliders/trim)
-  drawBattery(0,0, BatRemPer, wgt)
+  drawBattery(0,0, BatRemPer, wgt,typeBattery["receiver"])
+
+  --drawBattery(270, 100, valueVoltsPercentRemaining["receiver"], wgt,typeBattery["receiver"] )
+
 
   --local myBatt = { ["x"] = 0, ["y"] = 0, ["w"] = 85, ["h"] = 35, ["segments_w"] = 15, ["color"] = WHITE, ["cath_w"] = 6, ["cath_h"] = 20 }
   --
@@ -1839,6 +1986,8 @@ local function refreshZoneLarge(wgt)
   lcd.setColor(CUSTOM_COLOR, wgt.options.Color)
   
   fontSize = 10
+
+  debugPrint("WIDGET:", BatRemPer)
   
     if BatRemPer > 0 then -- Don't blink
     BlinkWhenZero = 0
@@ -1846,13 +1995,13 @@ local function refreshZoneLarge(wgt)
     BlinkWhenZero = BLINK
   end
   lcd.drawText(wgt.zone.x + 5, wgt.zone.y + fontSize, "BATTERY LEFT", SHADOWED)
-  lcd.setColor(CUSTOM_COLOR, getPercentColor(BatRemPer))
+  lcd.setColor(CUSTOM_COLOR, getPercentColor(BatRemPer,typeBattery["receiver"]))
   lcd.drawText(wgt.zone.x + 5, wgt.zone.y + fontSize + 25, round(BatRemPer).."%" , DBLSIZE + SHADOWED + BlinkWhenZero)
   lcd.drawText(wgt.zone.x + 5, wgt.zone.y + fontSize + 55, math.floor(BatRemainmAh).."mAh" , DBLSIZE + SHADOWED + BlinkWhenZero)
 
   lcd.setColor(CUSTOM_COLOR, wgt.options.Color)
   lcd.drawRectangle((wgt.zone.x - 1) , (wgt.zone.y + (wgt.zone.h - 31)), (wgt.zone.w + 2), 32, 0)
-  lcd.setColor(CUSTOM_COLOR, getPercentColor(BatRemPer))
+  lcd.setColor(CUSTOM_COLOR, getPercentColor(BatRemPer,typeBattery["receiver"]))
   lcd.drawGauge(wgt.zone.x , (wgt.zone.y + (wgt.zone.h - 30)), wgt.zone.w, 30, BatRemPer, 100, BlinkWhenZero)
 end
 
@@ -1956,12 +2105,12 @@ local function refreshZoneXLarge(wgt)
 
 
     -- Draw the bottom-left 1/4 of the screen
-    drawBattery(40, 100, valueVoltsPercentRemaining["main"], wgt,typeBattery["main"] )
 
     -- Draw the top-right 1/4 of the screen
     --lcd.drawText(wgt.zone.x + 270, wgt.zone.y + -5, string.format("%.2fV", VoltsNow), DBLSIZE + Color)
-    lcd.drawText(wgt.zone.x + 10, wgt.zone.y + -5, "Main Battery", MIDSIZE + Color + SHADOWED)
-    lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 23, "C: Current / L: Lowest / H: Highest", SMLSIZE + Color )
+    --lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 30, "Main Battery", MIDSIZE + Color + SHADOWED)
+    lcd.drawText(wgt.zone.x + 50, wgt.zone.y + 30, "Main Battery", MIDSIZE + Color + SHADOWED)
+    lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 60, "C: Current / L: Lowest / H: Highest", SMLSIZE + Color )
   
     amps = getValue( sensorCurrent["main"] ) -- todo
     --lcd.drawText(wgt.zone.x + 270, wgt.zone.y + 25, string.format("%.1fA", amps), DBLSIZE + Color)
@@ -1969,50 +2118,46 @@ local function refreshZoneXLarge(wgt)
     --maincur = getValue(VoltageSensor)
     --maincurmax = getValue(VoltageSensor.."+")
   
-    lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 40, string.format("C: %sV", currentVoltageValueCurrent["main"]), MIDSIZE + COLOR_THEME_SECONDARY1 + mainVoltBlink )
+    lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 80, string.format("C: %sV", currentVoltageValueCurrent["main"]), MIDSIZE + COLOR_THEME_SECONDARY1 + mainVoltBlink )
     --lcd.drawText(wgt.zone.x + 95, wgt.zone.y + 35, "/", MIDSIZE + Color)
-    lcd.drawText(wgt.zone.x + 120, wgt.zone.y + 40, string.format("L: %sV", currentVoltageValueLow["main"]), MIDSIZE + Color)
+    lcd.drawText(wgt.zone.x + 120, wgt.zone.y + 80, string.format("L: %sV", currentVoltageValueLow["main"]), MIDSIZE + Color)
     
 
-    lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 70, string.format("C: %sA", currentCurrentValueCurrent["main"]), MIDSIZE + COLOR_THEME_SECONDARY1 + mainCurrentBlink)
+    lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 110, string.format("C: %sA", currentCurrentValueCurrent["main"]), MIDSIZE + COLOR_THEME_SECONDARY1 + mainCurrentBlink)
     --lcd.drawText(wgt.zone.x + 95, wgt.zone.y + 65, "/", MIDSIZE + Color)
-    lcd.drawText(wgt.zone.x + 120, wgt.zone.y + 70, string.format("H: %sA", currentCurrentValueHigh["main"]), MIDSIZE + Color)
+    lcd.drawText(wgt.zone.x + 120, wgt.zone.y + 110, string.format("H: %sA", currentCurrentValueHigh["main"]), MIDSIZE + Color)
+
+    drawBattery(40, 150, valueVoltsPercentRemaining["main"], wgt,typeBattery["main"] )
 
 
 
 
+    -- lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 230, sensorline1, SMLSIZE + BLACK + SHADOWED )
+    -- lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 245, sensorline2, SMLSIZE + BLACK + SHADOWED )
+
+    lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 230, sensorline1, SMLSIZE + BLACK )
+    lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 245, sensorline2, SMLSIZE + BLACK )
 
 
-    lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 170, "RPM [L: 1000 H: 2000] RSSI [L: 11 H: 32]", SMLSIZE + Color )
-
-
-
-
-
-    --watts = math.floor(amps * VoltsNow)
-
-
-
-  --rxcur = getValue(RxBatVoltSensor)
-  --rxcurmax = getValue(RxBatVoltSensor.."+")
-
-
-  lcd.drawText(wgt.zone.x + 240, wgt.zone.y + -5, "Receiver Battery", MIDSIZE + Color + SHADOWED)
-  lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 23, "C: Current / L: Lowest / H: Highest", SMLSIZE + Color )
+  lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 30, "Receiver Battery", MIDSIZE + Color + SHADOWED)
+  lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 60, "C: Current / L: Lowest / H: Highest", SMLSIZE + Color )
 
   --lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 40, string.format("%.2fV / %.2fV", RxVoltsNow, RxVoltsMax), MIDSIZE + Color)
 
-  lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 40, string.format("C: %sV", currentVoltageValueCurrent["receiver"]), MIDSIZE + COLOR_THEME_SECONDARY1 + rxVoltBlink)
+  lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 80, string.format("C: %sV", currentVoltageValueCurrent["receiver"]), MIDSIZE + COLOR_THEME_SECONDARY1 + rxVoltBlink)
   --lcd.drawText(wgt.zone.x + 95, wgt.zone.y + 35, "/", MIDSIZE + Color)
-  lcd.drawText(wgt.zone.x + 350, wgt.zone.y + 40, string.format("L: %sV", currentVoltageValueLow["receiver"]), MIDSIZE + Color)
+  lcd.drawText(wgt.zone.x + 350, wgt.zone.y + 80, string.format("L: %sV", currentVoltageValueLow["receiver"]), MIDSIZE + Color)
 
-  lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 70, string.format("C: %sA",  currentCurrentValueCurrent["receiver"]), MIDSIZE + COLOR_THEME_SECONDARY1 + rxCurrentBlink)
+  lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 110, string.format("C: %sA",  currentCurrentValueCurrent["receiver"]), MIDSIZE + COLOR_THEME_SECONDARY1 + rxCurrentBlink)
   --lcd.drawText(wgt.zone.x + 95, wgt.zone.y + 65, "/", MIDSIZE + Color)
-  lcd.drawText(wgt.zone.x + 350, wgt.zone.y + 70, string.format("H: %sA", currentCurrentValueHigh["receiver"]), MIDSIZE + Color)
+  lcd.drawText(wgt.zone.x + 350, wgt.zone.y + 110, string.format("H: %sA", currentCurrentValueHigh["receiver"]), MIDSIZE + Color)
+
+  drawBattery(270, 150, valueVoltsPercentRemaining["receiver"], wgt,typeBattery["receiver"] )
 
 
+  -- lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 170, sensorline1, SMLSIZE + Color )
+  -- lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 185, sensorline2, SMLSIZE + Color )
 
-  drawBattery(270, 100, valueVoltsPercentRemaining["receiver"], wgt,typeBattery["receiver"] )
 
 else
 
