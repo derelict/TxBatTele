@@ -143,6 +143,7 @@ local line2statsensors = {
   {"Tmp2","TMP2","h"}
 }
 
+line1 = "RPM [ H: #RPM+# L: #RPM-# ]" --another way to do it -- todo
 --local line1statsensors = {
 --  {"RPM", "RPM", "clh", {"white", "green", "red"}},
 --  {"RSSI", "RSSI", "hl", {"red", "green"}},
@@ -204,7 +205,7 @@ local modelTable = {
       resetSwitch            = "TELE",
       VoltageSensor          = { main = "Cels",    receiver = "RxBt" },
       CurrentSensor          = { main = "Curr",    receiver = "Curr" },
-      MahSensor              = { main = "",        receiver = "" },
+      MahSensor              = { main = "mah",        receiver = "mah" },
       BattType               = { main = "lipo",    receiver = "buffer" },
       CellCount              = { main = 8,         receiver = 2 },
       capacities             = { main = { 500, 1000, 1500, 2000, 2500, 3000 }, receiver = { 500, 1000, 1500, 2000, 2500, 3000 } },
@@ -216,6 +217,7 @@ local modelTable = {
 }
 
 
+local modelAlreadyLoaded = false
 
 local priorizeSwitchAnnouncements = true
 
@@ -399,7 +401,8 @@ local x, y, fontSize, yColumn2
 local xAlign = 0
 
 local BlinkWhenZero = 0 -- updated in run_func
-local Color = BLACK
+local Color = BLUE
+local BGColor = BLACK
 
 
 
@@ -1107,6 +1110,8 @@ local function check_for_missing_cells(context)
 
 local CfullVolt = BatteryDefinition[typeBattery[context]].highVoltage
 
+debugPrint("MC VOL:" .. CfullVolt)
+
   -- If the number of cells detected by the voltage sensor does not match the value in GV6 then play the warning message
   -- This is only for the dedicated voltage sensor
   --debugPrint(string.format("CellCount: %d currentSensorVoltageValue[context]:", CellCount))
@@ -1159,7 +1164,7 @@ end
 -- ####################################################################
 local function init_func()
 
-
+if not modelAlreadyLoaded then --todo --- maybe move all of this stuff out of init 
 
   local currentModelName = model.getInfo().name
 
@@ -1249,7 +1254,7 @@ printHumanReadableTable(announcementConfig)
 
 printHumanReadableTable(BatteryDefinition)
 
-logging(true)
+
 
   contexts = {}
   currentContextIndex = 1
@@ -1442,6 +1447,10 @@ logging(true)
   BatRemainmAh = 0 -- todo
 
   BatRemPer = 0 -- todo remove
+
+  modelAlreadyLoaded = true
+
+end
 
 end
 
@@ -2094,6 +2103,23 @@ local function refreshZoneXLarge(wgt)
     rxCurrentBlink = 0
   end
 
+-- testing = true
+-- 
+-- 
+-- 
+-- if testing then
+--   
+-- 
+-- end
+
+
+
+
+
+
+
+      --background
+      lcd.drawFilledRectangle(0, 0, wgt.zone.w, wgt.zone.h, BGColor, 5)
 
 
   if batCheckPassed or not ShowPreFlightStatus then
@@ -2109,8 +2135,8 @@ local function refreshZoneXLarge(wgt)
     -- Draw the top-right 1/4 of the screen
     --lcd.drawText(wgt.zone.x + 270, wgt.zone.y + -5, string.format("%.2fV", VoltsNow), DBLSIZE + Color)
     --lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 30, "Main Battery", MIDSIZE + Color + SHADOWED)
-    lcd.drawText(wgt.zone.x + 50, wgt.zone.y + 30, "Main Battery", MIDSIZE + Color + SHADOWED)
-    lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 60, "C: Current / L: Lowest / H: Highest", SMLSIZE + Color )
+    lcd.drawText(wgt.zone.x + 50, wgt.zone.y + 30, "Main Battery", MIDSIZE + COLOR_THEME_PRIMARY3 + SHADOWED)
+    lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 60, "C: Current / L: Lowest / H: Highest", SMLSIZE + COLOR_THEME_PRIMARY2 )
   
     amps = getValue( sensorCurrent["main"] ) -- todo
     --lcd.drawText(wgt.zone.x + 270, wgt.zone.y + 25, string.format("%.1fA", amps), DBLSIZE + Color)
@@ -2120,12 +2146,12 @@ local function refreshZoneXLarge(wgt)
   
     lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 80, string.format("C: %sV", currentVoltageValueCurrent["main"]), MIDSIZE + COLOR_THEME_SECONDARY1 + mainVoltBlink )
     --lcd.drawText(wgt.zone.x + 95, wgt.zone.y + 35, "/", MIDSIZE + Color)
-    lcd.drawText(wgt.zone.x + 120, wgt.zone.y + 80, string.format("L: %sV", currentVoltageValueLow["main"]), MIDSIZE + Color)
+    lcd.drawText(wgt.zone.x + 120, wgt.zone.y + 80, string.format("L: %sV", currentVoltageValueLow["main"]), MIDSIZE + COLOR_THEME_SECONDARY2)
     
 
     lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 110, string.format("C: %sA", currentCurrentValueCurrent["main"]), MIDSIZE + COLOR_THEME_SECONDARY1 + mainCurrentBlink)
     --lcd.drawText(wgt.zone.x + 95, wgt.zone.y + 65, "/", MIDSIZE + Color)
-    lcd.drawText(wgt.zone.x + 120, wgt.zone.y + 110, string.format("H: %sA", currentCurrentValueHigh["main"]), MIDSIZE + Color)
+    lcd.drawText(wgt.zone.x + 120, wgt.zone.y + 110, string.format("H: %sA", currentCurrentValueHigh["main"]), MIDSIZE + COLOR_THEME_SECONDARY2)
 
     drawBattery(40, 150, valueVoltsPercentRemaining["main"], wgt,typeBattery["main"] )
 
@@ -2139,18 +2165,18 @@ local function refreshZoneXLarge(wgt)
     lcd.drawText(wgt.zone.x + 10, wgt.zone.y + 245, sensorline2, SMLSIZE + BLACK )
 
 
-  lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 30, "Receiver Battery", MIDSIZE + Color + SHADOWED)
-  lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 60, "C: Current / L: Lowest / H: Highest", SMLSIZE + Color )
+  lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 30, "Receiver Battery", MIDSIZE + COLOR_THEME_PRIMARY1 + SHADOWED)
+  lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 60, "C: Current / L: Lowest / H: Highest", SMLSIZE + COLOR_THEME_PRIMARY2 )
 
   --lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 40, string.format("%.2fV / %.2fV", RxVoltsNow, RxVoltsMax), MIDSIZE + Color)
 
   lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 80, string.format("C: %sV", currentVoltageValueCurrent["receiver"]), MIDSIZE + COLOR_THEME_SECONDARY1 + rxVoltBlink)
   --lcd.drawText(wgt.zone.x + 95, wgt.zone.y + 35, "/", MIDSIZE + Color)
-  lcd.drawText(wgt.zone.x + 350, wgt.zone.y + 80, string.format("L: %sV", currentVoltageValueLow["receiver"]), MIDSIZE + Color)
+  lcd.drawText(wgt.zone.x + 350, wgt.zone.y + 80, string.format("L: %sV", currentVoltageValueLow["receiver"]), MIDSIZE + COLOR_THEME_SECONDARY2)
 
   lcd.drawText(wgt.zone.x + 240, wgt.zone.y + 110, string.format("C: %sA",  currentCurrentValueCurrent["receiver"]), MIDSIZE + COLOR_THEME_SECONDARY1 + rxCurrentBlink)
   --lcd.drawText(wgt.zone.x + 95, wgt.zone.y + 65, "/", MIDSIZE + Color)
-  lcd.drawText(wgt.zone.x + 350, wgt.zone.y + 110, string.format("H: %sA", currentCurrentValueHigh["receiver"]), MIDSIZE + Color)
+  lcd.drawText(wgt.zone.x + 350, wgt.zone.y + 110, string.format("H: %sA", currentCurrentValueHigh["receiver"]), MIDSIZE + COLOR_THEME_SECONDARY2)
 
   drawBattery(270, 150, valueVoltsPercentRemaining["receiver"], wgt,typeBattery["receiver"] )
 
@@ -2370,7 +2396,8 @@ end
 -- end
 
 function update(Context, options)
-  Color = options.Color
+  Color = options.Color -- left for historical reasons ... remove Color Variable -- todo 
+  BGColor = Color
   Context.options = options
   Context.back = nil
   Battery_Cap = options.Battery_Cap
