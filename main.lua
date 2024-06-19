@@ -364,7 +364,38 @@ local BatteryTypeDefaults = {
 
 
 
+  local unitNames = {
+    [0] = "",                        -- Raw unit (no unit)
+    [1] = "V",                       -- Volts
+    [2] = "A",                       -- Amps
+    [3] = "mA",                      -- Milliamps
+    [4] = "kts",                     -- Knots
+    [5] = "m/s",                     -- Meters per Second
+    [6] = "ft/s",                    -- Feet per Second
+    [7] = "km/h",                    -- Kilometers per Hour
+    [8] = "mph",                     -- Miles per Hour
+    [9] = "m",                       -- Meters
+    [10] = "ft",                     -- Feet
+    [11] = "°C",                     -- Degrees Celsius
+    [12] = "°F",                     -- Degrees Fahrenheit
+    [13] = "%",                      -- Percent
+    [14] = "mAh",                    -- Milliamp Hour
+    [15] = "W",                      -- Watts
+    [16] = "mW",                     -- Milliwatts
+    [17] = "dB",                     -- dB
+    [18] = "rpm",                    -- RPM
+    [19] = "G",                      -- G
+    [20] = "°",                      -- Degrees
+    [21] = "rad",                    -- Radians
+    [22] = "ml",                     -- Milliliters
+    [23] = "floz",                   -- Fluid Ounces
+    [24] = "ml/min",                 -- Ml per minute
+    [35] = "h",                      -- Hours
+    [36] = "min",                    -- Minutes
+    [37] = "s",                      -- Seconds
+    [38] = "V",                      -- Virtual unit for Cells
 
+}
 
 -- todo -- really needed ?
 local CapacityReservePercent = 0 -- set to zero to disable
@@ -679,7 +710,7 @@ end
 
 local function getAmp(sensor)
   if sensor ~= "" then
-    amps = getValue( sensor )
+    amps = getValue( sensor.id )
     if type(amps) == "number" then
       --if type(MaxAmps) == "string" or (type(MaxAmps) == "number" and amps > MaxAmps) then
       --  MaxAmps = amps
@@ -1256,6 +1287,8 @@ printHumanReadableTable(BatteryDefinition)
 
 
 
+
+
   contexts = {}
   currentContextIndex = 1
 --- -- Add entries to the table
@@ -1319,15 +1352,25 @@ printHumanReadableTable(BatteryDefinition)
   debugPrint("MODEL NAME: ", modelName)
   debugPrint("MODEL IMAGE: ",modelImage)
  
-  sensorVoltage["main"]         = modelDetails.VoltageSensor.main
-  sensorVoltage["receiver"]     = modelDetails.VoltageSensor.receiver
+  sensorVoltage["main"]         = getFieldInfo(modelDetails.VoltageSensor.main)
+  sensorVoltage["receiver"]     = getFieldInfo(modelDetails.VoltageSensor.receiver)
 
-  sensorCurrent["main"]         = modelDetails.CurrentSensor.main
-  sensorCurrent["receiver"]     = modelDetails.CurrentSensor.receiver
+  sensorCurrent["main"]         = getFieldInfo(modelDetails.CurrentSensor.main)
+  sensorCurrent["receiver"]     = getFieldInfo(modelDetails.CurrentSensor.receiver)
 
-  sensorMah["main"]             = modelDetails.MahSensor.main
-  sensorMah["receiver"]         = modelDetails.MahSensor.receiver
+  sensorMah["main"]             = getFieldInfo(modelDetails.MahSensor.main)
+  sensorMah["receiver"]         = getFieldInfo(modelDetails.MahSensor.receiver)
 
+  --myid = getFieldInfo(sensorCurrent["main"])
+--
+  --debugPrint("GFI: id:" .. myid.id )
+  --debugPrint("GFI: name:" .. myid.name )
+  --debugPrint("GFI: desc:" .. myid.desc )
+  --debugPrint("GFI: unit:" .. myid.unit )
+  --debugPrint("GFI: test unit:" .. sensorVoltage["main"].unit )
+  --debugPrint("GFI: test name:" .. sensorVoltage["main"].name )
+
+  
 
 
   countCell["main"]             = tonumber(modelDetails.CellCount.main)
@@ -1576,9 +1619,9 @@ end
 local function updateSensorValues(context)
 
 
-  currentSensorVoltageValue[context] = getValue(sensorVoltage[context])
-  currentSensorCurrentValue[context] = getValue(sensorCurrent[context])
-  currentSensorMahValue[context]     = getValue(sensorMah[context])
+  currentSensorVoltageValue[context] = getValue(sensorVoltage[context].id)
+  currentSensorCurrentValue[context] = getValue(sensorCurrent[context].id)
+  currentSensorMahValue[context]     = getValue(sensorMah[context].id)
 
 
   -- currentVoltageValueLatest[context] = getCellVoltage(currentSensorVoltageValue[context])
@@ -1591,7 +1634,7 @@ local function updateSensorValues(context)
 
   -- string.format("%.2f", number)
 
-  debugPrint(string.format("Updated Sensor Values: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, sensorVoltage[context],  currentVoltageValueCurrent[context] , sensorCurrent[context], sensorMah[context], currentSensorVoltageValue[context], currentSensorCurrentValue[context], currentSensorMahValue[context]))
+  debugPrint(string.format("Updated Sensor Values: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, sensorVoltage[context].name,  currentVoltageValueCurrent[context] , sensorCurrent[context].name, sensorMah[context].name, currentSensorVoltageValue[context], currentSensorCurrentValue[context], currentSensorMahValue[context]))
 
   -- disabled --           if VoltsNow < 1 or volts > 1 then
   -- disabled --             VoltsNow = volts
@@ -1607,7 +1650,7 @@ local function updateSensorValues(context)
 
   if currentVoltageValueLow[context] == 0 or ( currentVoltageValueCurrent[context] < currentVoltageValueLow[context] and currentVoltageValueCurrent[context] ~= 0.00 ) then
     currentVoltageValueLow[context] = currentVoltageValueCurrent[context]
-    debugPrint(string.format("Updated Sensor Values Low: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, sensorVoltage[context], currentVoltageValueCurrent[context] , sensorCurrent[context], sensorMah[context], currentSensorVoltageValue[context], currentSensorCurrentValue[context], currentSensorMahValue[context]))
+    debugPrint(string.format("Updated Sensor Values Low: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, sensorVoltage[context].name, currentVoltageValueCurrent[context] , sensorCurrent[context].name, sensorMah[context].name, currentSensorVoltageValue[context], currentSensorCurrentValue[context], currentSensorMahValue[context]))
 -- Updated Sensor Values Low: Context: main Sensor Voltage: Cels ( get Cell: nil ) Sensor Current: Curr Sensor mah:  Volt: 0 Current: 0 mAh: 0
   end
 
@@ -1854,11 +1897,11 @@ local function drawBattery(xOrigin, yOrigin, percentage, wgt, battype)
     local myBatt = { ["x"] = xOrigin,
                      ["y"] = yOrigin,
                      ["w"] = 120,
-                     ["h"] = 40,
+                     ["h"] = 30,
                      ["segments_w"] = 15,
                      ["color"] = WHITE,
                      ["cath_w"] = 6,
-                     ["cath_h"] = 22 }
+                     ["cath_h"] = 18 }
 
   lcd.setColor(CUSTOM_COLOR, wgt.options.Color)
 
@@ -1868,6 +1911,9 @@ local function drawBattery(xOrigin, yOrigin, percentage, wgt, battype)
     BlinkWhenZero = BLINK
   end
 
+  FSIZE = 0
+  --FSIZE = MIDSIZE
+  
   -- fill batt
   lcd.setColor(CUSTOM_COLOR, getPercentColor(percentage, battype))
   lcd.drawGauge(wgt.zone.x + myBatt.x, wgt.zone.y + myBatt.y, myBatt.w, myBatt.h, percentage, 100, CUSTOM_COLOR)
@@ -1881,13 +1927,65 @@ local function drawBattery(xOrigin, yOrigin, percentage, wgt, battype)
           myBatt.cath_w,
           myBatt.cath_h,
           CUSTOM_COLOR)
-  lcd.drawText(wgt.zone.x + myBatt.x + 20, wgt.zone.y + myBatt.y + 5, string.format("%d%%", percentage), LEFT + MIDSIZE + CUSTOM_COLOR)
+  lcd.drawText(wgt.zone.x + myBatt.x + 20, wgt.zone.y + myBatt.y + 5, string.format("%d%%", percentage), LEFT + FSIZE + CUSTOM_COLOR)
 
     -- draw values
-  lcd.drawText(wgt.zone.x + myBatt.x, wgt.zone.y + myBatt.y + 40,
-          string.format("%d mAh", BatRemainmAh), MIDSIZE + Color + BlinkWhenZero)
+  lcd.drawText(wgt.zone.x + myBatt.x, wgt.zone.y + myBatt.y + 30,
+          string.format("%d mAh", BatRemainmAh), FSIZE + Color + BlinkWhenZero)
 end
 
+-- ####################################################################
+local function drawNewBattery(xOrigin, yOrigin, percentage, wgt, battype, batCol, txtCol, size)
+
+  local myBatt = { ["x"] = xOrigin,
+                   ["y"] = yOrigin,
+                   ["w"] = 120,
+                   ["h"] = 30,
+                   ["segments_w"] = 15,
+                   ["color"] = WHITE,
+                   ["cath_w"] = 4,
+                   ["font"] = 0,
+                   ["cath_h"] = 18 }
+
+if size == "x" then
+  myBatt.h = 40
+  myBatt.cath_w = 6
+  myBatt.cath_h = 22
+  myBatt.w = 160
+  myBatt.font = MIDSIZE
+
+end                   
+
+--lcd.setColor(CUSTOM_COLOR, wgt.options.Color)
+
+if percentage > 0 then -- Don't blink
+  BlinkWhenZero = 0
+else
+  BlinkWhenZero = BLINK
+end
+
+
+-- fill batt
+lcd.setColor(CUSTOM_COLOR, getPercentColor(percentage, battype))
+lcd.drawGauge(wgt.zone.x + myBatt.x, wgt.zone.y + myBatt.y, myBatt.w, myBatt.h, percentage, 100, CUSTOM_COLOR)
+
+-- draws bat
+--lcd.setColor(CUSTOM_COLOR, batCol)
+lcd.drawRectangle(wgt.zone.x + myBatt.x, wgt.zone.y + myBatt.y, myBatt.w, myBatt.h, batCol, 2)
+lcd.drawFilledRectangle(wgt.zone.x + myBatt.x + myBatt.w,
+        --wgt.zone.y + myBatt.h / 2 - myBatt.cath_h / 2,
+        wgt.zone.y + myBatt.y + myBatt.cath_h / 2 - 2.5,
+        myBatt.cath_w,
+        myBatt.cath_h,
+        batCol)
+
+lcd.drawText(wgt.zone.x + myBatt.x + 20, wgt.zone.y + myBatt.y + 5, string.format("%d%%", percentage), LEFT + myBatt.font + batCol)
+
+  -- draw values
+lcd.drawText(wgt.zone.x + myBatt.x, wgt.zone.y + myBatt.y + myBatt.h,
+-- string.format("%d mAh", BatRemainmAh), myBatt.font + txtCol + BlinkWhenZero) -- todo -- original line --below just for display testing
+"3456 mAh (8000)", myBatt.font + txtCol + BlinkWhenZero)
+end
 
 
 local function draw_sensor_line(wgt, sensor_line_data, x, y)
@@ -1988,6 +2086,276 @@ local function refreshZoneMedium(wgt)
   --        string.format("%d mAh", BatRemainmAh), DBLSIZE + CUSTOM_COLOR + BlinkWhenZero)
 
 end
+
+local function lcdText(text,width,height,fontsize,color,rowDirection,row,colDirection,column)
+
+  local smallestStepY = 14
+  local smallestStepX = 12
+  local maxMaxCol = 19 -- for RM TX16S ! -- todo get screen maxsize somehow ?
+
+  if     fontsize == "xl"  then FONT , fontpxl, lineSpaceing, colSpacing  = XXLSIZE , 72 , 6 , 19
+  elseif fontsize == "x"   then FONT , fontpxl, lineSpaceing, colSpacing  = DBLSIZE , 32 , 5 , 18
+  elseif fontsize == "l"   then FONT , fontpxl, lineSpaceing, colSpacing  = MIDSIZE , 24 , 4 , 17   -- <----
+  elseif fontsize == "m"   then FONT , fontpxl, lineSpaceing, colSpacing  = 0       , 16 , 3 , 16
+  else                          FONT , fontpxl, lineSpaceing, colSpacing  = SMLSIZE , 12 , 2 , 8
+  end
+
+ linex = 0
+ liney = 0
+
+ maxrow = math.floor(height / ( fontpxl + lineSpaceing ) )
+ maxcol = math.floor(width / colSpacing )
+
+ xStep = colSpacing
+ yStep = fontpxl + lineSpaceing
+
+ column = column - 1
+
+
+
+  debugPrint("SCREEN: maxrow: " .. maxrow .. " maxcol: " .. maxcol .. " Size: " .. fontsize )
+
+  if rowDirection == "b" then
+    liney = (maxrow - row) * yStep
+  else
+    liney = yStep * ( row - 1)
+  end
+
+
+  if colDirection == "r" then
+    linex = (maxcol - column) * colSpacing
+  else
+    linex = linex +  ( column * colSpacing )
+  end
+
+
+  lcd.drawText(linex, liney , text, FONT + color )
+
+
+
+end
+
+
+local function renderScreen(layout, width, height)
+  local smallestStepY = 14
+  local smallestStepX = 12
+
+  local fontSizes = {
+      xl = { FONT = XXLSIZE, fontpxl = 72, lineSpacing = 6, colSpacing = 19 },
+      x  = { FONT = DBLSIZE, fontpxl = 32, lineSpacing = 5, colSpacing = 18 },
+      l  = { FONT = MIDSIZE, fontpxl = 24, lineSpacing = 4, colSpacing = 17 },
+      m  = { FONT = 0,       fontpxl = 16, lineSpacing = 3, colSpacing = 16 },
+      s  = { FONT = SMLSIZE, fontpxl = 12, lineSpacing = 2, colSpacing = 8 }
+  }
+
+
+
+
+
+  local maxrow = math.floor(height / (fontSizes["l"].fontpxl + fontSizes["l"].lineSpacing))
+  local maxcol = math.floor(width / fontSizes["l"].colSpacing)
+
+  -- Define the starting positions
+  local y = 0
+  local x = 0
+
+  -- Function to draw text with given parameters
+  local function drawText(text, x, y, fontsize, color)
+    local offsetX = x + 2 -- a little bit from left
+
+      local fontData = fontSizes[fontsize]
+      lcd.drawText(offsetX, y, text, fontData.FONT + color)
+  end
+
+  -- Function to draw a sensor line
+  local function drawSensorLine(sensors, y)
+      local offsetX = x + 2 -- a little bit from left
+      for _, sensor in ipairs(sensors) do
+          drawText(sensor.label, offsetX, y, "m", sensor.labelColor)
+          drawText(sensor.value, offsetX + fontSizes["m"].colSpacing * 2, y, "m", sensor.valuecolor)
+          offsetX = offsetX + fontSizes["m"].colSpacing * 6
+      end
+  end
+
+  -- Function to draw a bottom sensor line with high and low values
+  --local function drawBottomSensorLine(sensors, y)
+  --    local offsetX = x + 1 -- a little bit from left
+  --    for _, sensor in ipairs(sensors) do
+  --        drawText(sensor.label, offsetX, y, "s", sensor.labelColor)
+  --        drawText(":", offsetX + fontSizes["s"].colSpacing * 5, y, "s", WHITE)
+  --        drawText("[", offsetX + fontSizes["s"].colSpacing * 6, y, "s", WHITE)
+  --        drawText("L:", offsetX + fontSizes["s"].colSpacing * 7, y, "s", sensor.labelColor)
+  --        drawText(sensor.lowValue, offsetX + fontSizes["s"].colSpacing * 9, y, "s", sensor.lowValueColor)
+  --        drawText("H:", offsetX + fontSizes["s"].colSpacing * 13, y, "s", sensor.labelColor)
+  --        drawText(sensor.highValue, offsetX + fontSizes["s"].colSpacing * 15, y, "s", sensor.highValueColor)
+  --        drawText("]", offsetX + fontSizes["s"].colSpacing * 19, y, "s", WHITE)
+  --        offsetX = offsetX + fontSizes["s"].colSpacing * 20
+  --    end
+  --end
+
+  local function drawBottomSensorLine(sensors, y)
+    local offsetX = x + 1 -- a little bit from left
+    local totalSensors = #sensors
+    local sensorsPerLine = 2
+    local sensorWidth = width / sensorsPerLine
+
+    for i, sensor in ipairs(sensors) do
+        local currentLine = math.floor((i - 1) / sensorsPerLine)
+        local colIndex = (i - 1) % sensorsPerLine
+        local lineOffsetX = offsetX + colIndex * sensorWidth
+
+        drawText(sensor.label, lineOffsetX, y, "s", sensor.labelColor)
+        drawText("[", lineOffsetX + fontSizes["s"].colSpacing * 6, y, "s", WHITE)
+        drawText("L:", lineOffsetX + fontSizes["s"].colSpacing * 7, y, "s", sensor.labelColor)
+        drawText(sensor.lowValue, lineOffsetX + fontSizes["s"].colSpacing * 9, y, "s", sensor.lowValueColor)
+        drawText("H:", lineOffsetX + fontSizes["s"].colSpacing * 15, y, "s", sensor.labelColor)
+        drawText(sensor.highValue, lineOffsetX + fontSizes["s"].colSpacing * 17, y, "s", sensor.highValueColor)
+        drawText("]", lineOffsetX + fontSizes["s"].colSpacing * 23, y, "s", WHITE)
+
+        -- Move to the next line if it's a new set of sensors
+        if colIndex == sensorsPerLine - 1 and i < totalSensors then
+            y = y + fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing
+        end
+    end
+end
+
+  -- Iterate through the layout and render each element
+  for _, item in ipairs(layout) do
+      if item.type == "header" then
+          drawText(item.text, x, y, "l", item.color)
+          y = y + fontSizes["l"].fontpxl + fontSizes["l"].lineSpacing
+      elseif item.type == "sensorLine" then
+          drawSensorLine(item.sensors, y)
+          y = y + fontSizes["m"].fontpxl + fontSizes["m"].lineSpacing
+      elseif item.type == "bottom" then
+          drawBottomSensorLine(item.sensors, height - fontSizes["s"].fontpxl - fontSizes["s"].lineSpacing - 8) -- -8 to lift it from the bottom ... but should be adapted to screen height
+          height = height - fontSizes["s"].fontpxl - fontSizes["s"].lineSpacing
+      end
+  end
+end
+
+
+
+
+local function renderScreen(layout, width, height)
+  local smallestStepY = 14
+  local smallestStepX = 12
+
+  local headerSpacing = 0
+
+  local firstHeader = true
+
+  local fontSizes = {
+      -- xl = { FONT = XXLSIZE, fontpxl = 72, lineSpacing = 6, colSpacing = 19 },
+      -- x  = { FONT = DBLSIZE, fontpxl = 32, lineSpacing = 5, colSpacing = 18 },
+      l  = { FONT = MIDSIZE, fontpxl = 24, lineSpacing = 4, colSpacing = 17 },
+      m  = { FONT = 0,       fontpxl = 16, lineSpacing = 3, colSpacing = 16 },
+      s  = { FONT = SMLSIZE, fontpxl = 12, lineSpacing = 2, colSpacing = 8 }
+  }
+
+
+if height >= 272 then
+
+  fontSizes = {
+    -- xl = { FONT = XXLSIZE, fontpxl = 72, lineSpacing = 6, colSpacing = 19 },
+    l  = { FONT = DBLSIZE, fontpxl = 32, lineSpacing = 5, colSpacing = 18 },
+    m  = { FONT = MIDSIZE, fontpxl = 24, lineSpacing = 4, colSpacing = 22 }, -- <<
+    s  = { FONT = 0,       fontpxl = 16, lineSpacing = 3, colSpacing = 10 },
+    -- ss  = { FONT = SMLSIZE, fontpxl = 12, lineSpacing = 2, colSpacing = 8 }
+}
+
+headerSpacing = 15
+ 
+end
+
+
+  local maxrow = math.floor(height / (fontSizes["l"].fontpxl + fontSizes["l"].lineSpacing))
+  local maxcol = math.floor(width / fontSizes["l"].colSpacing)
+
+  -- Define the starting positions
+  local y = 0
+  local x = 0
+
+  -- Function to draw text with given parameters
+  local function drawText(text, x, y, fontsize, color)
+    local offsetX = x + 2 -- a little bit from left
+          local fontData = fontSizes[fontsize]
+      lcd.drawText(offsetX, y, text, fontData.FONT + color)
+
+      y = y + headerSpacing
+
+  end
+
+  -- Function to draw a sensor line
+  local function drawSensorLine(sensors, y)
+      local offsetX = x + 2 -- a little bit from left
+      for _, sensor in ipairs(sensors) do
+          drawText(sensor.label, offsetX, y, "m", sensor.labelColor)
+          drawText(sensor.value, offsetX + fontSizes["m"].colSpacing * 2, y, "m", sensor.valuecolor)
+          offsetX = offsetX + fontSizes["m"].colSpacing * 6
+      end
+  end
+
+  -- Function to draw a bottom sensor line with high and low values
+  --local function drawBottomSensorLine(sensors, y)
+  --    local offsetX = x + 1 -- a little bit from left
+  --    for _, sensor in ipairs(sensors) do
+  --        drawText(sensor.label, offsetX, y, "s", sensor.labelColor)
+  --        drawText(":", offsetX + fontSizes["s"].colSpacing * 5, y, "s", WHITE)
+  --        drawText("[", offsetX + fontSizes["s"].colSpacing * 6, y, "s", WHITE)
+  --        drawText("L:", offsetX + fontSizes["s"].colSpacing * 7, y, "s", sensor.labelColor)
+  --        drawText(sensor.lowValue, offsetX + fontSizes["s"].colSpacing * 9, y, "s", sensor.lowValueColor)
+  --        drawText("H:", offsetX + fontSizes["s"].colSpacing * 13, y, "s", sensor.labelColor)
+  --        drawText(sensor.highValue, offsetX + fontSizes["s"].colSpacing * 15, y, "s", sensor.highValueColor)
+  --        drawText("]", offsetX + fontSizes["s"].colSpacing * 19, y, "s", WHITE)
+  --        offsetX = offsetX + fontSizes["s"].colSpacing * 20
+  --    end
+  --end
+
+  local function drawBottomSensorLine(sensors, y)
+    local offsetX = x + 1 -- a little bit from left
+    local totalSensors = #sensors
+    local sensorsPerLine = 2
+    local sensorWidth = width / sensorsPerLine
+
+    for i, sensor in ipairs(sensors) do
+        local currentLine = math.floor((i - 1) / sensorsPerLine)
+        local colIndex = (i - 1) % sensorsPerLine
+        local lineOffsetX = offsetX + colIndex * sensorWidth
+
+        drawText(sensor.label, lineOffsetX, y, "s", sensor.labelColor)
+        drawText("[", lineOffsetX + fontSizes["s"].colSpacing * 6, y, "s", WHITE)
+        drawText("L:", lineOffsetX + fontSizes["s"].colSpacing * 7, y, "s", sensor.labelColor)
+        drawText(sensor.lowValue, lineOffsetX + fontSizes["s"].colSpacing * 9, y, "s", sensor.lowValueColor)
+        drawText("H:", lineOffsetX + fontSizes["s"].colSpacing * 15, y, "s", sensor.labelColor)
+        drawText(sensor.highValue, lineOffsetX + fontSizes["s"].colSpacing * 17, y, "s", sensor.highValueColor)
+        drawText("]", lineOffsetX + fontSizes["s"].colSpacing * 23, y, "s", WHITE)
+
+        -- Move to the next line if it's a new set of sensors
+        if colIndex == sensorsPerLine - 1 and i < totalSensors then
+            y = y + fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing
+        end
+    end
+end
+
+  -- Iterate through the layout and render each element
+  for _, item in ipairs(layout) do
+      if item.type == "header" then
+        if not firstHeader then y = y + headerSpacing end
+          drawText(item.text, x, y, "l", item.color)
+          firstHeader = false
+          y = y + fontSizes["l"].fontpxl + fontSizes["l"].lineSpacing
+      elseif item.type == "sensorLine" then
+          drawSensorLine(item.sensors, y)
+          y = y + fontSizes["m"].fontpxl + fontSizes["m"].lineSpacing
+      elseif item.type == "bottom" then
+          drawBottomSensorLine(item.sensors, height - fontSizes["s"].fontpxl - fontSizes["s"].lineSpacing - 8) -- -8 to lift it from the bottom ... but should be adapted to screen height
+          height = height - fontSizes["s"].fontpxl - fontSizes["s"].lineSpacing
+      end
+  end
+end
+
+
 
 -- ####################################################################
 local function refreshZoneLarge(wgt)
@@ -2103,18 +2471,311 @@ local function refreshZoneXLarge(wgt)
     rxCurrentBlink = 0
   end
 
--- testing = true
+testing = true
+
+
+
+if testing then
+
+  x = 0
+  y = 0
+  w = wgt.zone.w
+  h = wgt.zone.h
+  hw = math.floor(w / 2)
+  hh = math.floor(h / 2)
+
+  dhw = math.floor(hw / 2)
+  dhh = math.floor(hh / 2)
+
+  ddhw = math.floor(dhw / 2) -- or w / 8
+  ddhh = math.floor(dhh / 2) -- or h / 8
+
+  line1 = y
+  line2 = y +   ddhh
+  line3 = y + ( ddhh * 2 )
+  line4 = y + ( ddhh * 3 )
+  line5 = y + ( ddhh * 4 )
+  line6 = y + ( ddhh * 5 )
+  line7 = y + ( ddhh * 6 )
+  line8 = y + ( ddhh * 7 )
+
+  col1 = x
+  col2 = x +   ddhw
+  col3 = x + ( ddhw * 2 )
+  col4 = x + ( ddhw * 3 )
+  col5 = x + ( ddhw * 4 )
+  col6 = x + ( ddhw * 5 )
+  col7 = x + ( ddhw * 6 )
+  col8 = x + ( ddhw * 7 )
+
+  
+  local FONT_38 = XXLSIZE -- 38px -- 72
+  local FONT_16 = DBLSIZE -- 16px -- 32
+  local FONT_12 = MIDSIZE -- 12px -- 24
+  local FONT_8 = 0 -- Default 8px -- 16
+  local FONT_6 = SMLSIZE -- 6px --   12 -- 14
+
+  debugPrint("SCREEN: x: ".. x .. " Y: " .. y .. " w: " .. w .. " h: " .. h)
+  debugPrint("SCREEN: hw: ".. hw .. " hh: " .. hh .. " dhw: ".. dhw .. " dhh: " .. dhh )
+  debugPrint("SCREEN: ddhw: ".. ddhw .. " ddhh: " .. ddhh  )
+
+  lcd.drawFilledRectangle(0, 0, w, h, BLACK, 5)
+
+  -- lcdText("RpM [H: 3200 p: 2601]",w,h,"s",WHITE,"t",1 ,"l",1)
+  -- lcdText("RpM [H: 3200 p: 2602]",w,h,"s",WHITE,"t",2 ,"l",1)
+  -- lcdText("RpM [H: 3200 p: 2603]",w,h,"s",WHITE,"t",3 ,"l",1)
+  -- lcdText("RpM [H: 3200 p: 2604]",w,h,"s",WHITE,"t",4 ,"l",1)
+  -- lcdText("RpM [H: 3200 p: 2605]",w,h,"s",WHITE,"t",5 ,"l",1)
+  -- lcdText("RpM [H: 3200 p: 2606]",w,h,"s",WHITE,"t",6 ,"l",1)
+  -- lcdText("RpM [H: 3200 p: 2607]",w,h,"s",WHITE,"t",7 ,"l",1)
+  -- lcdText("RpM [H: 3200 p: 2608]",w,h,"s",WHITE,"t",8 ,"l",1)
+
+  -- lcdText("RpM [H: 3200 p: 2609]",w,h,"s",WHITE,"t",9 ,"l",1)
+  -- lcdText("RpM [H: 3200 p: 2610]",w,h,"s",WHITE,"t",10,"l",1)
+  -- lcdText("RpM [H: 3200 p: 2611]",w,h,"s",WHITE,"t",11,"l",1)
+  -- lcdText("RpM [H: 3200 p: 2612]",w,h,"s",WHITE,"t",12,"l",1)
+  -- lcdText("RpM [H: 3200 p: 2613]",w,h,"s",WHITE,"t",13,"l",1)
+  -- lcdText("RpM [H: 3200 p: 2614]",w,h,"s",WHITE,"t",14,"l",1)
+  -- lcdText("RpM [H: 3200 p: 2615]",w,h,"s",WHITE,"t",15,"l",1)
+  -- lcdText("RpM [H: 3200 p: 2616]",w,h,"s",WHITE,"t",16,"l",1)
+
+-- works --     lcdText("Main",w,h,"l",  COLOR_THEME_SECONDARY2,"t",1,"l",2)
+-- works --   
+-- works --     lcdText("C:",w,h,"m",  COLOR_THEME_SECONDARY2,"t",3,"l",2)
+-- works --     lcdText("54.24V",w,h,"m",               GREEN,"t",3,"l",3)
+-- works --   
+-- works --     lcdText("L:",w,h,"m",  COLOR_THEME_SECONDARY2,"t",3,"l",7)
+-- works --     lcdText("54.24V",w,h,"m",                 RED,"t",3,"l",8)
+-- works --   
+-- works --     lcdText("C:",w,h,"m",  COLOR_THEME_SECONDARY2,"t",4,"l",2)
+-- works --     lcdText("54.24V",w,h,"m",               GREEN,"t",4,"l",3)
+-- works --   
+-- works --     lcdText("L:",w,h,"m",  COLOR_THEME_SECONDARY2,"t",4,"l",7)
+-- works --     lcdText("54.24V",w,h,"m",                 RED,"t",4,"l",8)
+-- works --   
+-- works --   
+-- works --     lcdText("Receiver",w,h,"l",  COLOR_THEME_SECONDARY2,"t",4,"l",2)
+-- works --   
+-- works --     lcdText("C:",w,h,"m",  COLOR_THEME_SECONDARY2,"t",7,"l",2)
+-- works --     lcdText("54.24V",w,h,"m",               GREEN,"t",7,"l",3)
+-- works --   
+-- works --     lcdText("L:",w,h,"m",  COLOR_THEME_SECONDARY2,"t",7,"l",7)
+-- works --     lcdText("54.24V",w,h,"m",                 RED,"t",7,"l",8)
+-- works --   
+-- works --     lcdText("C:",w,h,"m",  COLOR_THEME_SECONDARY2,"t",8,"l",2)
+-- works --     lcdText("54.24V",w,h,"m",               GREEN,"t",8,"l",3)
+-- works --   
+-- works --     lcdText("L:",w,h,"m",  COLOR_THEME_SECONDARY2,"t",8,"l",7)
+-- works --     lcdText("54.24V",w,h,"m",                 RED,"t",8,"l",8)
+-- works --   
+-- works --   
+-- works --     
+-- works --     --lcdText("L: 54.24V",w,h,"m",  COLOR_THEME_SECONDARY2,"t",3,"l",7)
+-- works --   
+-- works --   
+-- works --     lcdText("RPM:",w,h,"s",   COLOR_THEME_SECONDARY2,"b",2,"l",1)
+-- works --     lcdText("[",w,h,"s",      COLOR_THEME_SECONDARY1,"b",2,"l",6)
+-- works --     lcdText("L:",w,h,"s",          COLOR_THEME_FOCUS,"b",2,"l",7)
+-- works --     lcdText("3000",w,h,"s",                      RED,"b",2,"l",9)
+-- works --     lcdText("H:",w,h,"s",          COLOR_THEME_FOCUS,"b",2,"l",13)
+-- works --     lcdText("3000",w,h,"s",                    GREEN,"b",2,"l",15)
+-- works --     lcdText("]",w,h,"s",      COLOR_THEME_SECONDARY1,"b",2,"l",19)
+-- works --    
+-- works --     lcdText("RPM:",w,h,"s",   COLOR_THEME_SECONDARY2,"b",2,"l",20)
+-- works --     lcdText("[",w,h,"s",      COLOR_THEME_SECONDARY1,"b",2,"l",25)
+-- works --     lcdText("L:",w,h,"s",          COLOR_THEME_FOCUS,"b",2,"l",26)
+-- works --     lcdText("3000",w,h,"s",                      RED,"b",2,"l",28)
+-- works --     lcdText("H:",w,h,"s",          COLOR_THEME_FOCUS,"b",2,"l",32)
+-- works --     lcdText("3000",w,h,"s",                    GREEN,"b",2,"l",34)
+-- works --     lcdText("]",w,h,"s",      COLOR_THEME_SECONDARY1,"b",2,"l",38)
+-- works --   
+-- works --     lcdText("RPM:",w,h,"s",   COLOR_THEME_SECONDARY2,"b",2,"l",39)
+-- works --     lcdText("[",w,h,"s",      COLOR_THEME_SECONDARY1,"b",2,"l",44)
+-- works --     lcdText("L:",w,h,"s",          COLOR_THEME_FOCUS,"b",2,"l",45)
+-- works --     lcdText("3000",w,h,"s",                      RED,"b",2,"l",47)
+-- works --     lcdText("H:",w,h,"s",          COLOR_THEME_FOCUS,"b",2,"l",51)
+-- works --     lcdText("3000",w,h,"s",                    GREEN,"b",2,"l",53)
+-- works --     lcdText("]",w,h,"s",      COLOR_THEME_SECONDARY1,"b",2,"l",57)
+
+--print("GFI:", sensorVoltage["main"].unit)
+-- Example usage
+
+local screenLayout = {
+  { type = "header", text = "Main", color = COLOR_THEME_SECONDARY2 },
+  { type = "sensorLine", sensors = {
+      { label = "C:", value = currentVoltageValueCurrent["main"] .. unitNames[sensorVoltage["main"].unit], labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
+      { label = "L:", value = currentVoltageValueLow["main"] .. unitNames[sensorVoltage["main"].unit], labelColor = COLOR_THEME_FOCUS, valuecolor = RED }
+  }},
+  { type = "sensorLine", sensors = {
+      { label = "C:", value = currentCurrentValueCurrent["main"] .. unitNames[sensorCurrent["main"].unit], labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
+      { label = "H:", value = currentCurrentValueHigh["main"] .. unitNames[sensorCurrent["main"].unit]   , labelColor = COLOR_THEME_FOCUS, valuecolor = RED }
+  }},
+  { type = "header", text = "Receiver", color = COLOR_THEME_SECONDARY2 },
+  { type = "sensorLine", sensors = {
+      { label = "C:", value = currentVoltageValueCurrent["receiver"] .. unitNames[sensorVoltage["receiver"].unit], labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
+      { label = "L:", value = currentVoltageValueLow["receiver"] .. unitNames[sensorVoltage["receiver"].unit], labelColor = COLOR_THEME_FOCUS, valuecolor = RED }
+  }},
+  { type = "sensorLine", sensors = {
+      { label = "C:", value = currentCurrentValueCurrent["receiver"] .. unitNames[sensorCurrent["receiver"].unit], labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
+      { label = "H:", value = currentCurrentValueHigh["receiver"] .. unitNames[sensorCurrent["receiver"].unit]   , labelColor = COLOR_THEME_FOCUS, valuecolor = RED }
+  }},
+  { type = "bottom", sensors = {
+      { label = "RPM", lowValue = "3000", highValue = "3200", labelColor = COLOR_THEME_SECONDARY2, lowValueColor = RED, highValueColor = GREEN },
+      { label = "RxBt", lowValue = "29.00V", highValue = "29.00V", labelColor = COLOR_THEME_SECONDARY2, lowValueColor = RED, highValueColor = GREEN },
+      --{ label = "RPM", lowValue = "2800", highValue = "3000", labelColor = COLOR_THEME_SECONDARY2, lowValueColor = RED, highValueColor = GREEN }
+  }},
+  { type = "bottom", sensors = {
+      { label = "TEMP", lowValue = "20C", highValue = "25C", labelColor = COLOR_THEME_SECONDARY2, lowValueColor = RED, highValueColor = GREEN },
+      { label = "TEMP", lowValue = "18C", highValue = "23C", labelColor = COLOR_THEME_SECONDARY2, lowValueColor = RED, highValueColor = GREEN },
+      --{ label = "TEMP", lowValue = "19C", highValue = "24C", labelColor = COLOR_THEME_SECONDARY2, lowValueColor = RED, highValueColor = GREEN }
+  }}
+}
+
+
+renderScreen(screenLayout, wgt.zone.w, wgt.zone.h)
+
+if wgt.zone.h >= 272 then
+
+
+drawNewBattery(280, 25, valueVoltsPercentRemaining["main"], wgt,typeBattery["main"], COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE, "x" )
+drawNewBattery(280, 135, valueVoltsPercentRemaining["receiver"], wgt,typeBattery["receiver"] , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE,"x")
+
+else
+
+  drawNewBattery(230, 15, valueVoltsPercentRemaining["main"], wgt,typeBattery["main"], COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE,"l" )
+drawNewBattery(230, 80, valueVoltsPercentRemaining["receiver"], wgt,typeBattery["receiver"] , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE, "l")
+
+end
+
+
+
+  -- lcdText("RPM:",w,h,"s",  WHITE,"b",5,"l",1)
+  -- lcdText("[",w,h,"s",     WHITE,"b",5,"l",4)
+  -- lcdText("L:",w,h,"s",    WHITE,"b",5,"l",5)
+  -- lcdText("3000",w,h,"s",  GREEN,"b",5,"l",6)
+  -- lcdText("H:",w,h,"s",    WHITE,"b",5,"l",9)
+  -- lcdText("3000",w,h,"s",  WHITE,"b",5,"l",10)
+  -- lcdText("]",w,h,"s",     WHITE,"b",5,"l",13)
 -- 
--- 
--- 
--- if testing then
---   
--- 
--- end
+  -- lcdText("RPM:",w,h,"s",  WHITE,"b",5,"l",14)
+  -- lcdText("[",w,h,"s",     WHITE,"b",5,"l",17)
+  -- lcdText("L:",w,h,"s",    WHITE,"b",5,"l",18)
+  -- lcdText("3000",w,h,"s",  GREEN,"b",5,"l",19)
+  -- lcdText("H:",w,h,"s",    WHITE,"b",5,"l",22)
+  -- lcdText("3000",w,h,"s",  WHITE,"b",5,"l",23)
+  -- lcdText("]",w,h,"s",     WHITE,"b",5,"l",26)
+
+  --lcdText("HHHHHHHHHHHHHHHHHHHHH",w,h,"s",     WHITE,"b",5,"l",1)
 
 
 
 
+
+
+  --lcdText("RpM [H: 3200 p: 2617]",w,h,"s",WHITE,"b",3,"l",1)
+  --lcdText("RpM [H: 3200 p: 2618]",w,h,"s",WHITE,"b",2,"l",1)
+  --lcdText("RpM [H: 3200 p: 2619]",w,h,"s",WHITE,"b",1,"l",1)
+
+
+  -- lcdText("TEST1",w,h,"l",WHITE,"t",1,"l",1)
+  -- lcdText("TEST2",w,h,"l",WHITE,"t",2,"l",1)
+  -- lcdText("TEST3",w,h,"l",WHITE,"t",3,"l",1)
+  -- lcdText("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH",w,h,"l",WHITE,"t",4,"l",1) -- 28
+  -- 
+  -- lcdText("H1",w,h,"l",WHITE,"t",5,"l",1) -- 28
+  -- lcdText("H2",w,h,"l",WHITE,"t",5,"l",3) -- 28
+  -- lcdText("H3",w,h,"l",WHITE,"t",5,"l",5) -- 28
+-- 
+  -- lcdText("H1",w,h,"l",WHITE,"t",5,"r",2) -- 28
+  -- lcdText("H2",w,h,"l",WHITE,"t",5,"r",4) -- 28
+  -- lcdText("H3",w,h,"l",WHITE,"t",5,"r",6) -- 28
+-- 
+  -- -- lcdText("H",w,h,"l",WHITE,"t",5,"r",1) -- 28
+  -- -- lcdText("H",w,h,"l",WHITE,"t",5,"r",2) -- 28
+  -- -- lcdText("H",w,h,"l",WHITE,"t",5,"r",3) -- 28
+-- 
+-- 
+  -- --lcdText("TEST5",w,h,"l",WHITE,"t",5,"l",1)
+  -- lcdText("TEST6",w,h,"l",WHITE,"t",6,"l",1)
+  -- lcdText("TEST7",w,h,"l",WHITE,"t",7,"l",1)
+  -- lcdText("TEST8",w,h,"l",WHITE,"t",8,"l",1)
+
+
+  
+-- text = "RPM [H: 3200 L: 2600]"
+-- 
+-- lcd.drawText(x            , line1 , text, FONT_8 + COLOR_THEME_PRIMARY2 )
+-- lcd.drawText(x            , line1 + 18 , text, FONT_8 + COLOR_THEME_PRIMARY2 )
+-- lcd.drawText(x            , line2 , text, FONT_6 + COLOR_THEME_PRIMARY2 )
+-- lcd.drawText(x            , line3 , text, FONT_6 + COLOR_THEME_PRIMARY2 )
+-- lcd.drawText(x            , line4 , text, FONT_6 + COLOR_THEME_PRIMARY2 )
+
+-- lcd.drawText(x            , line5 , text, FONT_6 + COLOR_THEME_PRIMARY2 )
+-- lcd.drawText(x            , line6 , text, FONT_6 + COLOR_THEME_PRIMARY2 )
+-- lcd.drawText(x            , line7 , text, FONT_6 + COLOR_THEME_PRIMARY2 )
+-- lcd.drawText(x            , line8 , text, FONT_6 + COLOR_THEME_PRIMARY2 )
+
+-- lcd.drawText(col1            , line1 , text, FONT_6 + COLOR_THEME_PRIMARY2 )
+-- --lcd.drawText(col2            , line1 , text, FONT_6 + COLOR_THEME_PRIMARY2 )
+-- lcd.drawText(col3            , line1 , text, FONT_6 + COLOR_THEME_PRIMARY2 )
+-- --lcd.drawText(col4            , line1 , text, FONT_6 + COLOR_THEME_PRIMARY2 )
+-- 
+-- lcd.drawText(col5            , line1 , text, FONT_6 + COLOR_THEME_PRIMARY2 )
+-- --lcd.drawText(col6            , line1 , text, FONT_6 + COLOR_THEME_PRIMARY2 )
+-- lcd.drawText(col7            , line1 , text, FONT_6 + COLOR_THEME_PRIMARY2 )
+-- --lcd.drawText(col8            , line1 , text, FONT_6 + COLOR_THEME_PRIMARY2 )
+
+
+
+-- lcd.drawText(x            , y , "TEST", FONT_16 + COLOR_THEME_PRIMARY2 )
+-- lcd.drawText(x + dhw      , y , "TEST", FONT_16 + COLOR_THEME_PRIMARY2 )
+-- lcd.drawText(x + hw       , y , "TEST", FONT_16 + COLOR_THEME_PRIMARY2 )
+-- lcd.drawText(x + hw + dhw , y , "TEST", FONT_16 + COLOR_THEME_PRIMARY2 )
+-- 
+-- lcd.drawText(x, y + hh, "TEST", FONT_16 + COLOR_THEME_PRIMARY2 )
+-- lcd.drawText(x + hw, y + hh , "TEST", FONT_16 + COLOR_THEME_PRIMARY2 )
+
+
+
+
+  -- ray = 0
+  -- lcd.drawFilledRectangle(0, ray, rhw, rhw, COLOR_THEME_PRIMARY1)
+  -- ray = ray + rhw
+  -- lcd.drawFilledRectangle(0, ray, rhw, rhw, COLOR_THEME_PRIMARY2)
+  -- ray = ray + rhw
+  -- lcd.drawFilledRectangle(0, ray, rhw, rhw, COLOR_THEME_PRIMARY3)
+  -- ray = ray + rhw
+  -- lcd.drawFilledRectangle(0, ray, rhw, rhw, COLOR_THEME_SECONDARY1)
+  -- ray = ray + rhw
+  -- lcd.drawFilledRectangle(0, ray, rhw, rhw, COLOR_THEME_SECONDARY2)
+  -- ray = ray + rhw
+  -- lcd.drawFilledRectangle(0, ray, rhw, rhw, COLOR_THEME_SECONDARY3)
+  -- ray = ray + rhw
+  -- lcd.drawFilledRectangle(0, ray, rhw, rhw, COLOR_THEME_FOCUS)
+  -- ray = ray + rhw
+  -- lcd.drawFilledRectangle(0, ray, rhw, rhw, COLOR_THEME_EDIT)
+  -- ray = ray + rhw
+  -- lcd.drawFilledRectangle(0, ray, rhw, rhw, COLOR_THEME_ACTIVE)
+  -- ray = ray + rhw
+  -- lcd.drawFilledRectangle(0, ray, rhw, rhw, COLOR_THEME_WARNING)
+  -- ray = ray + rhw
+  -- lcd.drawFilledRectangle(0, ray, rhw, rhw, COLOR_THEME_DISABLED)
+
+end
+
+if not testing then
+
+-- math.floor(value)
+
+-- COLOR_THEME_FOCUS
+-- 
+-- COLOR_THEME_EDIT
+-- 
+-- COLOR_THEME_ACTIVE
+-- 
+-- COLOR_THEME_WARNING
+-- 
+-- COLOR_THEME_DISABLED
 
 
 
@@ -2341,6 +3002,8 @@ end
 
 end
 
+
+end
   -- if type(MaxWatts) == "string" then
   --   sMaxWatts = MaxWatts
   -- elseif type(MaxWatts) == "number" then
