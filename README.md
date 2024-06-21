@@ -24,6 +24,7 @@ EdgeTX/OpenTX Battery and Telemetry Monitoring LUA Widget which tries to rely as
 ## Screenshots :tv:
 ![image](https://github.com/derelict/TxBatTele/assets/2826671/e1487942-3ac2-4cea-994f-5cf6c51344dc)
 ![image](https://github.com/derelict/TxBatTele/assets/2826671/ee8379ee-a5bc-404f-a317-16ce1ffb2e67)
+![image](https://github.com/derelict/TxBatTele/assets/2826671/0bd001a4-3599-418e-bd2d-8c73fdeef9de)
 
 ## Note
 - **This is currently in alpha/"works for me" state ... use/try at your own Risk**
