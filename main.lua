@@ -108,6 +108,8 @@ local Title = "Flight Telemetry and Battery Monitor"
 
 local DEBUG_ENABLED = true
 
+--local invalidSensorList = {}
+
 -- Sensors
 -- 	Use Voltage and or mAh consumed calculated sensor based on VFAS, FrSky FAS-40
 -- 	Use sensor names from OpenTX TELEMETRY screen
@@ -251,6 +253,7 @@ local Batteries = {
           {3.69, 10}, {3.67, 7.5}, {3.61, 5}, {3.49, 2.5},
           {3.27, 0}
       },
+      displayName                 = "LiPo",
       graceperiod                 = 4,      -- grace period for fluctuations 
       criticalThreshold           = 15,     -- Critical threshold in percentage
       warningThreshold            = 20,     -- Warning threshold in percentage
@@ -269,6 +272,7 @@ local Batteries = {
 
   buffer = {  -- Buffer Pack (condensator)
       dischargeCurve              = nil,    -- This will be dynamically calculated based on voltage range
+      displayName                 = "Buffer Pack",
       graceperiod                 = 4,      -- grace period for fluctuations 
       criticalThreshold           = 96,     -- Critical threshold in percentage
       warningThreshold            = 97,     -- Warning threshold in percentage
@@ -287,6 +291,7 @@ local Batteries = {
 
   beconly = {  -- BEC only Definition
       dischargeCurve              = nil,    -- This will be dynamically calculated based on voltage range
+      displayName                 = "BEC only",
       graceperiod                 = 4,      -- grace period for fluctuations 
       criticalThreshold           = 96,     -- Critical threshold in percentage
       warningThreshold            = 97,     -- Warning threshold in percentage
@@ -1046,8 +1051,9 @@ local function doAnnouncements(context)
   checkChangedInterval(statusTele, "telemetry")
 
 
-  if  statusTele then -- do these only if telemetry true
+  if  statusTele and allSensorsValid then -- do these only if telemetry true
 -- here
+--debugPrint("CCIV: " .. context )
   checkChangedInterval(thisModel.VoltageSensor[context].cellMissing, "BatteryMissingCell", context)
   checkChangedInterval(thisModel.VoltageSensor[context].PercRem, "BatteryNotFull", context)
   checkChangedInterval(thisModel.VoltageSensor[context].cellInconsistent, "CellDelta", context)
@@ -1088,7 +1094,10 @@ local function doAnnouncements(context)
       if announcement.item == "BatteryMissingCell" then
         if announcement.severity == "critical" or announcement.severity == "warning" then
 
-          local reverseValue = math.abs(cellMissing[context])
+          --local reverseValue = math.abs(cellMissing[context])
+          local reverseValue = math.abs(thisModel.VoltageSensor[context].cellMissing)
+
+          
 
           --queueSound(context,0)
           --queueSound("battery",0)
@@ -1096,7 +1105,7 @@ local function doAnnouncements(context)
           queueSound("missing",0)
           queueNumber(reverseValue, 0, 0 , 0 )
           queueSound("of",0)
-          queueNumber(countCell[context], 0, 0 , 0 )
+          queueNumber(thisModel.CellCount[context], 0, 0 , 0 )
           queueSound("cell",0)
 
 
@@ -1268,18 +1277,97 @@ debugPrint("MC VOL:" .. CfullVolt)
 
 end
 
+-- local function getInvalidSensorNames()
+--   local invalidSensors = {}
+--   local uniqueSensors = {}
+-- 
+--   -- Helper function to add a sensor name if it's not already in the set
+--   local function addUniqueSensor(sensorName)
+--       -- Extract the base sensor name without the suffixes "+", "-", or any numbers following
+--       local baseName = string.match(sensorName, "^(.-)[+%-%d]*$")
+--       if baseName and not uniqueSensors[baseName] then
+--           uniqueSensors[baseName] = true
+--           table.insert(invalidSensors, baseName)
+--       end
+--   end
+-- 
+--   -- Helper function to check and add invalid sensors
+--   local function checkSensors(sensorList)
+--       for _, sensor in ipairs(sensorList) do
+--           if sensor.valid == false then
+--               addUniqueSensor(sensor.sensorName)
+--           end
+--       end
+--   end
+-- 
+--   -- Check standard sensors
+--   checkSensors({
+--       thisModel.VoltageSensor.main,
+--       thisModel.VoltageSensor.receiver,
+--       thisModel.CurrentSensor.main,
+--       thisModel.CurrentSensor.receiver,
+--       thisModel.MahSensor.main,
+--       thisModel.MahSensor.receiver
+--   })
+-- 
+--   -- Check additional sensors
+--   for _, adlSensor in ipairs(thisModel.AdlSensors) do
+--       checkSensors(adlSensor.sensors)
+--   end
+-- 
+--   return invalidSensors
+-- end
+
+
 
 
 -- Function to initialize sensor IDs
+-- local function initializeSensorId(sensor)
+-- 
+--   if not sensor.valid or sensor.valid == nil then
+-- 
+--   local fieldInfo = getFieldInfo(sensor.sensorName)
+--   if fieldInfo then
+--     sensor.sensorId = fieldInfo.id
+--     sensor.valid = true
+--     debugPrint("UPDSEN: INIT: " .. sensor.sensorName .. " ID: " .. fieldInfo.id)
+--   else
+--     print("Field info not found for sensor: " .. sensor.sensorName)
+--     -- todo add to wrong sensor list
+--     sensor.valid = false
+-- 
+--     --table.insert(badormissingsensors, sensor.sensorName)
+-- 
+--  end
+-- 
+-- end
+-- 
+-- end
+
 local function initializeSensorId(sensor)
-  local fieldInfo = getFieldInfo(sensor.sensorName)
-  if fieldInfo then
-    sensor.sensorId = fieldInfo.id
-    debugPrint("UPDSEN: INIT: " .. sensor.sensorName .. " ID: " .. fieldInfo.id)
-  else
-    print("Field info not found for sensor: " .. sensor.sensorName)
- end
+  if not sensor.valid or sensor.valid == nil then
+      local fieldInfo = getFieldInfo(sensor.sensorName)
+      if fieldInfo then
+          sensor.sensorId = fieldInfo.id
+          sensor.valid = true
+          debugPrint("UPDSEN: INIT: " .. sensor.sensorName .. " ID: " .. fieldInfo.id)
+          -- Sensor became valid, do nothing with invalid list
+      else
+          print("Field info not found for sensor: " .. sensor.sensorName)
+          sensor.valid = false
+          --local normalizedName = sensor.sensorName:gsub("[%+%-%s]", "")
+          local normalizedName = string.gsub(sensor.sensorName, "[+%-%s]", "")
+          if not string.find(invalidSensorList, normalizedName) then
+            if invalidSensorList ~= "" then
+                invalidSensorList = invalidSensorList .. ","
+            end
+            invalidSensorList = invalidSensorList .. normalizedName
+          end
+      
+      end
+  end
 end
+
 
 -- Function to update sensor values
 local function updateSensorValue(sensor)
@@ -1291,7 +1379,13 @@ local function updateSensorValue(sensor)
 end
 
 -- Initialize sensor IDs for all sensor groups
-local function initializeAllSensorIds()
+local function initializeAndCheckAllSensorIds()
+
+  if not allSensorsValid then
+
+  --invalidSensorList = {}
+
+  invalidSensorList = ""
 
   initializeSensorId(thisModel.VoltageSensor.main)
   initializeSensorId(thisModel.VoltageSensor.receiver)
@@ -1308,7 +1402,46 @@ local function initializeAllSensorIds()
   end
 end
 
+if not allSensorsValid then
 
+if invalidSensorList == "" then
+
+allSensorsValid = true
+
+debugPrint("INVS: All Sensors valid")
+
+pfStatus.text = "All Sensors valid"
+pfStatus.color = GREEN
+
+  -- todo: maybe consider/adapt to use cases with only current and/or mah sensors
+  if thisModel.VoltageSensor.main.sensorId ~= nil then
+    table.insert(contexts, "main")
+    --CellsDetected["main"] = false
+    thisModel.VoltageSensor.main.CellsDetected = false
+    --numberOfBatteries = numberOfBatteries + 1
+  else
+    thisModel.VoltageSensor.main.CellsDetected = true
+  end
+
+  if thisModel.VoltageSensor.receiver.sensorId ~= nil then
+    table.insert(contexts, "receiver")
+    thisModel.VoltageSensor.receiver.CellsDetected = false
+    --numberOfBatteries = numberOfBatteries + 1
+  else
+    thisModel.VoltageSensor.receiver.CellsDetected = true
+  end
+
+else
+  debugPrint("INVS: Invalid Sensors: " .. invalidSensorList)
+
+  pfStatus.text = "Invalid Sensors: " .. invalidSensorList
+  pfStatus.color = YELLOW
+
+end
+
+end
+
+end
 
 -- -- Update sensor values for all sensor groups
 -- local function updateAllSensorValues(model)
@@ -1423,7 +1556,7 @@ end
 
 -- printHumanReadableTable(announcementConfig)
 
-printHumanReadableTable(thisModel)
+-- printHumanReadableTable(thisModel)
 
 
 
@@ -1443,6 +1576,10 @@ printHumanReadableTable(thisModel)
 
   --tableBatCapacity = {}
 
+pfStatus = {
+    text = "unknown",  -- This can be "ok", "warning", "error", or "unknown"
+    color = GREY      -- Default color for unknown status
+}
   switchIndexes = {}
   previousSwitchState = {}
 
@@ -1494,8 +1631,8 @@ printHumanReadableTable(thisModel)
 
   queueSound(modelDetails.modelWav,2)
 
-  debugPrint("MODEL NAME: ", modelDetails.modelName)
-  debugPrint("MODEL IMAGE: ",modelDetails.modelImage)
+  debugPrint("MODEL NAME: ", thisModel.modelName)
+  debugPrint("MODEL IMAGE: ",thisModel.modelImage)
  
   -- sensorVoltage["main"]         = getFieldInfo(modelDetails.VoltageSensor.main)
   -- sensorVoltage["receiver"]     = getFieldInfo(modelDetails.VoltageSensor.receiver)
@@ -1515,12 +1652,16 @@ printHumanReadableTable(thisModel)
   --debugPrint("GFI: test unit:" .. sensorVoltage["main"].unit )
   --debugPrint("GFI: test name:" .. sensorVoltage["main"].name )
 
-  
-  initializeAllSensorIds()
+  invalidSensorList = ""
 
-  debugPrint("INIVAL:" .. thisModel.VoltageSensor.main.sensorId )
-  debugPrint("INIVAL:" .. thisModel.VoltageSensor.receiver.sensorId )
-  debugPrint("INIVAL: RPM" .. thisModel.AdlSensors[1].sensors[1].sensorId )
+  allSensorsValid = false
+
+  
+
+  -- initializeAllSensorIds()
+-- 
+  -- debugPrint("INVS:" .. invalidSensorList)
+
 
   -- countCell["main"]             = tonumber(modelDetails.CellCount.main)
   -- countCell["receiver"]         = tonumber(modelDetails.CellCount.receiver)
@@ -1601,6 +1742,8 @@ printHumanReadableTable(thisModel)
 
   statusTele = false
 
+  
+
   --switchReset                   = modelDetails.resetSwitch
   --statusTele                    = modelDetails.telemetryStatus
 
@@ -1625,28 +1768,18 @@ printHumanReadableTable(thisModel)
 
   batCheckPassed = false
 
+  --badormissingsensors = {}
 
-
+  -- local invalidSensorNames = getInvalidSensorNames()
+  -- if #invalidSensorNames > 0 then
+  --     debugPrint("INVS: Invalid sensors: " .. table.concat(invalidSensorNames, ", "))
+  -- else
+  --   debugPrint("INVS: All sensors are valid.")
+  -- end
 
   numOfBatPassedCellCheck = 0
 
-  -- todo: maybe consider/adapt to use cases with only current and/or mah sensors
-  if thisModel.VoltageSensor.main.sensorId ~= nil then
-    table.insert(contexts, "main")
-    --CellsDetected["main"] = false
-    thisModel.VoltageSensor.main.CellsDetected = false
-    --numberOfBatteries = numberOfBatteries + 1
-  else
-    thisModel.VoltageSensor.main.CellsDetected = true
-  end
 
-  if thisModel.VoltageSensor.receiver.sensorId ~= nil then
-    table.insert(contexts, "receiver")
-    thisModel.VoltageSensor.receiver.CellsDetected = false
-    --numberOfBatteries = numberOfBatteries + 1
-  else
-    thisModel.VoltageSensor.receiver.CellsDetected = true
-  end
 
 
   for _, switchInfo in ipairs(thisModel.switchAnnounces) do --todo --- maybe with a table and index too ?
@@ -1790,10 +1923,13 @@ local function checkForTelemetry()
     thisModel.VoltageSensor.receiver.CurVolt     = "--.--"
     thisModel.CurrentSensor.receiver.CurAmp      = "--.--"
 
-    preFlightStatusTele = "NOT OK. Waiting"
+    pfStatus.text = "Waiting for Telemetry"
+    pfStatus.color = RED
   else
-    preFlightStatusTele = "OK"
-  end
+    pfStatus.text = "Telemetry OK"
+    pfStatus.color = GREEN
+
+    end
 
   TriggerTimers["telegrace"] = 0
 
@@ -1993,14 +2129,14 @@ local function bg_func()
 --
   --debugPrint("Updated Sensor Values TEST: ", sdf)
   
-  local currentContext = contexts[currentContextIndex]
 
-  debugPrint("Current Context:", currentContext)
 
 
 processQueue()
 
 checkForTelemetry()
+
+initializeAndCheckAllSensorIds()
 
 switchAnnounce()
 
@@ -2008,7 +2144,11 @@ switchAnnounce()
   reset_if_needed() -- test if the reset switch is toggled, if so then reset all internal flags
   
 
- if statusTele then -- if we have no telemetry .... don't waste time doing anything that requires telemetry
+ if statusTele and allSensorsValid then -- if we have no telemetry .... don't waste time doing anything that requires telemetry
+
+  currentContext = contexts[currentContextIndex]
+
+  debugPrint("Current Context:", currentContext)
 
   --updateSensorValues(thisModel.VoltageSensor.main.cellMissing)
 
@@ -2030,9 +2170,12 @@ switchAnnounce()
 
   if thisModel.VoltageSensor.receiver.CellsDetected and thisModel.VoltageSensor.main.CellsDetected then -- sanity checks passed ... we can move to normal operation and switch the status widget
    batCheckPassed = true
-   preFlightStatusBat = "OK"
-  else
-    preFlightStatusBat = "Check Battery"
+   pfStatus.text = "OK"
+   pfStatus.color = GREEN
+   else
+    pfStatus.text = "Check Battery"
+    pfStatus.color = YELLOW
+    batCheckPassed = false
   end
 
 
@@ -2040,9 +2183,11 @@ end -- end of if telemetry
 
 doAnnouncements(currentContext)
 
-
+if statusTele and allSensorsValid then
       -- Update the index to cycle through the contexts using the modulo operator
       currentContextIndex = (currentContextIndex % #contexts) + 1
+end
+
 
 end
 
@@ -2146,7 +2291,7 @@ local function drawBattery(xOrigin, yOrigin, percentage, wgt, battery)
 end
 
 -- ####################################################################
-local function drawNewBattery(xOrigin, yOrigin, percentage, wgt, battery, batCol, txtCol, size)
+local function drawNewBattery(xOrigin, yOrigin, context, wgt,  batCol, txtCol, size)
 
   local myBatt = { ["x"] = xOrigin,
                    ["y"] = yOrigin,
@@ -2166,6 +2311,9 @@ if size == "x" then
   myBatt.font = MIDSIZE
 
 end                   
+
+local percentage = thisModel.VoltageSensor[context].PercRem
+local battery = thisModel.battery[context]
 
 --lcd.setColor(CUSTOM_COLOR, wgt.options.Color)
 
@@ -2194,8 +2342,8 @@ lcd.drawText(wgt.zone.x + myBatt.x + 20, wgt.zone.y + myBatt.y + 5, string.forma
 
   -- draw values
 lcd.drawText(wgt.zone.x + myBatt.x, wgt.zone.y + myBatt.y + myBatt.h,
--- string.format("%d mAh", BatRemainmAh), myBatt.font + txtCol + BlinkWhenZero) -- todo -- original line --below just for display testing
-"3456 mAh (8000)", myBatt.font + txtCol + BlinkWhenZero)
+string.format("%d mAh used", thisModel.MahSensor[context].value), myBatt.font + txtCol + BlinkWhenZero) -- todo -- original line --below just for display testing
+--"3456 mAh (8000)", myBatt.font + txtCol + BlinkWhenZero)
 end
 
 
@@ -2448,6 +2596,150 @@ end
 
 
 
+
+local function preFlightStatusScreen(layout, width, height)
+  local y = 0
+  local xlineStart = 10
+  local ylineStart = 25
+  local ylineinc = 20
+  local fontSizes = {
+      l = { FONT = DBLSIZE, lineSpacing = 5 },
+      m = { FONT = MIDSIZE, lineSpacing = 3 }
+  }
+
+  -- Helper function to draw text with given parameters
+  local function drawText(text, x, y, fontsize, color, alignment)
+      local fontData = fontSizes[fontsize]
+      local textColor = color or WHITE  -- Default color if not provided
+      local textAlignment = alignment or TEXT_LEFT  -- Default alignment if not provided
+      lcd.drawText(x, y, text, fontData.FONT + textColor )
+      y = y + fontData.lineSpacing
+      return y
+  end
+
+  -- Iterate through the layout and render each element
+  for _, item in ipairs(layout) do
+      if item.type == "header" then
+          y = drawText(item.text, xlineStart, y, "l", item.color, CENTER)
+      elseif item.type == "modelInfo" then
+          -- Draw model name and image
+          lcd.drawText(width / 2, y, item.modelName, MIDSIZE + COLOR_THEME_PRIMARY1 + DBLSIZE + CENTER)
+          lcd.drawBitmap(item.modelImage, width / 2 - 25, y + 20, 50)
+          y = y + 70  -- Adjust based on image size and spacing
+      elseif item.type == "sensorValue" then
+          y = drawText(item.label, xlineStart, y, "m", item.labelColor)
+          lcd.drawText(xlineStart + 100, y - fontSizes["m"].lineSpacing, ":", COLOR_THEME_PRIMARY2 + BOLD)
+          lcd.drawText(xlineStart + 120, y - fontSizes["m"].lineSpacing, item.value, WHITE + BOLD)
+      elseif item.type == "statusMessage" then
+          -- Render status message with wrapping
+          local lines = lcd.drawText(xlineStart, y, item.text, MIDSIZE + item.color , width - 20)
+          y = y + lines * (MIDSIZE.lineSpacing + 1)  -- Adjust based on line spacing and wrapping
+      end
+  end
+end
+
+local function preFlightStatusScreen(layout, width, height)
+
+  
+
+  local headerSpacing = 0
+
+  local firstHeader = true
+
+  local fontSizes = {
+      -- xl = { FONT = XXLSIZE, fontpxl = 72, lineSpacing = 6, colSpacing = 19 },
+      -- x  = { FONT = DBLSIZE, fontpxl = 32, lineSpacing = 5, colSpacing = 18 },
+      l  = { FONT = MIDSIZE, fontpxl = 24, lineSpacing = 4, colSpacing = 17 },
+      m  = { FONT = 0,       fontpxl = 16, lineSpacing = 3, colSpacing = 16 },
+      s  = { FONT = SMLSIZE, fontpxl = 12, lineSpacing = 2, colSpacing = 8 }
+  }
+
+
+if height >= 272 then
+
+  fontSizes = {
+    -- xl = { FONT = XXLSIZE, fontpxl = 72, lineSpacing = 6, colSpacing = 19 },
+    l  = { FONT = DBLSIZE, fontpxl = 32, lineSpacing = 4, colSpacing = 18 },
+    m  = { FONT = MIDSIZE, fontpxl = 24, lineSpacing = 3, colSpacing = 22 }, -- <<
+    s  = { FONT = 0,       fontpxl = 16, lineSpacing = 2, colSpacing = 10 },
+    -- ss  = { FONT = SMLSIZE, fontpxl = 12, lineSpacing = 2, colSpacing = 8 }
+}
+
+headerSpacing = 10
+ 
+end
+
+
+
+
+  -- Define the starting positions
+  local y = 0
+  local x = 0
+
+  local xlineStart = x
+  local ylineStart = x
+
+  -- Function to draw text with given parameters
+  local function drawText(text, x, y, fontsize, color)
+    debugPrint("SCRN:" .. text)
+    local offsetX = x + 2 -- a little bit from left
+          local fontData = fontSizes[fontsize]
+      lcd.drawText(offsetX, y, text, fontData.FONT + color)
+
+      y = y + headerSpacing
+
+  end
+
+  -- Function to draw a sensor line
+  local function drawKeyValLine(key, value, keycol, valcol, y)
+    local offsetX = x + 2 -- a little bit from left
+    --for _, sensor in ipairs(sensors) do
+        drawText(key  , offsetX, y, "s", keycol)
+        drawText(":", offsetX + fontSizes["s"].colSpacing * 10, y, "s", WHITE)
+        drawText(value, offsetX + fontSizes["s"].colSpacing * 11, y, "s", valcol)
+        --offsetX = offsetX + fontSizes["m"].colSpacing * 6
+    --end
+end
+
+
+
+-- string.format("%.2f", sensor.val1)
+
+  -- Iterate through the layout and render each element
+  for _, item in ipairs(layout) do
+      if item.type == "header" then
+        if not firstHeader then y = y + headerSpacing end
+          drawText(item.text, x, y, "m", item.color)
+          firstHeader = false
+          y = y + fontSizes["m"].fontpxl + fontSizes["m"].lineSpacing
+        elseif item.type == "modelInfo" then
+          -- Draw model name and image
+          drawText(item.modelName, width / 2, ylineStart, "l", item.labelColor)
+          lcd.drawBitmap(item.modelImage, width / 2 , ylineStart + fontSizes["l"].fontpxl + fontSizes["l"].lineSpacing, 50)
+          --y = y + 70  -- Adjust based on image size and spacing          
+      elseif item.type == "keyvalue" then
+        --drawKeyValue(item.keyvalue, y)
+        --  y = y + fontSizes["m"].fontpxl + fontSizes["m"].lineSpacing
+
+        drawKeyValLine(item.label, item.value, item.labelColor, item.valuecolor , y)
+        y = y + fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing
+
+        --drawText(item.label, xlineStart, y, "m", item.labelColor)
+        --lcd.drawText(xlineStart + 100, y - fontSizes["m"].lineSpacing, ":", COLOR_THEME_PRIMARY2 + BOLD)
+        --lcd.drawText(xlineStart + 120, y - fontSizes["m"].lineSpacing, item.value, WHITE + BOLD)
+        elseif item.type == "statusMessage" then
+          drawText(item.status.text, x, y, "s", item.status.color)
+          -- Render status message with wrapping
+          --local lines = lcd.drawText(xlineStart, y, item.text, MIDSIZE + item.color , width - 20)
+          --y = y + lines * (MIDSIZE.lineSpacing + 1)  -- Adjust based on line spacing and wrapping
+          --y = y + fontSizes["m"].fontpxl + fontSizes["m"].lineSpacing
+      end
+  end
+end
+
+
+
+
 local function renderScreen(layout, width, height)
   local smallestStepY = 14
   local smallestStepX = 12
@@ -2556,7 +2848,13 @@ local function drawBottomSensorLine(sensors, y)
   local sensorsPerLine = 2
   local sensorWidth = width / sensorsPerLine
 
+
   for i = 1, totalSensors do
+
+    if height <= 168 and i > 4 then 
+      break
+    end
+
       local sensor = sensors[i]
       local currentLine = math.floor((i - 1) / sensorsPerLine)
       local colIndex = (i - 1) % sensorsPerLine
@@ -2762,6 +3060,13 @@ if testing then
 
   lcd.drawFilledRectangle(0, 0, w, h, BLACK, 5)
 
+
+
+  if batCheckPassed or not ShowPreFlightStatus then
+
+
+
+
   -- lcdText("RpM [H: 3200 p: 2601]",w,h,"s",WHITE,"t",1 ,"l",1)
   -- lcdText("RpM [H: 3200 p: 2602]",w,h,"s",WHITE,"t",2 ,"l",1)
   -- lcdText("RpM [H: 3200 p: 2603]",w,h,"s",WHITE,"t",3 ,"l",1)
@@ -2917,17 +3222,46 @@ if wgt.zone.h >= 272 then
 
 -- local function drawNewBattery(xOrigin, yOrigin, percentage, wgt, battery, batCol, txtCol, size)
 
-drawNewBattery(280, 25,  thisModel.VoltageSensor.main.PercRem    , wgt,thisModel.battery.main    , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE, "x" )
-drawNewBattery(280, 135, thisModel.VoltageSensor.receiver.PercRem, wgt,thisModel.battery.receiver , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE,"x")
+drawNewBattery(280, 25,  "main"     , wgt , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE, "x" )
+drawNewBattery(280, 135, "receiver" , wgt , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE,"x")
 
 else
 
-  drawNewBattery(230, 15, thisModel.VoltageSensor.main.PercRem    , wgt,thisModel.battery.main     , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE,"l" )
-drawNewBattery(230, 80,   thisModel.VoltageSensor.receiver.PercRem, wgt,thisModel.battery.receiver , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE, "l")
+  drawNewBattery(230, 15, "main"     , wgt  , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE,"l" )
+drawNewBattery(230, 80,   "receiver" , wgt  , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE, "l")
 
 end
 
 
+
+
+  
+  else
+
+    
+
+    local screenLayout = {
+      { type = "header", text = "Main Battery", color = COLOR_THEME_SECONDARY2 },
+      { type = "modelInfo", modelName = thisModel.modelName, modelImage = thisModel.bmpSizedModelImage , labelColor = COLOR_THEME_SECONDARY2 },
+      { type = "keyvalue", label = "Battery Type", value = thisModel.battery.main.displayName, labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
+      { type = "keyvalue", label = "Cell Count", value = string.format("%s (%s)", thisModel.CellCount.main, thisModel.VoltageSensor.main.CellsDetectedCurrent), labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
+      { type = "keyvalue", label = "Voltage", value = thisModel.VoltageSensor.main.CurVolt, labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
+      { type = "keyvalue", label = "Percentage", value = thisModel.VoltageSensor.main.PercRem, labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
+  
+      { type = "header", text = "Receiver Battery", color = COLOR_THEME_SECONDARY2 },
+      { type = "keyvalue", label = "Battery Type", value = thisModel.battery.receiver.displayName, labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
+      { type = "keyvalue", label = "Cell Count", value = string.format("%s (%s)", thisModel.CellCount.receiver, thisModel.VoltageSensor.receiver.CellsDetectedCurrent), labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
+      { type = "keyvalue", label = "Voltage", value = thisModel.VoltageSensor.receiver.CurVolt, labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
+      { type = "keyvalue", label = "Percentage", value = thisModel.VoltageSensor.receiver.PercRem, labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
+  
+      { type = "header", text = "Status:", color = COLOR_THEME_SECONDARY2 },
+      { type = "statusMessage", status = pfStatus  , color = GREEN}  -- Placeholder for dynamic status message
+  }
+    
+  preFlightStatusScreen(screenLayout, wgt.zone.w, wgt.zone.h)
+
+
+end
 
   -- lcdText("RPM:",w,h,"s",  WHITE,"b",5,"l",1)
   -- lcdText("[",w,h,"s",     WHITE,"b",5,"l",4)
