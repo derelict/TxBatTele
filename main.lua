@@ -177,6 +177,135 @@ local BattPackSelectorSwitch = {
 }
 
 
+local defaultAdlSensors = {
+  {
+      name = "RPM",
+      unit = "",
+      sensors = {
+          { sensorName = "RPM+", prefix = "H:", color = GREEN  },
+          { sensorName = "RPM-", prefix = "L:", color = RED    }
+      }
+  },
+  {
+    name = "RPM",
+    unit = "",
+    sensors = {
+        { sensorName = "RPM+", prefix = "H:", color = GREEN  },
+        { sensorName = "RPM-", prefix = "L:", color = RED    }
+    }
+},
+{
+  name = "RPM",
+  unit = "",
+  sensors = {
+      { sensorName = "RPM+", prefix = "H:", color = GREEN  },
+      { sensorName = "RPM-", prefix = "L:", color = RED    }
+  }
+},  
+{
+  name = "RPM",
+  unit = "",
+  sensors = {
+      { sensorName = "RPM+", prefix = "H:", color = GREEN  },
+      { sensorName = "RPM-", prefix = "L:", color = RED    }
+  }
+},
+{
+  name = "CEL",
+  unit = "",
+  sensors = {
+      { sensorName = "Cels+", prefix = "H:", color = GREEN  },
+      { sensorName = "Cels-", prefix = "L:", color = RED    }
+  }
+},
+  {
+      name = "RxBT",
+      unit = "V",
+      sensors = {
+          { sensorName = "RxBt+", prefix = "H:", color = GREEN  },
+          { sensorName = "RxBt-", prefix = "L:", color = RED    }
+      }
+  }
+}
+
+
+
+
+-- Based on results from http://rcdiy.ca/taranis-q-x7-battery-run-time/
+-- https://blog.ampow.com/lipo-voltage-chart/
+
+-- BatteryDefinition
+-- todo only announce in steps of N
+local Batteries = {
+  lipo = {  -- normal lipo Battery
+      dischargeCurve           = {
+          {4.20, 100}, {4.17, 97.5}, {4.15, 95}, {4.13, 92.5},
+          {4.11, 90}, {4.10, 87.5}, {4.08, 85}, {4.05, 82.5},
+          {4.02, 80}, {4.00, 77.5}, {3.98, 75}, {3.97, 72.5},
+          {3.95, 70}, {3.93, 67.5}, {3.91, 65}, {3.89, 62.5},
+          {3.87, 60}, {3.86, 57.5}, {3.85, 55}, {3.85, 52.5},
+          {3.84, 50}, {3.83, 47.5}, {3.82, 45}, {3.81, 42.5},
+          {3.80, 40}, {3.80, 37.5}, {3.79, 35}, {3.78, 32.5},
+          {3.77, 30}, {3.76, 27.5}, {3.75, 25}, {3.74, 22.5},
+          {3.73, 20}, {3.72, 17.5}, {3.71, 15}, {3.70, 12.5},
+          {3.69, 10}, {3.67, 7.5}, {3.61, 5}, {3.49, 2.5},
+          {3.27, 0}
+      },
+      graceperiod                 = 4,      -- grace period for fluctuations 
+      criticalThreshold           = 15,     -- Critical threshold in percentage
+      warningThreshold            = 20,     -- Warning threshold in percentage
+      notFullCriticalThreshold    = 96,     -- Not full critical threshold in percentage
+      notFullWarningThreshold     = 98,     -- Not full warning threshold in percentage
+      announceNotFullCriticalMode = "change", -- change, disable or integer intervall
+      announceNotFullWarningMode  = "change", -- change, disable or integer intervall
+      announceNormalMode          = 20, -- change, disable or integer intervall
+      announceWarningMode         = "change", -- change, disable or integer intervall
+      announceCriticalMode        = "change", -- change, disable or integer intervall
+      highVoltage                 = 4.20,   -- High voltage
+      lowVoltage                  = 3.27,   -- Low voltage
+      cellDeltaVoltage            = 0.1,    -- Cell delta voltage
+      isNotABattery               = false   -- DO NOT CHANGE for any Battery !!!
+  },
+
+  buffer = {  -- Buffer Pack (condensator)
+      dischargeCurve              = nil,    -- This will be dynamically calculated based on voltage range
+      graceperiod                 = 4,      -- grace period for fluctuations 
+      criticalThreshold           = 96,     -- Critical threshold in percentage
+      warningThreshold            = 97,     -- Warning threshold in percentage
+      notFullCriticalThreshold    = 98,     -- Not full critical threshold in percentage
+      notFullWarningThreshold     = 99,     -- Not full warning threshold in percentage
+      announceNotFullCriticalMode = "change", -- change, disable or integer intervall
+      announceNotFullWarningMode  = "change", -- change, disable or integer intervall
+      announceNormalMode          = 20, -- change, disable or integer intervall
+      announceWarningMode         = "change", -- change, disable or integer intervall
+      announceCriticalMode        = "change", -- change, disable or integer intervall      highVoltage              = nil,    -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
+      highVoltage                 = nil,   -- if nil will use model rxReferenceVoltage
+      lowVoltage                  = 6,      -- Low voltage -- where your buffer pack shuts off completely ... all hope is lost after this ;-) .. please note... in the case of buffer packs ... we will device this value by 2 in order to get a theoretical 2s per cell value for the alerts and percentage left -- todo
+      cellDeltaVoltage            = nil,     -- Cell delta voltage -- irrelevant for buffer or bec
+      isNotABattery               = true   -- buffer is not a battery and values for high and low voltage represent real voltages and will be devided by 2 by the script to get a theoretical cell value
+    },
+
+  beconly = {  -- BEC only Definition
+      dischargeCurve              = nil,    -- This will be dynamically calculated based on voltage range
+      graceperiod                 = 4,      -- grace period for fluctuations 
+      criticalThreshold           = 96,     -- Critical threshold in percentage
+      warningThreshold            = 97,     -- Warning threshold in percentage
+      notFullCriticalThreshold    = 98,     -- Not full critical threshold in percentage
+      notFullWarningThreshold     = 99,     -- Not full warning threshold in percentage
+      announceNotFullCriticalMode = "change", -- change, disable or integer intervall
+      announceNotFullWarningMode  = "change", -- change, disable or integer intervall
+      announceNormalMode          = 20, -- change, disable or integer intervall
+      announceWarningMode         = "change", -- change, disable or integer intervall
+      announceCriticalMode        = "change", -- change, disable or integer intervall      highVoltage              = nil,    -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
+      highVoltage                 = nil,   -- if nil will use model rxReferenceVoltage
+      lowVoltage                  = 5,      -- Low voltage -- there is not such a thing as "lowvoltage" if only using a bec ... if you loose your bec you will recognize it before we can announce anything ... so lets set this to anything below what is "normal" ... like 5
+      cellDeltaVoltage            = nil,     -- Cell delta voltage -- irrelevant for buffer or bec
+      isNotABattery               = true   -- BEC is not a battery and values for high and low voltage represent real voltages and will be devided by 2 by the script to get a theoretical cell value
+    },
+  }
+
+
+
 local modelTable = {
   {
       modelNameMatch         = "DEFAULT",
@@ -185,15 +314,23 @@ local modelTable = {
       modelWav               = "sg630",
       rxReferenceVoltage     = 8.2,
       resetSwitch            = "TELE",
-      VoltageSensor          = { main = "Cels",    receiver = "RxBt" },
-      CurrentSensor          = { main = "Curr",    receiver = "Curr" },
-      MahSensor              = { main = "",        receiver = "" },
-      BattType               = { main = "lipo",    receiver = "buffer" },
+      VoltageSensor          = {
+        main =      { sensorName = "Cels"  },
+        receiver =  { sensorName = "RxBt"  }
+        },
+      CurrentSensor          = {
+        main =      { sensorName = "Curr"  },
+        receiver =  { sensorName = "Curr"  }
+        },
+      MahSensor              = {
+        main =      { sensorName = "mah"  },
+        receiver =  { sensorName = "mah"  }
+        },
+      AdlSensors             = defaultAdlSensors,
+      battery               = { main = Batteries.lipo ,    receiver = Batteries.buffer },
       CellCount              = { main = 12,        receiver = 2 },
       capacities             = { main = { 500, 1000, 1500, 2000, 2500, 3000 }, receiver = { 500, 1000, 1500, 2000, 2500, 3000 } },
       switchAnnounces        = SwitchAnnounceTable,
-      line1statsensors       = line1statsensors,
-      line2statsensors       = line2statsensors,
       BattPackSelectorSwitch = BattPackSelectorSwitch
   },
   {
@@ -203,15 +340,23 @@ local modelTable = {
       modelWav               = "sg630",
       rxReferenceVoltage     = 8.2,
       resetSwitch            = "TELE",
-      VoltageSensor          = { main = "Cels",    receiver = "RxBt" },
-      CurrentSensor          = { main = "Curr",    receiver = "Curr" },
-      MahSensor              = { main = "mah",        receiver = "mah" },
-      BattType               = { main = "lipo",    receiver = "buffer" },
+      VoltageSensor          = {
+        main =      { sensorName = "Cels"  },
+        receiver =  { sensorName = "RxBt"  }
+        },
+      CurrentSensor          = {
+        main =      { sensorName = "Curr"  },
+        receiver =  { sensorName = "Curr"  }
+        },
+      MahSensor              = {
+        main =      { sensorName = "mah"  },
+        receiver =  { sensorName = "mah"  }
+        },
+      AdlSensors             = defaultAdlSensors,
+      battery               = { main = Batteries.lipo ,    receiver = Batteries.buffer },
       CellCount              = { main = 8,         receiver = 2 },
       capacities             = { main = { 500, 1000, 1500, 2000, 2500, 3000 }, receiver = { 500, 1000, 1500, 2000, 2500, 3000 } },
       switchAnnounces        = SwitchAnnounceTable,
-      line1statsensors       = line1statsensors,
-      line2statsensors       = line2statsensors,
       BattPackSelectorSwitch = BattPackSelectorSwitch
   }
 }
@@ -289,113 +434,38 @@ local announcementConfigDefault = {
 
 
 
--- Based on results from http://rcdiy.ca/taranis-q-x7-battery-run-time/
--- https://blog.ampow.com/lipo-voltage-chart/
-
--- BatteryDefinition
--- todo only announce in steps of N
-local BatteryTypeDefaults = {
-  lipo = {  -- normal lipo Battery
-      dischargeCurve           = {
-          {4.20, 100}, {4.17, 97.5}, {4.15, 95}, {4.13, 92.5},
-          {4.11, 90}, {4.10, 87.5}, {4.08, 85}, {4.05, 82.5},
-          {4.02, 80}, {4.00, 77.5}, {3.98, 75}, {3.97, 72.5},
-          {3.95, 70}, {3.93, 67.5}, {3.91, 65}, {3.89, 62.5},
-          {3.87, 60}, {3.86, 57.5}, {3.85, 55}, {3.85, 52.5},
-          {3.84, 50}, {3.83, 47.5}, {3.82, 45}, {3.81, 42.5},
-          {3.80, 40}, {3.80, 37.5}, {3.79, 35}, {3.78, 32.5},
-          {3.77, 30}, {3.76, 27.5}, {3.75, 25}, {3.74, 22.5},
-          {3.73, 20}, {3.72, 17.5}, {3.71, 15}, {3.70, 12.5},
-          {3.69, 10}, {3.67, 7.5}, {3.61, 5}, {3.49, 2.5},
-          {3.27, 0}
-      },
-      graceperiod                 = 4,      -- grace period for fluctuations 
-      criticalThreshold           = 15,     -- Critical threshold in percentage
-      warningThreshold            = 20,     -- Warning threshold in percentage
-      notFullCriticalThreshold    = 96,     -- Not full critical threshold in percentage
-      notFullWarningThreshold     = 98,     -- Not full warning threshold in percentage
-      announceNotFullCriticalMode = "change", -- change, disable or integer intervall
-      announceNotFullWarningMode  = "change", -- change, disable or integer intervall
-      announceNormalMode          = 20, -- change, disable or integer intervall
-      announceWarningMode         = "change", -- change, disable or integer intervall
-      announceCriticalMode        = "change", -- change, disable or integer intervall
-      highVoltage                 = 4.20,   -- High voltage
-      lowVoltage                  = 3.27,   -- Low voltage
-      cellDeltaVoltage            = 0.1,    -- Cell delta voltage
-      isNotABattery               = false   -- DO NOT CHANGE for any Battery !!!
-  },
-
-  buffer = {  -- Buffer Pack (condensator)
-      dischargeCurve              = nil,    -- This will be dynamically calculated based on voltage range
-      graceperiod                 = 4,      -- grace period for fluctuations 
-      criticalThreshold           = 96,     -- Critical threshold in percentage
-      warningThreshold            = 97,     -- Warning threshold in percentage
-      notFullCriticalThreshold    = 98,     -- Not full critical threshold in percentage
-      notFullWarningThreshold     = 99,     -- Not full warning threshold in percentage
-      announceNotFullCriticalMode = "change", -- change, disable or integer intervall
-      announceNotFullWarningMode  = "change", -- change, disable or integer intervall
-      announceNormalMode          = 20, -- change, disable or integer intervall
-      announceWarningMode         = "change", -- change, disable or integer intervall
-      announceCriticalMode        = "change", -- change, disable or integer intervall      highVoltage              = nil,    -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
-      highVoltage                 = nil,   -- if nil will use model rxReferenceVoltage
-      lowVoltage                  = 6,      -- Low voltage -- where your buffer pack shuts off completely ... all hope is lost after this ;-) .. please note... in the case of buffer packs ... we will device this value by 2 in order to get a theoretical 2s per cell value for the alerts and percentage left -- todo
-      cellDeltaVoltage            = nil,     -- Cell delta voltage -- irrelevant for buffer or bec
-      isNotABattery               = true   -- buffer is not a battery and values for high and low voltage represent real voltages and will be devided by 2 by the script to get a theoretical cell value
-    },
-
-  beconly = {  -- BEC only Definition
-      dischargeCurve              = nil,    -- This will be dynamically calculated based on voltage range
-      graceperiod                 = 4,      -- grace period for fluctuations 
-      criticalThreshold           = 96,     -- Critical threshold in percentage
-      warningThreshold            = 97,     -- Warning threshold in percentage
-      notFullCriticalThreshold    = 98,     -- Not full critical threshold in percentage
-      notFullWarningThreshold     = 99,     -- Not full warning threshold in percentage
-      announceNotFullCriticalMode = "change", -- change, disable or integer intervall
-      announceNotFullWarningMode  = "change", -- change, disable or integer intervall
-      announceNormalMode          = 20, -- change, disable or integer intervall
-      announceWarningMode         = "change", -- change, disable or integer intervall
-      announceCriticalMode        = "change", -- change, disable or integer intervall      highVoltage              = nil,    -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
-      highVoltage                 = nil,   -- if nil will use model rxReferenceVoltage
-      lowVoltage                  = 5,      -- Low voltage -- there is not such a thing as "lowvoltage" if only using a bec ... if you loose your bec you will recognize it before we can announce anything ... so lets set this to anything below what is "normal" ... like 5
-      cellDeltaVoltage            = nil,     -- Cell delta voltage -- irrelevant for buffer or bec
-      isNotABattery               = true   -- BEC is not a battery and values for high and low voltage represent real voltages and will be devided by 2 by the script to get a theoretical cell value
-    },
-  }
-
-
-
-  local unitNames = {
-    [0] = "",                        -- Raw unit (no unit)
-    [1] = "V",                       -- Volts
-    [2] = "A",                       -- Amps
-    [3] = "mA",                      -- Milliamps
-    [4] = "kts",                     -- Knots
-    [5] = "m/s",                     -- Meters per Second
-    [6] = "ft/s",                    -- Feet per Second
-    [7] = "km/h",                    -- Kilometers per Hour
-    [8] = "mph",                     -- Miles per Hour
-    [9] = "m",                       -- Meters
-    [10] = "ft",                     -- Feet
-    [11] = "°C",                     -- Degrees Celsius
-    [12] = "°F",                     -- Degrees Fahrenheit
-    [13] = "%",                      -- Percent
-    [14] = "mAh",                    -- Milliamp Hour
-    [15] = "W",                      -- Watts
-    [16] = "mW",                     -- Milliwatts
-    [17] = "dB",                     -- dB
-    [18] = "rpm",                    -- RPM
-    [19] = "G",                      -- G
-    [20] = "°",                      -- Degrees
-    [21] = "rad",                    -- Radians
-    [22] = "ml",                     -- Milliliters
-    [23] = "floz",                   -- Fluid Ounces
-    [24] = "ml/min",                 -- Ml per minute
-    [35] = "h",                      -- Hours
-    [36] = "min",                    -- Minutes
-    [37] = "s",                      -- Seconds
-    [38] = "V",                      -- Virtual unit for Cells
-
-}
+--   local unitNames = {
+--     [0] = "",                        -- Raw unit (no unit)
+--     [1] = "V",                       -- Volts
+--     [2] = "A",                       -- Amps
+--     [3] = "mA",                      -- Milliamps
+--     [4] = "kts",                     -- Knots
+--     [5] = "m/s",                     -- Meters per Second
+--     [6] = "ft/s",                    -- Feet per Second
+--     [7] = "km/h",                    -- Kilometers per Hour
+--     [8] = "mph",                     -- Miles per Hour
+--     [9] = "m",                       -- Meters
+--     [10] = "ft",                     -- Feet
+--     [11] = "°C",                     -- Degrees Celsius
+--     [12] = "°F",                     -- Degrees Fahrenheit
+--     [13] = "%",                      -- Percent
+--     [14] = "mAh",                    -- Milliamp Hour
+--     [15] = "W",                      -- Watts
+--     [16] = "mW",                     -- Milliwatts
+--     [17] = "dB",                     -- dB
+--     [18] = "rpm",                    -- RPM
+--     [19] = "G",                      -- G
+--     [20] = "°",                      -- Degrees
+--     [21] = "rad",                    -- Radians
+--     [22] = "ml",                     -- Milliliters
+--     [23] = "floz",                   -- Fluid Ounces
+--     [24] = "ml/min",                 -- Ml per minute
+--     [35] = "h",                      -- Hours
+--     [36] = "min",                    -- Minutes
+--     [37] = "s",                      -- Seconds
+--     [38] = "V",                      -- Virtual unit for Cells
+-- 
+-- }
 
 -- todo -- really needed ?
 local CapacityReservePercent = 0 -- set to zero to disable
@@ -710,7 +780,8 @@ end
 
 local function getAmp(sensor)
   if sensor ~= "" then
-    amps = getValue( sensor.id )
+    --amps = getValue( sensor.id )
+    amps = sensor
     if type(amps) == "number" then
       --if type(MaxAmps) == "string" or (type(MaxAmps) == "number" and amps > MaxAmps) then
       --  MaxAmps = amps
@@ -739,28 +810,33 @@ end
 
 -- ####################################################################
 
-local function findPercentRem( cellVoltage, battype )
+local function findPercentRem( cellVoltage, context )
 
   debugPrint("findPercentRem Cell Voltage: ", cellVoltage)
-  debugPrint("findPercentRem BatType: ", battype)
+  debugPrint("findPercentRem context: ", context)
 
   --local low = batTypeLowHighValues[battype][1]
   --local high = batTypeLowHighValues[battype][2]
 
-  local low = BatteryDefinition[battype].lowVoltage
-  local high = BatteryDefinition[battype].highVoltage
+  -- local low = BatteryDefinition[battype] .lowVoltage
+  -- local high = BatteryDefinition[battype].highVoltage
+
+  --local low  = thisModel.battery[context].lowVoltage
+  --local high = thisModel.battery[context].highVoltage
+
 
   --local discharcurve = BatteryTypeDischargeCurves[battype]
-  local discharcurve = BatteryDefinition[battype].dischargeCurve
+  -- local discharcurve = BatteryDefinition[battype].dischargeCurve
+  --local discharcurve = thisModel.battery[context].dischargeCurve
 
-  if cellVoltage > high then
+  if cellVoltage > thisModel.battery[context].highVoltage then
     return 100
-  elseif	cellVoltage < low then
+  elseif	cellVoltage < thisModel.battery[context].lowVoltage then
     return 0
   else
     -- method of finding percent in my array provided by on4mh (Mike)
-    for i, v in ipairs( discharcurve ) do
-      debugPrint(string.format("findPercentRem Check Voltage: %s battype %s", v[ 1 ],battype))
+    for i, v in ipairs( thisModel.battery[context].dischargeCurve ) do
+      debugPrint(string.format("findPercentRem Check Voltage: %s ", v[ 1 ]))
       if cellVoltage >= v[ 1 ] then
         return v[ 2 ]
       end
@@ -848,7 +924,7 @@ end
 --if item == "Battery" or item == "BatteryNotFull" then
   if item == "Battery" then
 
-  config = BatteryDefinition[typeBattery[context]]
+  config = thisModel.battery[context]
 
   critTH = config.criticalThreshold
   warnTH = config.warningThreshold
@@ -863,7 +939,8 @@ end
 
 if item == "BatteryNotFull" then
 
-  config = BatteryDefinition[typeBattery[context]]
+  --config = BatteryDefinition[typeBattery[context]]
+  config = thisModel.battery[context]
 
   critTH = config.notFullCriticalThreshold
   warnTH = config.notFullWarningThreshold
@@ -970,11 +1047,11 @@ local function doAnnouncements(context)
 
 
   if  statusTele then -- do these only if telemetry true
-
-  checkChangedInterval(cellMissing[context], "BatteryMissingCell", context)
-  checkChangedInterval(valueVoltsPercentRemaining[context], "BatteryNotFull", context)
-  checkChangedInterval(cellInconsistent[context], "CellDelta", context)
-  checkChangedInterval(valueVoltsPercentRemaining[context], "Battery", context)
+-- here
+  checkChangedInterval(thisModel.VoltageSensor[context].cellMissing, "BatteryMissingCell", context)
+  checkChangedInterval(thisModel.VoltageSensor[context].PercRem, "BatteryNotFull", context)
+  checkChangedInterval(thisModel.VoltageSensor[context].cellInconsistent, "CellDelta", context)
+  checkChangedInterval(thisModel.VoltageSensor[context].PercRem, "Battery", context)
 
   end
 
@@ -1056,13 +1133,13 @@ local function doAnnouncements(context)
           --queueSound(context,0)
           --queueSound("battery",0)
           queueSound(announcement.severity,0)
-          queueNumber(valueVoltsPercentRemaining[context], 13, 0 , 0 )
+          queueNumber(thisModel.VoltageSensor[context].PercRem, 13, 0 , 0 )
 
         else
 
           --queueSound(context,0)
           --queueSound("battery",0)
-          queueNumber(valueVoltsPercentRemaining[context], 13, 0 , 0 )
+          queueNumber(thisModel.VoltageSensor[context].PercRem, 13, 0 , 0 )
 
         end
       end
@@ -1101,17 +1178,18 @@ local function check_cell_delta_voltage(context)
   -- Check to see if all cells are within VoltageDelta volts of each other
   --  default is .3 volts, can be changed above
 
-  --   check_cell_delta_voltage(currentSensorVoltageValue[context])
--- cellInconsistent[context]
+  --   check_cell_delta_voltage(thisModel.VoltageSensor[context].value)
+-- thisModel.VoltageSensor[context].cellInconsistent
 
-local vDelta = BatteryDefinition[typeBattery[context]].cellDeltaVoltage
+--local vDelta = BatteryDefinition[typeBattery[context]].cellDeltaVoltage
+local vDelta = thisModel.battery[context].cellDeltaVoltage
 
-  if (type(currentSensorVoltageValue[context]) == "table") then -- check to see if this is the dedicated voltage sensor
+  if (type(thisModel.VoltageSensor[context].value) == "table") then -- check to see if this is the dedicated voltage sensor
 
-    cellInconsistent[context] = false
+    thisModel.VoltageSensor[context].cellInconsistent = false
 
-    for i, v1 in ipairs(currentSensorVoltageValue[context]) do
-      for j,v2 in ipairs(currentSensorVoltageValue[context]) do
+    for i, v1 in ipairs(thisModel.VoltageSensor[context].value) do
+      for j,v2 in ipairs(thisModel.VoltageSensor[context].value) do
         -- debugPrint(string.format("i: %d v: %f j: %d v: %f", i, v1, j,v2))
         if i~=j and (math.abs(v1 - v2) > vDelta) then
           --debugPrint(string.format("i: %d v: %f j: %d v: %f", i, v1, j,v2))
@@ -1127,7 +1205,7 @@ local vDelta = BatteryDefinition[typeBattery[context]].cellDeltaVoltage
           --  PlayInconsistentCellWarning = true
           --end
           --return
-          cellInconsistent[context] = true
+          thisModel.VoltageSensor[context].cellInconsistent = true
         end
       end
     end
@@ -1136,39 +1214,41 @@ end
 
 -- ####################################################################
 local function check_for_missing_cells(context)
-    -- check_for_missing_cells(currentSensorVoltageValue[context], countCell[context])
+    -- check_for_missing_cells(thisModel.VoltageSensor[context].value, thisModel.CellCount[context])
     -- local function check_for_missing_cells(voltageSensorValue, expectedCells )
 
-local CfullVolt = BatteryDefinition[typeBattery[context]].highVoltage
+    --local CfullVolt = BatteryDefinition[typeBattery[context]].highVoltage
+    local CfullVolt = thisModel.battery[context].highVoltage
 
 debugPrint("MC VOL:" .. CfullVolt)
 
   -- If the number of cells detected by the voltage sensor does not match the value in GV6 then play the warning message
   -- This is only for the dedicated voltage sensor
-  --debugPrint(string.format("CellCount: %d currentSensorVoltageValue[context]:", CellCount))
-  if countCell[context] > 0 then
+  --debugPrint(string.format("CellCount: %d thisModel.VoltageSensor[context].value:", CellCount))
+  --if thisModel.CellCount[context] > 0 then
+    if thisModel.CellCount[context] > 0 then
 
     local missingCellDetected = false
 
-    if (type(currentSensorVoltageValue[context]) == "table") then
+    if (type(thisModel.VoltageSensor[context].value) == "table") then
       --tableSize = 0 -- Initialize the counter for the cell table size
-      --for i, v in ipairs(currentSensorVoltageValue[context]) do
+      --for i, v in ipairs(thisModel.VoltageSensor[context].value) do
       --  tableSize = tableSize + 1
       --end
       --if tableSize ~= CellCount then
-      CellsDetectedCurrent[context] = #currentSensorVoltageValue[context]
-      if #currentSensorVoltageValue[context] ~= countCell[context] then
+      thisModel.VoltageSensor[context].CellsDetectedCurrent = #thisModel.VoltageSensor[context].value
+      if #thisModel.VoltageSensor[context].value ~= thisModel.CellCount[context] then
         --debugPrint(string.format("CellCount: %d tableSize: %d", CellCount, tableSize))
         
         missingCellDetected = true
       end
-    --elseif VoltageSensor == "VFAS" and type(currentSensorVoltageValue[context]) == "number" then --this is for the vfas sensor
-    elseif type(currentSensorVoltageValue[context]) == "number" then --this is for the vfas sensor
-      CellsDetectedCurrent[context] = math.ceil( currentSensorVoltageValue[context] / ( CfullVolt + 0.3) ) --todo 0.3 ??
-      --CellsDetectedCurrent[context] = math.floor( currentSensorVoltageValue[context] / 3.2 )
-      --if (countCell[context] * 3.2) > (currentSensorVoltageValue[context]) then
-        if CellsDetectedCurrent[context] ~= countCell[context]  then
-          --debugPrint(string.format("vfas missing cell: %d", currentSensorVoltageValue[context]))
+    --elseif VoltageSensor == "VFAS" and type(thisModel.VoltageSensor[context].value) == "number" then --this is for the vfas sensor
+    elseif type(thisModel.VoltageSensor[context].value) == "number" then --this is for the vfas sensor
+      thisModel.VoltageSensor[context].CellsDetectedCurrent = math.ceil( thisModel.VoltageSensor[context].value / ( CfullVolt + 0.3) ) --todo 0.3 ??
+      --thisModel.VoltageSensor[context].CellsDetectedCurrent = math.floor( thisModel.VoltageSensor[context].value / 3.2 )
+      --if (thisModel.CellCount[context] * 3.2) > (thisModel.VoltageSensor[context].value) then
+        if thisModel.VoltageSensor[context].CellsDetectedCurrent ~= thisModel.CellCount[context]  then
+          --debugPrint(string.format("vfas missing cell: %d", thisModel.VoltageSensor[context].value))
         
         missingCellDetected = true
       end
@@ -1177,16 +1257,76 @@ debugPrint("MC VOL:" .. CfullVolt)
 
 
     -- cellMissing[context] = missingCellDetected
-    cellMissing[context] =  CellsDetectedCurrent[context]  - countCell[context]
+    thisModel.VoltageSensor[context].cellMissing =  thisModel.VoltageSensor[context].CellsDetectedCurrent  - thisModel.CellCount[context]
 
-    if cellMissing[context] == 0 then
-      CellsDetected[context] = true
+    if thisModel.VoltageSensor[context].cellMissing == 0 then
+      thisModel.VoltageSensor[context].CellsDetected = true
     end
 
 
   end
 
 end
+
+
+
+-- Function to initialize sensor IDs
+local function initializeSensorId(sensor)
+  local fieldInfo = getFieldInfo(sensor.sensorName)
+  if fieldInfo then
+    sensor.sensorId = fieldInfo.id
+    debugPrint("UPDSEN: INIT: " .. sensor.sensorName .. " ID: " .. fieldInfo.id)
+  else
+    print("Field info not found for sensor: " .. sensor.sensorName)
+ end
+end
+
+-- Function to update sensor values
+local function updateSensorValue(sensor)
+  
+  if sensor.sensorId then
+    sensor.value = getValue(sensor.sensorId)
+    debugPrint("UPDSEN: VAL: " .. tostring(sensor.value) .. " ID: " .. sensor.sensorId)
+  end
+end
+
+-- Initialize sensor IDs for all sensor groups
+local function initializeAllSensorIds()
+
+  initializeSensorId(thisModel.VoltageSensor.main)
+  initializeSensorId(thisModel.VoltageSensor.receiver)
+  initializeSensorId(thisModel.CurrentSensor.main)
+  initializeSensorId(thisModel.CurrentSensor.receiver)
+  initializeSensorId(thisModel.MahSensor.main)
+  initializeSensorId(thisModel.MahSensor.receiver)
+
+
+ for _, adlSensor in ipairs(thisModel.AdlSensors) do
+    for _, sensor in ipairs(adlSensor.sensors) do
+      initializeSensorId(sensor)
+    end
+  end
+end
+
+
+
+-- -- Update sensor values for all sensor groups
+-- local function updateAllSensorValues(model)
+--   updateSensorValue(model.VoltageSensor.main)
+--   updateSensorValue(model.VoltageSensor.receiver)
+--   updateSensorValue(model.CurrentSensor.main)
+--   updateSensorValue(model.CurrentSensor.receiver)
+--   updateSensorValue(model.MahSensor.main)
+--   updateSensorValue(model.MahSensor.receiver)
+-- 
+-- 
+--  for _, adlSensor in ipairs(model.AdlSensors) do
+--     for _, sensor in ipairs(adlSensor.sensors) do
+--       updateSensorValue(sensor)
+--     end
+--   end
+-- end
+
 
 
 
@@ -1208,69 +1348,69 @@ if not modelAlreadyLoaded then --todo --- maybe move all of this stuff out of in
 --resolveDynamicValues()
 
 -- printHumanReadableTable(announcementConfig)
-typeBattery = {}
+-- typeBattery = {}
+-- 
+-- typeBattery["main"]           = modelDetails.BattType.main
+-- typeBattery["receiver"]       = modelDetails.BattType.receiver
 
-typeBattery["main"]           = modelDetails.BattType.main
-typeBattery["receiver"]       = modelDetails.BattType.receiver
-
--- we are manipulating the battery definitions at runtime when the model is loaded ... let's work on a copy 
+-- we are manipulating the battery definitions at runtime when the model is loaded ... let's work on a copy of the model
 BatteryDefinition = BatteryTypeDefaults
 
+thisModel = modelDetails
 
-if BatteryDefinition[typeBattery["main"]].lowVoltage == nil then
-BatteryDefinition[typeBattery["main"]].lowVoltage = 3.27 --todo is this wise todo ?
+--thisModel.battery.main.lowVoltage
+
+if thisModel.battery.main.lowVoltage == nil then
+  thisModel.battery.main.lowVoltage = 3.27 --todo is this wise todo ?
 end
 
-if BatteryDefinition[typeBattery["main"]].highVoltage == nil then
-BatteryDefinition[typeBattery["main"]].highVoltage = 4.2 --todo is this wise todo ?
+if thisModel.battery.main.highVoltage == nil then
+  thisModel.battery.main.highVoltage = 4.2 --todo is this wise todo ?
 end
 
-if BatteryDefinition[typeBattery["main"]].dischargeCurve == nil then -- we have no discharge curve .... lets build a linear one at runtime
+if thisModel.battery.main.dischargeCurve == nil then -- we have no discharge curve .... lets build a linear one at runtime
 
  debugPrint("NO DISCHARGE CURVE FOR MAIN")
- local low = BatteryDefinition[typeBattery["main"]].lowVoltage
- local high = BatteryDefinition[typeBattery["main"]].highVoltage
 
- BatteryDefinition[typeBattery["main"]].dischargeCurve = calculateLinearDischargeCurve(low, high)
+ thisModel.battery.main.dischargeCurve = calculateLinearDischargeCurve(thisModel.battery.main.lowVoltage, thisModel.battery.main.highVoltage)
 
 end
 
 
 
-if BatteryDefinition[typeBattery["receiver"]].lowVoltage == nil  then
- if BatteryDefinition[typeBattery["receiver"]].isNotABattery then
- BatteryDefinition[typeBattery["receiver"]].lowVoltage = 6 --todo is this wise todo ?
+if thisModel.battery.receiver.lowVoltage == nil  then
+ if thisModel.battery.receiver.isNotABattery then
+  thisModel.battery.receiver.lowVoltage = 6 --todo is this wise todo ?
  else
-  BatteryDefinition[typeBattery["receiver"]].lowVoltage = 3.27
+  thisModel.battery.receiver.lowVoltage = 3.27
  end
 end
 
-if BatteryDefinition[typeBattery["receiver"]].highVoltage == nil  then
- if BatteryDefinition[typeBattery["receiver"]].isNotABattery then
- BatteryDefinition[typeBattery["receiver"]].highVoltage = rxReferenceVoltage
+if thisModel.battery.receiver.highVoltage == nil  then
+ if thisModel.battery.receiver.isNotABattery then
+  thisModel.battery.receiver.highVoltage = rxReferenceVoltage
  else
-  BatteryDefinition[typeBattery["receiver"]].highVoltage = 4.2
+  thisModel.battery.receiver.highVoltage = 4.2
  end
 end
 
 
-if BatteryDefinition[typeBattery["receiver"]].isNotABattery then
+if thisModel.battery.receiver.isNotABattery then
 
-BatteryDefinition[typeBattery["receiver"]].lowVoltage  = BatteryDefinition[typeBattery["receiver"]].lowVoltage / 2
-BatteryDefinition[typeBattery["receiver"]].highVoltage = BatteryDefinition[typeBattery["receiver"]].highVoltage / 2
+  thisModel.battery.receiver.lowVoltage  = thisModel.battery.receiver.lowVoltage / 2
+  thisModel.battery.receiver.highVoltage = thisModel.battery.receiver.highVoltage / 2
 
 end
 
 
 
-if BatteryDefinition[typeBattery["receiver"]].dischargeCurve == nil  then-- we have no discharge curve .... lets build a linear one at runtime
+if thisModel.battery.receiver.dischargeCurve == nil  then-- we have no discharge curve .... lets build a linear one at runtime
 
 debugPrint("NO DISCHARGE CURVE FOR RECEIVER")
 
-local low = BatteryDefinition[typeBattery["receiver"]].lowVoltage
-local high = BatteryDefinition[typeBattery["receiver"]].highVoltage
 
-BatteryDefinition[typeBattery["receiver"]].dischargeCurve = calculateLinearDischargeCurve(low, high)
+
+thisModel.battery.receiver.dischargeCurve = calculateLinearDischargeCurve(thisModel.battery.receiver.lowVoltage, thisModel.battery.receiver.highVoltage)
 
 end
 
@@ -1281,9 +1421,9 @@ end
 --updateAnnouncementConfig(announcementConfig, BatteryTypeDefaults, typeBattery["main"], typeBattery["receiver"])
 
 
-printHumanReadableTable(announcementConfig)
+-- printHumanReadableTable(announcementConfig)
 
-printHumanReadableTable(BatteryDefinition)
+printHumanReadableTable(thisModel)
 
 
 
@@ -1296,46 +1436,51 @@ printHumanReadableTable(BatteryDefinition)
 --- table.insert(contexts, "receiver")
 --- table.insert(contexts, "backup")
 
-  sensorVoltage = {}
-  sensorCurrent = {}
-  sensorMah = {}
-  countCell = {}
+ --sensorVoltage = {}
+ --sensorCurrent = {}
+ --sensorMah = {}
+ --countCell = {}
 
-  tableBatCapacity = {}
+  --tableBatCapacity = {}
 
   switchIndexes = {}
   previousSwitchState = {}
 
-  currentSensorVoltageValue = {}
-  currentSensorCurrentValue = {}
-  currentSensorMahValue = {}
+  --currentSensorVoltageValue = {}
+  --currentSensorCurrentValue = {}
+  --currentSensorMahValue = {}
 
-  currentVoltageValueCurrent = {}
-  currentCurrentValueCurrent = {}
+  --currentVoltageValueCurrent = {}
+  --currentCurrentValueCurrent = {}
+--
+  --currentVoltageValueLatest = {}
+  --currentCurrentValueLatest = {}
+--
+  --currentVoltageValueHigh = {}
+  --currentCurrentValueHigh = {}
 
-  currentVoltageValueLatest = {}
-  currentCurrentValueLatest = {}
+  --currentVoltageValueLow = {}
+  --currentCurrentValueLow = {}
 
-  currentVoltageValueHigh = {}
-  currentCurrentValueHigh = {}
+  ---valueVoltsPercentRemaining = {}
 
-  currentVoltageValueLow = {}
-  currentCurrentValueLow = {}
+  --currentMahValue = {}
 
-  valueVoltsPercentRemaining = {}
+  --CellsDetected = {}
 
-  currentMahValue = {}
-
-  CellsDetected = {}
-
-  sensorline1 = nil
-  sensorline2 = nil
+  --sensorline1 = nil
+  --sensorline2 = nil
 
   -- todo --- build variables using context switching
 
-  CellsDetectedCurrent = {}
-  CellsDetectedCurrent["main"]      = 0
-  CellsDetectedCurrent["receiver"]  = 0
+  --CellsDetectedCurrent = {}
+  --CellsDetectedCurrent["main"]      = 0
+  --CellsDetectedCurrent["receiver"]  = 0
+
+  thisModel.VoltageSensor.main.CellsDetectedCurrent = 0
+  thisModel.VoltageSensor.receiver.CellsDetectedCurrent = 0
+
+  -- thisModel.VoltageSensor[context].CellsDetectedCurrent
 
   detectedBattery = {}
   detectedBatteryValid = {}
@@ -1343,23 +1488,23 @@ printHumanReadableTable(BatteryDefinition)
   numberOfBatteries = 0
   --previousSwitchState = {}
 
-  modelName = modelDetails.modelName
-  modelImage = modelDetails.modelImage
-  modelWav = modelDetails.modelWav
+  --modelName = modelDetails.modelName
+  --modelImage = modelDetails.modelImage
+  --modelWav = modelDetails.modelWav
 
-  queueSound(modelWav,2)
+  queueSound(modelDetails.modelWav,2)
 
-  debugPrint("MODEL NAME: ", modelName)
-  debugPrint("MODEL IMAGE: ",modelImage)
+  debugPrint("MODEL NAME: ", modelDetails.modelName)
+  debugPrint("MODEL IMAGE: ",modelDetails.modelImage)
  
-  sensorVoltage["main"]         = getFieldInfo(modelDetails.VoltageSensor.main)
-  sensorVoltage["receiver"]     = getFieldInfo(modelDetails.VoltageSensor.receiver)
-
-  sensorCurrent["main"]         = getFieldInfo(modelDetails.CurrentSensor.main)
-  sensorCurrent["receiver"]     = getFieldInfo(modelDetails.CurrentSensor.receiver)
-
-  sensorMah["main"]             = getFieldInfo(modelDetails.MahSensor.main)
-  sensorMah["receiver"]         = getFieldInfo(modelDetails.MahSensor.receiver)
+  -- sensorVoltage["main"]         = getFieldInfo(modelDetails.VoltageSensor.main)
+  -- sensorVoltage["receiver"]     = getFieldInfo(modelDetails.VoltageSensor.receiver)
+-- 
+  -- sensorCurrent["main"]         = getFieldInfo(modelDetails.CurrentSensor.main)
+  -- sensorCurrent["receiver"]     = getFieldInfo(modelDetails.CurrentSensor.receiver)
+-- 
+  -- sensorMah["main"]             = getFieldInfo(modelDetails.MahSensor.main)
+  -- sensorMah["receiver"]         = getFieldInfo(modelDetails.MahSensor.receiver)
 
   --myid = getFieldInfo(sensorCurrent["main"])
 --
@@ -1371,73 +1516,112 @@ printHumanReadableTable(BatteryDefinition)
   --debugPrint("GFI: test name:" .. sensorVoltage["main"].name )
 
   
+  initializeAllSensorIds()
 
+  debugPrint("INIVAL:" .. thisModel.VoltageSensor.main.sensorId )
+  debugPrint("INIVAL:" .. thisModel.VoltageSensor.receiver.sensorId )
+  debugPrint("INIVAL: RPM" .. thisModel.AdlSensors[1].sensors[1].sensorId )
 
-  countCell["main"]             = tonumber(modelDetails.CellCount.main)
-  countCell["receiver"]         = tonumber(modelDetails.CellCount.receiver)
+  -- countCell["main"]             = tonumber(modelDetails.CellCount.main)
+  -- countCell["receiver"]         = tonumber(modelDetails.CellCount.receiver)
+-- 
+  -- tableBatCapacity["main"]      = modelDetails.capacities["main"]
+  -- tableBatCapacity["receiver"]  = modelDetails.capacities["receiver"]
+-- 
+  -- currentVoltageValueCurrent["main"] = 0 -- current value even when tele lost
+  -- currentVoltageValueLatest["main"] = 0  -- last value while tele was present
+  -- currentVoltageValueHigh["main"] = 0
+  -- currentVoltageValueLow["main"] = 0
+-- 
+  -- currentVoltageValueCurrent["receiver"] = 0 -- current value even when tele lost
+  -- currentVoltageValueLatest["receiver"] = 0  -- last value while tele was present
+  -- currentVoltageValueHigh["receiver"] = 0
+  -- currentVoltageValueLow["receiver"] = 0
+-- 
+  -- currentCurrentValueCurrent["main"] = 0
+  -- currentCurrentValueLatest["main"] = 0
+  -- currentCurrentValueHigh["main"] = 0
+  -- currentCurrentValueLow["main"] = 0
+-- 
+  -- currentCurrentValueCurrent["receiver"] = 0
+  -- currentCurrentValueLatest["receiver"] = 0
+  -- currentCurrentValueHigh["receiver"] = 0
+  -- currentCurrentValueLow["receiver"] = 0
 
-  tableBatCapacity["main"]      = modelDetails.capacities["main"]
-  tableBatCapacity["receiver"]  = modelDetails.capacities["receiver"]
+  -- valueVoltsPercentRemaining["main"] = 0
+  -- valueVoltsPercentRemaining["receiver"] = 0
 
-  currentVoltageValueCurrent["main"] = 0 -- current value even when tele lost
-  currentVoltageValueLatest["main"] = 0  -- last value while tele was present
-  currentVoltageValueHigh["main"] = 0
-  currentVoltageValueLow["main"] = 0
+  thisModel.VoltageSensor.main.CurVolt = 0
+  thisModel.VoltageSensor.main.LowestVolt = 0
+  thisModel.VoltageSensor.main.HighestVolt = 0
 
-  currentVoltageValueCurrent["receiver"] = 0 -- current value even when tele lost
-  currentVoltageValueLatest["receiver"] = 0  -- last value while tele was present
-  currentVoltageValueHigh["receiver"] = 0
-  currentVoltageValueLow["receiver"] = 0
+  thisModel.CurrentSensor.main.CurAmp = 0
+  thisModel.CurrentSensor.main.LowestAmp = 0
+  thisModel.CurrentSensor.main.HighestAmp = 0
 
-  currentCurrentValueCurrent["main"] = 0
-  currentCurrentValueLatest["main"] = 0
-  currentCurrentValueHigh["main"] = 0
-  currentCurrentValueLow["main"] = 0
+  thisModel.VoltageSensor.receiver.CurVolt = 0
+  thisModel.VoltageSensor.receiver.LowestVolt = 0
+  thisModel.VoltageSensor.receiver.HighestVolt = 0
 
-  currentCurrentValueCurrent["receiver"] = 0
-  currentCurrentValueLatest["receiver"] = 0
-  currentCurrentValueHigh["receiver"] = 0
-  currentCurrentValueLow["receiver"] = 0
+  thisModel.CurrentSensor.receiver.CurAmp = 0
+  thisModel.CurrentSensor.receiver.LowestAmp = 0
+  thisModel.CurrentSensor.receiver.HighestAmp = 0
 
-  valueVoltsPercentRemaining["main"] = 0
-  valueVoltsPercentRemaining["receiver"] = 0
+  thisModel.VoltageSensor.main.PercRem = 0
+  thisModel.VoltageSensor.receiver.PercRem = 0
+
+  
+  -- thisModel.MahSensor.main.CurAmp = 0
+  -- thisModel.MahSensor.main.LowestAmp = 0
+  -- thisModel.MahSensor.main.HighestAmp = 0
 
   preFlightStatusTele = "unknown"
   preFlightStatusBat = "unknown"
 
-  cellMissing = {}
-  cellMissing["main"] = 0
-  cellMissing["receiver"] = 0
+  -- cellMissing = {}
+  -- cellMissing["main"] = 0
+  -- cellMissing["receiver"] = 0
 
-  cellInconsistent = {}
-  cellInconsistent["main"] = false
-  cellInconsistent["receiver"] = false
+  thisModel.VoltageSensor.main.cellMissing = 0
+  thisModel.VoltageSensor.receiver.cellMissing = 0
 
-  batteryNotFull = {}
-  batteryNotFull["main"] = nil -- nil means not determined yet / on init
-  batteryNotFull["receiver"] = nil -- nil means not determined yet / on init
+-- 
+  -- cellInconsistent = {}
+  -- cellInconsistent["main"] = false
+  -- cellInconsistent["receiver"] = false
+
+  thisModel.VoltageSensor.main.cellInconsistent = false
+  thisModel.VoltageSensor.receiver.cellInconsistent = false
+
+
+  -- batteryNotFull = {}
+  -- batteryNotFull["main"] = nil -- nil means not determined yet / on init
+  -- batteryNotFull["receiver"] = nil -- nil means not determined yet / on init
 
 
   statusTele = false
 
-  switchReset                   = modelDetails.resetSwitch
+  --switchReset                   = modelDetails.resetSwitch
   --statusTele                    = modelDetails.telemetryStatus
 
 
-  idswitchReset                 = getSwitchIndex(switchReset)
+  --idswitchReset                 = getSwitchIndex(switchReset)
   --idstatusTele                  = getSwitchIndex(statusTele)
+  debugPrint("INIVAL: " .. thisModel.resetSwitch)
 
-  tableSwitchAnnounces          = modelDetails.switchAnnounces
-  tableLine1StatSensors         = modelDetails.line1statsensors
-  tableLine2StatSensors         = modelDetails.line2statsensors
-  tableBattPackSelectorSwitch   = modelDetails.BattPackSelectorSwitch
+  thisModel.resetswitchid = getSwitchIndex(thisModel.resetSwitch)
+
+  --tableSwitchAnnounces          = modelDetails.switchAnnounces
+  --tableLine1StatSensors         = modelDetails.line1statsensors
+  --tableLine2StatSensors         = modelDetails.line2statsensors
+  --tableBattPackSelectorSwitch   = modelDetails.BattPackSelectorSwitch
 
   -- todo ... is this really needed ?
-  detectedBattery["main"] = false
-  detectedBattery["receiver"] = false
-
-  detectedBatteryValid["main"] = false
-  detectedBatteryValid["receiver"] = false
+  --detectedBattery["main"] = false
+  --detectedBattery["receiver"] = false
+--
+  --detectedBatteryValid["main"] = false
+  --detectedBatteryValid["receiver"] = false
 
   batCheckPassed = false
 
@@ -1447,33 +1631,34 @@ printHumanReadableTable(BatteryDefinition)
   numOfBatPassedCellCheck = 0
 
   -- todo: maybe consider/adapt to use cases with only current and/or mah sensors
-  if sensorVoltage["main"] ~= nil then
+  if thisModel.VoltageSensor.main.sensorId ~= nil then
     table.insert(contexts, "main")
-    CellsDetected["main"] = false
+    --CellsDetected["main"] = false
+    thisModel.VoltageSensor.main.CellsDetected = false
     --numberOfBatteries = numberOfBatteries + 1
   else
-    CellsDetected["main"] = true -- needed to pass sanity check / statuspage
+    thisModel.VoltageSensor.main.CellsDetected = true
   end
 
-  if sensorVoltage["receiver"] ~= nil then
+  if thisModel.VoltageSensor.receiver.sensorId ~= nil then
     table.insert(contexts, "receiver")
-    CellsDetected["receiver"] = false
+    thisModel.VoltageSensor.receiver.CellsDetected = false
     --numberOfBatteries = numberOfBatteries + 1
   else
-    CellsDetected["receiver"] = true -- needed to pass sanity check / statuspage
+    thisModel.VoltageSensor.receiver.CellsDetected = true
   end
 
 
-  for _, switchInfo in ipairs(tableSwitchAnnounces) do
+  for _, switchInfo in ipairs(thisModel.switchAnnounces) do --todo --- maybe with a table and index too ?
     local switch = switchInfo[1]
     local switchIndex = getFieldInfo(switch).id
     debugPrint("ANN SW IDX: ", switch)
     switchIndexes[switch] = switchIndex
   end
 
-  bmpModelImage = Bitmap.open("/IMAGES/" .. modelImage)
+  thisModel.bmpModelImage = Bitmap.open("/IMAGES/" .. thisModel.modelImage)
 
-  bmpSizedModelImage = Bitmap.resize(bmpModelImage, 400, 300)
+  thisModel.bmpSizedModelImage = Bitmap.resize(thisModel.bmpModelImage, 400, 300)
 
 
 -- modelWav
@@ -1504,7 +1689,7 @@ local function reset_if_needed()
   -- if ResetSwitchState == nil or AutomaticResetOnResetPrevState ~= ResetSwitchState then -- Update switch position
     --if AutomaticResetOnResetPrevState ~= ResetSwitchState then -- Update switch position
 
-    ResetSwitchState = getSwitchValue(idswitchReset)
+    ResetSwitchState = getSwitchValue(thisModel.resetswitchid)
 
     --debugPrint("RESET: Switch state :", ResetSwitchState)
 
@@ -1597,12 +1782,14 @@ local function checkForTelemetry()
     return
   end
 
+  -- thisModel.VoltageSensor.main.
   if not currentStatusTele then
-    currentVoltageValueCurrent["main"]     = "--.--"
-    currentCurrentValueCurrent["main"]     = "--.--"
+    thisModel.VoltageSensor.main.CurVolt     = "--.--"
+    thisModel.CurrentSensor.main.CurAmp      = "--.--"
 
-    currentVoltageValueCurrent["receiver"] = "--.--"
-    currentCurrentValueCurrent["receiver"] = "--.--"
+    thisModel.VoltageSensor.receiver.CurVolt     = "--.--"
+    thisModel.CurrentSensor.receiver.CurAmp      = "--.--"
+
     preFlightStatusTele = "NOT OK. Waiting"
   else
     preFlightStatusTele = "OK"
@@ -1619,72 +1806,93 @@ end
 local function updateSensorValues(context)
 
 
-  currentSensorVoltageValue[context] = getValue(sensorVoltage[context].id)
-  currentSensorCurrentValue[context] = getValue(sensorCurrent[context].id)
-  currentSensorMahValue[context]     = getValue(sensorMah[context].id)
+  -- thisModel.VoltageSensor[context].value = getValue(sensorVoltage[context].id)
+  -- currentSensorCurrentValue[context] = getValue(sensorCurrent[context].id)
+  -- currentSensorMahValue[context]     = getValue(sensorMah[context].id)
+
+  -- thisModel.VoltageSensor[context].sensorValue = getValue(thisModel.VoltageSensor[context].sensorId)
+  -- thisModel.CurrentSensor[context].sensorValue = getValue(thisModel.CurrentSensor[context].sensorId)
+  --     thisModel.MahSensor[context].sensorValue     = getValue(thisModel.MahSensor[context].sensorId)
+debugPrint("UPDSEN: " .. context)
+
+  updateSensorValue(thisModel.VoltageSensor[context])
+  updateSensorValue(thisModel.CurrentSensor[context])
+  updateSensorValue(thisModel.MahSensor[context])
+
+  for _, adlSensor in ipairs(thisModel.AdlSensors) do
+   for _, sensor in ipairs(adlSensor.sensors) do
+     updateSensorValue(sensor)
+   end
+ end
 
 
-  -- currentVoltageValueLatest[context] = getCellVoltage(currentSensorVoltageValue[context])
+
+  -- currentVoltageValueLatest[context] = getCellVoltage(thisModel.VoltageSensor[context].value)
   -- currentCurrentValueLatest[context] = getAmp(sensorCurrent[context]) --todo .. function calls getValue again
 
-  currentVoltageValueCurrent[context] = math.floor(getCellVoltage(currentSensorVoltageValue[context])  * 100) / 100   -- this will hold the current value ... even if no telemetry --> = 0
-  currentCurrentValueCurrent[context] = math.floor(getAmp(sensorCurrent[context])   * 100) / 100 --todo .. function calls getValue again -- this will hold the current value ... even if no telemetry --> = 0
+  -- currentVoltageValueCurrent[context] = math.floor(getCellVoltage(thisModel.VoltageSensor[context].value)  * 100) / 100   -- this will hold the current value ... even if no telemetry --> = 0
+  -- currentCurrentValueCurrent[context] = math.floor(getAmp(sensorCurrent[context])   * 100) / 100 --todo .. function calls getValue again -- this will hold the current value ... even if no telemetry --> = 0
+
+  thisModel.VoltageSensor[context].CurVolt = math.floor(getCellVoltage(thisModel.VoltageSensor[context].value)  * 100) / 100   -- this will hold the current value ... even if no telemetry --> = 0
+  thisModel.CurrentSensor[context].CurAmp = math.floor(getAmp(thisModel.CurrentSensor[context].value)   * 100) / 100 --todo .. function calls getValue again -- this will hold the current value ... even if no telemetry --> = 0
+
+  -- updateAllSensorValues(thisModel)
 
   -- local truncatedNumber = math.floor(number * 100) / 100
 
   -- string.format("%.2f", number)
 
-  debugPrint(string.format("Updated Sensor Values: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, sensorVoltage[context].name,  currentVoltageValueCurrent[context] , sensorCurrent[context].name, sensorMah[context].name, currentSensorVoltageValue[context], currentSensorCurrentValue[context], currentSensorMahValue[context]))
+  debugPrint(string.format("Updated Sensor Values: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, thisModel.VoltageSensor[context].sensorName,  thisModel.VoltageSensor[context].CurVolt , thisModel.CurrentSensor[context].sensorName, thisModel.MahSensor[context].sensorName, thisModel.VoltageSensor[context].value, thisModel.CurrentSensor[context].value, thisModel.MahSensor[context].value))
 
   -- disabled --           if VoltsNow < 1 or volts > 1 then
   -- disabled --             VoltsNow = volts
   -- disabled --           end
 
-  if currentVoltageValueLatest[context] == 0  or currentVoltageValueCurrent[context] ~= 0 then
-    currentVoltageValueLatest[context] = currentVoltageValueCurrent[context]
+  if thisModel.VoltageSensor[context].LatestVolt == 0  or thisModel.VoltageSensor[context].CurVolt ~= 0 then
+    thisModel.VoltageSensor[context].LatestVolt = thisModel.VoltageSensor[context].CurVolt
   end
 
-  if currentVoltageValueHigh[context] == 0 or ( currentVoltageValueCurrent[context] > currentVoltageValueHigh[context] and currentVoltageValueCurrent[context] ~= 0.00 ) then
-    currentVoltageValueHigh[context] = currentVoltageValueCurrent[context]
+  if thisModel.VoltageSensor[context].HighestVolt == 0 or ( thisModel.VoltageSensor[context].CurVolt > thisModel.VoltageSensor[context].HighestVolt and thisModel.VoltageSensor[context].CurVolt ~= 0.00 ) then
+    thisModel.VoltageSensor[context].HighestVolt = thisModel.VoltageSensor[context].CurVolt
   end
 
-  if currentVoltageValueLow[context] == 0 or ( currentVoltageValueCurrent[context] < currentVoltageValueLow[context] and currentVoltageValueCurrent[context] ~= 0.00 ) then
-    currentVoltageValueLow[context] = currentVoltageValueCurrent[context]
-    debugPrint(string.format("Updated Sensor Values Low: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, sensorVoltage[context].name, currentVoltageValueCurrent[context] , sensorCurrent[context].name, sensorMah[context].name, currentSensorVoltageValue[context], currentSensorCurrentValue[context], currentSensorMahValue[context]))
+  if thisModel.VoltageSensor[context].LowestVolt == 0 or ( thisModel.VoltageSensor[context].CurVolt < thisModel.VoltageSensor[context].LowestVolt and thisModel.VoltageSensor[context].CurVolt ~= 0.00 ) then
+    thisModel.VoltageSensor[context].LowestVolt = thisModel.VoltageSensor[context].CurVolt
+    --debugPrint(string.format("Updated Sensor Values Low: Context: %s Sensor Voltage: %s ( get Cell: %s ) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s", context, sensorVoltage[context].name, thisModel.VoltageSensor[context].CurVolt , sensorCurrent[context].name, sensorMah[context].name, thisModel.VoltageSensor[context].value, currentSensorCurrentValue[context], currentSensorMahValue[context]))
 -- Updated Sensor Values Low: Context: main Sensor Voltage: Cels ( get Cell: nil ) Sensor Current: Curr Sensor mah:  Volt: 0 Current: 0 mAh: 0
   end
 
 
 
 
-  if currentCurrentValueLatest[context] == 0 or currentCurrentValueCurrent[context] ~= 0 then
-  currentCurrentValueLatest[context] = currentCurrentValueCurrent[context]
+  if thisModel.CurrentSensor[context].LatestAmp == 0 or thisModel.CurrentSensor[context].CurAmp ~= 0 then
+    thisModel.CurrentSensor[context].LatestAmp = thisModel.CurrentSensor[context].CurAmp
   end
 
-  if currentCurrentValueHigh[context] == 0 or ( currentCurrentValueCurrent[context] > currentCurrentValueHigh[context] and currentCurrentValueCurrent[context] ~= 0.00 )   then
-    currentCurrentValueHigh[context] = currentCurrentValueCurrent[context]
+  if thisModel.CurrentSensor[context].HighestAmp == 0 or ( thisModel.CurrentSensor[context].CurAmp > thisModel.CurrentSensor[context].HighestAmp and thisModel.CurrentSensor[context].CurAmp ~= 0.00 )   then
+    thisModel.CurrentSensor[context].HighestAmp = thisModel.CurrentSensor[context].CurAmp
   end
 
-  if currentCurrentValueLow[context] == 0 or ( currentCurrentValueCurrent[context] < currentCurrentValueLow[context]  and currentCurrentValueCurrent[context] ~= 0.00 )  then
-    currentCurrentValueLow[context] = currentCurrentValueCurrent[context]
+  if thisModel.CurrentSensor[context].LowestAmp == 0 or ( thisModel.CurrentSensor[context].CurAmp < thisModel.CurrentSensor[context].LowestAmp  and thisModel.CurrentSensor[context].CurAmp ~= 0.00 )  then
+    thisModel.CurrentSensor[context].LowestAmp = thisModel.CurrentSensor[context].CurAmp
   end
 
 
   
 
   --if not cellMissing[context] then
-    valueVoltsPercentRemaining[context]  = findPercentRem( currentVoltageValueLatest[context]/countCell[context],  typeBattery[context])
-    debugPrint(string.format("SUPD: Got Percent: %s for Context: %s", valueVoltsPercentRemaining[context], context))
+  thisModel.VoltageSensor[context].PercRem  = findPercentRem( thisModel.VoltageSensor[context].LatestVolt/thisModel.CellCount[context],  context)
+    debugPrint(string.format("SUPD: Got Percent: %s for Context: %s", thisModel.VoltageSensor[context].PercRem, context))
 
-    BatRemPer = valueVoltsPercentRemaining[context] -- todo eliminate
+    BatRemPer = thisModel.VoltageSensor[context].PercRem -- todo eliminate
   --end
 
 
 
-  sensorline1 = build_sensor_line(tableLine1StatSensors)
-  sensorline2 = build_sensor_line(tableLine2StatSensors)
-  debugPrint("SENSLINE: " .. sensorline1)
-  debugPrint("SENSLINE: " .. sensorline2)
+  -- sensorline1 = build_sensor_line(tableLine1StatSensors)
+  -- sensorline2 = build_sensor_line(tableLine2StatSensors)
+  -- debugPrint("SENSLINE: " .. sensorline1)
+  -- debugPrint("SENSLINE: " .. sensorline2)
 
 
   -- if VoltsNow < 1 or volts > 1 then
@@ -1697,7 +1905,7 @@ end
 local function switchAnnounce()
 
 -- switch state announce
-for _, switchInfo in ipairs(tableSwitchAnnounces) do
+for _, switchInfo in ipairs(thisModel.switchAnnounces) do
   --local switch, action = switchInfo[1], switchInfo[2]
   local switch = switchInfo[1]
 
@@ -1802,11 +2010,14 @@ switchAnnounce()
 
  if statusTele then -- if we have no telemetry .... don't waste time doing anything that requires telemetry
 
+  --updateSensorValues(thisModel.VoltageSensor.main.cellMissing)
+
   updateSensorValues(currentContext)
+
 
   check_for_missing_cells(currentContext)
 
-  if cellMissing[currentContext] == 0 then -- if cell number is fine we have got voltage and can do the rest of the checks
+  if thisModel.VoltageSensor[currentContext].cellMissing == 0 then -- if cell number is fine we have got voltage and can do the rest of the checks
 
   -- check_for_full_battery(currentSensorVoltageValue[currentContext], BatNotFullThresh[typeBattery[currentContext]], countCell[currentContext], batTypeLowHighValues[typeBattery[currentContext]][1], batTypeLowHighValues[typeBattery[currentContext]][2])
   -- check_for_full_battery(currentContext)
@@ -1817,7 +2028,7 @@ switchAnnounce()
 
 
 
-  if CellsDetected["main"] and CellsDetected["receiver"] then -- sanity checks passed ... we can move to normal operation and switch the status widget
+  if thisModel.VoltageSensor.receiver.CellsDetected and thisModel.VoltageSensor.main.CellsDetected then -- sanity checks passed ... we can move to normal operation and switch the status widget
    batCheckPassed = true
    preFlightStatusBat = "OK"
   else
@@ -1836,11 +2047,11 @@ doAnnouncements(currentContext)
 end
 
 -- ####################################################################
-local function getPercentColor(cpercent, battype)
+local function getPercentColor(cpercent, battery)
   -- This function returns green at 100%, red bellow 30% and graduate in between
 
   --local warn = batTypeWarnCritThresh[battype][1] 
-  local warn = BatteryDefinition[battype].warningThreshold
+  local warn = battery.warningThreshold
 
 
 
@@ -1893,7 +2104,7 @@ local function drawCellVoltage(wgt, cellResult)
 end
 
 -- ####################################################################
-local function drawBattery(xOrigin, yOrigin, percentage, wgt, battype)
+local function drawBattery(xOrigin, yOrigin, percentage, wgt, battery)
     local myBatt = { ["x"] = xOrigin,
                      ["y"] = yOrigin,
                      ["w"] = 120,
@@ -1915,7 +2126,7 @@ local function drawBattery(xOrigin, yOrigin, percentage, wgt, battype)
   --FSIZE = MIDSIZE
   
   -- fill batt
-  lcd.setColor(CUSTOM_COLOR, getPercentColor(percentage, battype))
+  lcd.setColor(CUSTOM_COLOR, getPercentColor(percentage, battery))
   lcd.drawGauge(wgt.zone.x + myBatt.x, wgt.zone.y + myBatt.y, myBatt.w, myBatt.h, percentage, 100, CUSTOM_COLOR)
 
   -- draws bat
@@ -1935,7 +2146,7 @@ local function drawBattery(xOrigin, yOrigin, percentage, wgt, battype)
 end
 
 -- ####################################################################
-local function drawNewBattery(xOrigin, yOrigin, percentage, wgt, battype, batCol, txtCol, size)
+local function drawNewBattery(xOrigin, yOrigin, percentage, wgt, battery, batCol, txtCol, size)
 
   local myBatt = { ["x"] = xOrigin,
                    ["y"] = yOrigin,
@@ -1966,7 +2177,7 @@ end
 
 
 -- fill batt
-lcd.setColor(CUSTOM_COLOR, getPercentColor(percentage, battype))
+lcd.setColor(CUSTOM_COLOR, getPercentColor(percentage, battery))
 lcd.drawGauge(wgt.zone.x + myBatt.x, wgt.zone.y + myBatt.y, myBatt.w, myBatt.h, percentage, 100, CUSTOM_COLOR)
 
 -- draws bat
@@ -2258,9 +2469,9 @@ if height >= 272 then
 
   fontSizes = {
     -- xl = { FONT = XXLSIZE, fontpxl = 72, lineSpacing = 6, colSpacing = 19 },
-    l  = { FONT = DBLSIZE, fontpxl = 32, lineSpacing = 5, colSpacing = 18 },
-    m  = { FONT = MIDSIZE, fontpxl = 24, lineSpacing = 4, colSpacing = 22 }, -- <<
-    s  = { FONT = 0,       fontpxl = 16, lineSpacing = 3, colSpacing = 10 },
+    l  = { FONT = DBLSIZE, fontpxl = 32, lineSpacing = 4, colSpacing = 18 },
+    m  = { FONT = MIDSIZE, fontpxl = 24, lineSpacing = 3, colSpacing = 22 }, -- <<
+    s  = { FONT = 0,       fontpxl = 16, lineSpacing = 2, colSpacing = 10 },
     -- ss  = { FONT = SMLSIZE, fontpxl = 12, lineSpacing = 2, colSpacing = 8 }
 }
 
@@ -2278,6 +2489,7 @@ end
 
   -- Function to draw text with given parameters
   local function drawText(text, x, y, fontsize, color)
+    debugPrint("SCRN:" .. text)
     local offsetX = x + 2 -- a little bit from left
           local fontData = fontSizes[fontsize]
       lcd.drawText(offsetX, y, text, fontData.FONT + color)
@@ -2312,31 +2524,59 @@ end
   --    end
   --end
 
-  local function drawBottomSensorLine(sensors, y)
-    local offsetX = x + 1 -- a little bit from left
-    local totalSensors = #sensors
-    local sensorsPerLine = 2
-    local sensorWidth = width / sensorsPerLine
+--   local function drawBottomSensorLine(sensors, y)
+--     local offsetX = x + 1 -- a little bit from left
+--     local totalSensors = #sensors
+--     local sensorsPerLine = 2
+--     local sensorWidth = width / sensorsPerLine
+-- 
+--     for i, sensor in ipairs(sensors) do
+--         local currentLine = math.floor((i - 1) / sensorsPerLine)
+--         local colIndex = (i - 1) % sensorsPerLine
+--         local lineOffsetX = offsetX + colIndex * sensorWidth
+-- 
+--         drawText(sensor.label, lineOffsetX, y, "s", sensor.labelColor)
+--         drawText("[", lineOffsetX + fontSizes["s"].colSpacing * 6, y, "s", WHITE)
+--         drawText("L:", lineOffsetX + fontSizes["s"].colSpacing * 7, y, "s", sensor.labelColor)
+--         drawText(sensor.lowValue, lineOffsetX + fontSizes["s"].colSpacing * 9, y, "s", sensor.lowValueColor)
+--         drawText("H:", lineOffsetX + fontSizes["s"].colSpacing * 15, y, "s", sensor.labelColor)
+--         drawText(sensor.highValue, lineOffsetX + fontSizes["s"].colSpacing * 17, y, "s", sensor.highValueColor)
+--         drawText("]", lineOffsetX + fontSizes["s"].colSpacing * 23, y, "s", WHITE)
+-- 
+--         -- Move to the next line if it's a new set of sensors
+--         if colIndex == sensorsPerLine - 1 and i < totalSensors then
+--             y = y + fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing
+--         end
+--     end
+-- end
 
-    for i, sensor in ipairs(sensors) do
-        local currentLine = math.floor((i - 1) / sensorsPerLine)
-        local colIndex = (i - 1) % sensorsPerLine
-        local lineOffsetX = offsetX + colIndex * sensorWidth
+local function drawBottomSensorLine(sensors, y)
+  local offsetX = x + 1
+  local totalSensors = #sensors
+  local sensorsPerLine = 2
+  local sensorWidth = width / sensorsPerLine
 
-        drawText(sensor.label, lineOffsetX, y, "s", sensor.labelColor)
-        drawText("[", lineOffsetX + fontSizes["s"].colSpacing * 6, y, "s", WHITE)
-        drawText("L:", lineOffsetX + fontSizes["s"].colSpacing * 7, y, "s", sensor.labelColor)
-        drawText(sensor.lowValue, lineOffsetX + fontSizes["s"].colSpacing * 9, y, "s", sensor.lowValueColor)
-        drawText("H:", lineOffsetX + fontSizes["s"].colSpacing * 15, y, "s", sensor.labelColor)
-        drawText(sensor.highValue, lineOffsetX + fontSizes["s"].colSpacing * 17, y, "s", sensor.highValueColor)
-        drawText("]", lineOffsetX + fontSizes["s"].colSpacing * 23, y, "s", WHITE)
+  for i = 1, totalSensors do
+      local sensor = sensors[i]
+      local currentLine = math.floor((i - 1) / sensorsPerLine)
+      local colIndex = (i - 1) % sensorsPerLine
+      local lineOffsetX = offsetX + colIndex * sensorWidth
 
-        -- Move to the next line if it's a new set of sensors
-        if colIndex == sensorsPerLine - 1 and i < totalSensors then
-            y = y + fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing
-        end
-    end
+      drawText(sensor.name, lineOffsetX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", COLOR_THEME_SECONDARY2)
+      drawText("[", lineOffsetX + fontSizes["s"].colSpacing * 6, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", WHITE)
+      drawText(sensor.val1prefix, lineOffsetX + fontSizes["s"].colSpacing * 7, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", WHITE)
+      drawText(sensor.val1 .. sensor.unit, lineOffsetX + fontSizes["s"].colSpacing * 9, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.val1Color)
+      drawText(sensor.val2prefix, lineOffsetX + fontSizes["s"].colSpacing * 15, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", WHITE)
+      drawText(sensor.val2 .. sensor.unit, lineOffsetX + fontSizes["s"].colSpacing * 17, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.val2Color)
+      drawText("]", lineOffsetX + fontSizes["s"].colSpacing * 23, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", WHITE)
+
+      if colIndex == sensorsPerLine - 1 and i < totalSensors then
+          y = y -  fontSizes["s"].lineSpacing
+      end
+  end
 end
+
+-- string.format("%.2f", sensor.val1)
 
   -- Iterate through the layout and render each element
   for _, item in ipairs(layout) do
@@ -2349,11 +2589,12 @@ end
           drawSensorLine(item.sensors, y)
           y = y + fontSizes["m"].fontpxl + fontSizes["m"].lineSpacing
       elseif item.type == "bottom" then
-          drawBottomSensorLine(item.sensors, height - fontSizes["s"].fontpxl - fontSizes["s"].lineSpacing - 8) -- -8 to lift it from the bottom ... but should be adapted to screen height
-          height = height - fontSizes["s"].fontpxl - fontSizes["s"].lineSpacing
+          drawBottomSensorLine(item.sensors, height - fontSizes["s"].fontpxl - fontSizes["s"].lineSpacing - 5) -- -8 to lift it from the bottom ... but should be adapted to screen height
+          -- height = height - fontSizes["s"].fontpxl - fontSizes["s"].lineSpacing
       end
   end
 end
+
 
 
 
@@ -2446,26 +2687,26 @@ local function refreshZoneXLarge(wgt)
     BlinkWhenZero = BLINK
   end
 
-  if type(currentVoltageValueCurrent["main"]) ~= "number" or currentVoltageValueCurrent["main"] == 0 then -- Blink
+  if type(thisModel.VoltageSensor.main.CurVolt) ~= "number" or thisModel.VoltageSensor.main.CurVolt == 0 then -- Blink
     mainVoltBlink = BLINK
   else
     mainVoltBlink = 0
   end
 
-  if type(currentCurrentValueCurrent["main"]) ~= "number" or currentCurrentValueCurrent["main"] == 0 then -- Blink
+  if type(thisModel.CurrentSensor.main.CurAmp) ~= "number" or thisModel.CurrentSensor.main.CurAmp == 0 then -- Blink
     mainCurrentBlink = BLINK
   else
     mainCurrentBlink = 0
   end
 
 
-  if type(currentVoltageValueCurrent["receiver"]) ~= "number" or currentVoltageValueCurrent["receiver"] == 0 then -- Blink
+  if type(thisModel.VoltageSensor.receiver.CurVolt) ~= "number" or thisModel.VoltageSensor.receiver.CurVolt == 0 then -- Blink
     rxVoltBlink = BLINK
   else
     rxVoltBlink = 0
   end
 
-  if type(currentCurrentValueCurrent["receiver"]) ~= "number" or currentCurrentValueCurrent["receiver"] == 0 then -- Blink
+  if type(thisModel.CurrentSensor.receiver.CurAmp) ~= "number" or thisModel.CurrentSensor.receiver.CurAmp == 0 then -- Blink
     rxCurrentBlink = BLINK
   else
     rxCurrentBlink = 0
@@ -2603,47 +2844,86 @@ if testing then
 local screenLayout = {
   { type = "header", text = "Main", color = COLOR_THEME_SECONDARY2 },
   { type = "sensorLine", sensors = {
-      { label = "C:", value = currentVoltageValueCurrent["main"] .. unitNames[sensorVoltage["main"].unit], labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
-      { label = "L:", value = currentVoltageValueLow["main"] .. unitNames[sensorVoltage["main"].unit], labelColor = COLOR_THEME_FOCUS, valuecolor = RED }
+      { label = "C:", value = thisModel.VoltageSensor.main.CurVolt     .. "V", labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
+      { label = "L:", value = thisModel.VoltageSensor.main.LowestVolt  .. "V", labelColor = COLOR_THEME_FOCUS, valuecolor = RED }
   }},
   { type = "sensorLine", sensors = {
-      { label = "C:", value = currentCurrentValueCurrent["main"] .. unitNames[sensorCurrent["main"].unit], labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
-      { label = "H:", value = currentCurrentValueHigh["main"] .. unitNames[sensorCurrent["main"].unit]   , labelColor = COLOR_THEME_FOCUS, valuecolor = RED }
+      { label = "C:", value = thisModel.CurrentSensor.main.CurAmp     .. "A", labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
+      { label = "H:", value = thisModel.CurrentSensor.main.HighestAmp .. "A", labelColor = COLOR_THEME_FOCUS, valuecolor = RED }
   }},
   { type = "header", text = "Receiver", color = COLOR_THEME_SECONDARY2 },
   { type = "sensorLine", sensors = {
-      { label = "C:", value = currentVoltageValueCurrent["receiver"] .. unitNames[sensorVoltage["receiver"].unit], labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
-      { label = "L:", value = currentVoltageValueLow["receiver"] .. unitNames[sensorVoltage["receiver"].unit], labelColor = COLOR_THEME_FOCUS, valuecolor = RED }
+      { label = "C:", value = thisModel.VoltageSensor.receiver.CurVolt     .. "V", labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
+      { label = "L:", value = thisModel.VoltageSensor.receiver.LowestVolt  .. "V", labelColor = COLOR_THEME_FOCUS, valuecolor = RED }
   }},
   { type = "sensorLine", sensors = {
-      { label = "C:", value = currentCurrentValueCurrent["receiver"] .. unitNames[sensorCurrent["receiver"].unit], labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
-      { label = "H:", value = currentCurrentValueHigh["receiver"] .. unitNames[sensorCurrent["receiver"].unit]   , labelColor = COLOR_THEME_FOCUS, valuecolor = RED }
+      { label = "C:", value = thisModel.CurrentSensor.receiver.CurAmp     .. "A", labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
+      { label = "H:", value = thisModel.CurrentSensor.receiver.HighestAmp .. "A", labelColor = COLOR_THEME_FOCUS, valuecolor = RED }
   }},
-  { type = "bottom", sensors = {
-      { label = "RPM", lowValue = "3000", highValue = "3200", labelColor = COLOR_THEME_SECONDARY2, lowValueColor = RED, highValueColor = GREEN },
-      { label = "RxBt", lowValue = "29.00V", highValue = "29.00V", labelColor = COLOR_THEME_SECONDARY2, lowValueColor = RED, highValueColor = GREEN },
-      --{ label = "RPM", lowValue = "2800", highValue = "3000", labelColor = COLOR_THEME_SECONDARY2, lowValueColor = RED, highValueColor = GREEN }
-  }},
-  { type = "bottom", sensors = {
-      { label = "TEMP", lowValue = "20C", highValue = "25C", labelColor = COLOR_THEME_SECONDARY2, lowValueColor = RED, highValueColor = GREEN },
-      { label = "TEMP", lowValue = "18C", highValue = "23C", labelColor = COLOR_THEME_SECONDARY2, lowValueColor = RED, highValueColor = GREEN },
-      --{ label = "TEMP", lowValue = "19C", highValue = "24C", labelColor = COLOR_THEME_SECONDARY2, lowValueColor = RED, highValueColor = GREEN }
-  }}
+
 }
+
+
+
+
+
+-- for _, adlSensor in ipairs(thisModel.AdlSensors) do
+-- 
+--   -- debugPrint("SCRN Name:" .. adlSensor.name)
+--   -- debugPrint("SCRN TEST:" .. adlSensor.sensors[1].sensorName)
+--   -- debugPrint("SCRN VAL1:" .. adlSensor.sensors[1].value)
+--   
+--   local bottomSection = {
+--       type = "bottom",
+--       sensors = {
+--           { name = adlSensor.name, unit = adlSensor.unit, val1 = adlSensor.sensors[1].value or 0 , val2 = adlSensor.sensors[2].value or 0 , val1Color = adlSensor.sensors[1].color, val2Color = adlSensor.sensors[2].color, val1prefix = adlSensor.sensors[1].prefix, val2prefix = adlSensor.sensors[2].prefix }
+--       }
+--   }
+--   table.insert(screenLayout, bottomSection)
+-- 
+-- end
+
+
+
+-- Create a single bottom section
+local bottomSection = {
+  type = "bottom",
+  sensors = {}
+}
+
+-- Populate the bottom section dynamically from thisModel.AdlSensors
+for _, adlSensor in ipairs(thisModel.AdlSensors) do
+  table.insert(bottomSection.sensors, {
+    name = adlSensor.name,
+    unit = adlSensor.unit,
+    val1prefix = adlSensor.sensors[1].prefix,
+    val1 = format_number(adlSensor.sensors[1].value or 0),
+    val1Color = adlSensor.sensors[1].color,
+    val2prefix = adlSensor.sensors[2].prefix,
+    val2 = format_number(adlSensor.sensors[2].value or 0),
+    val2Color = adlSensor.sensors[2].color,
+    })
+end
+
+-- Insert the bottom section into the screen layout
+table.insert(screenLayout, bottomSection)
+
+-- 
 
 
 renderScreen(screenLayout, wgt.zone.w, wgt.zone.h)
 
 if wgt.zone.h >= 272 then
 
+-- local function drawNewBattery(xOrigin, yOrigin, percentage, wgt, battery, batCol, txtCol, size)
 
-drawNewBattery(280, 25, valueVoltsPercentRemaining["main"], wgt,typeBattery["main"], COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE, "x" )
-drawNewBattery(280, 135, valueVoltsPercentRemaining["receiver"], wgt,typeBattery["receiver"] , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE,"x")
+drawNewBattery(280, 25,  thisModel.VoltageSensor.main.PercRem    , wgt,thisModel.battery.main    , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE, "x" )
+drawNewBattery(280, 135, thisModel.VoltageSensor.receiver.PercRem, wgt,thisModel.battery.receiver , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE,"x")
 
 else
 
-  drawNewBattery(230, 15, valueVoltsPercentRemaining["main"], wgt,typeBattery["main"], COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE,"l" )
-drawNewBattery(230, 80, valueVoltsPercentRemaining["receiver"], wgt,typeBattery["receiver"] , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE, "l")
+  drawNewBattery(230, 15, thisModel.VoltageSensor.main.PercRem    , wgt,thisModel.battery.main     , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE,"l" )
+drawNewBattery(230, 80,   thisModel.VoltageSensor.receiver.PercRem, wgt,thisModel.battery.receiver , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE, "l")
 
 end
 
