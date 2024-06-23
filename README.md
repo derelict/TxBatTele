@@ -22,9 +22,7 @@ EdgeTX/OpenTX Battery and Telemetry Monitoring LUA Widget which tries to rely as
 - **Logging**: Take Screenshot of the Statuspage after flight or turn on logging if/as needed based on Conditions (like Battery at 30%) ( not yet possible ... but maybe >= EdgeTX 2.11 )
 
 ## Screenshots :tv:
-![image](https://github.com/derelict/TxBatTele/assets/2826671/e1487942-3ac2-4cea-994f-5cf6c51344dc)
-![image](https://github.com/derelict/TxBatTele/assets/2826671/ee8379ee-a5bc-404f-a317-16ce1ffb2e67)
-![image](https://github.com/derelict/TxBatTele/assets/2826671/0bd001a4-3599-418e-bd2d-8c73fdeef9de)
+![companion_S17qJbUCZB](https://github.com/derelict/TxBatTele/assets/2826671/82cedd0c-646f-4c8c-9e1c-0d3817aa7ea2)
 
 ## Note
 - **This is currently in alpha/"works for me" state ... use/try at your own Risk**
