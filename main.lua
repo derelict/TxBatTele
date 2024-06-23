@@ -237,8 +237,8 @@ local Batteries = {
       warningThreshold            = 20,     -- Warning threshold in percentage
       notFullCriticalThreshold    = 96,     -- Not full critical threshold in percentage
       notFullWarningThreshold     = 98,     -- Not full warning threshold in percentage
-      announceNotFullCriticalMode = "change", -- change, disable or integer intervall
-      announceNotFullWarningMode  = "change", -- change, disable or integer intervall
+      announceNotFullCriticalMode = 10, -- change, disable or integer intervall
+      announceNotFullWarningMode  = 10, -- change, disable or integer intervall
       announceNormalMode          = 20, -- change, disable or integer intervall
       announceWarningMode         = "change", -- change, disable or integer intervall
       announceCriticalMode        = "change", -- change, disable or integer intervall
@@ -256,8 +256,8 @@ local Batteries = {
       warningThreshold            = 97,     -- Warning threshold in percentage
       notFullCriticalThreshold    = 98,     -- Not full critical threshold in percentage
       notFullWarningThreshold     = 99,     -- Not full warning threshold in percentage
-      announceNotFullCriticalMode = "change", -- change, disable or integer intervall
-      announceNotFullWarningMode  = "change", -- change, disable or integer intervall
+      announceNotFullCriticalMode = 10, -- change, disable or integer intervall
+      announceNotFullWarningMode  = 10, -- change, disable or integer intervall
       announceNormalMode          = 20, -- change, disable or integer intervall
       announceWarningMode         = "change", -- change, disable or integer intervall
       announceCriticalMode        = "change", -- change, disable or integer intervall      highVoltage              = nil,    -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
@@ -275,8 +275,8 @@ local Batteries = {
       warningThreshold            = 97,     -- Warning threshold in percentage
       notFullCriticalThreshold    = 98,     -- Not full critical threshold in percentage
       notFullWarningThreshold     = 99,     -- Not full warning threshold in percentage
-      announceNotFullCriticalMode = "change", -- change, disable or integer intervall
-      announceNotFullWarningMode  = "change", -- change, disable or integer intervall
+      announceNotFullCriticalMode = 10, -- change, disable or integer intervall
+      announceNotFullWarningMode  = 10, -- change, disable or integer intervall
       announceNormalMode          = 20, -- change, disable or integer intervall
       announceWarningMode         = "change", -- change, disable or integer intervall
       announceCriticalMode        = "change", -- change, disable or integer intervall      highVoltage              = nil,    -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
@@ -839,7 +839,7 @@ local function checkChangedInterval(currentStatus, item, context )
   --local config = announcementConfig[item] or announcementConfigDefault
 
   --returnStateOnly = returnStateOnly or false
-
+debugPrint("CCITEMP:" .. item )
   -- BatteryDefinition for BatteryNotFull and Battery
 
   -- Determine if the item has context-specific configurations
@@ -1007,11 +1007,15 @@ local function doAnnouncements(context)
 
   if  statusTele and allSensorsValid then -- do these only if telemetry true
 -- here
---debugPrint("CCIV: " .. context )
-  checkChangedInterval(thisModel.VoltageSensor[context].cellMissing, "BatteryMissingCell", context)
-  if not preFlightChecksPassed then checkChangedInterval(thisModel.VoltageSensor[context].PercRem, "BatteryNotFull", context) end
+  debugPrint("CCIV: " .. thisModel.VoltageSensor[context].CurPercRem )
+
+  if  thisModel.VoltageSensor[context].cellMissing ~= 10 then checkChangedInterval(thisModel.VoltageSensor[context].cellMissing, "BatteryMissingCell", context) end
+
+  if not preFlightChecksPassed and thisModel.VoltageSensor[context].CurPercRem ~= "--" and thisModel.VoltageSensor[context].cellMissing == 0 then checkChangedInterval(thisModel.VoltageSensor[context].LatestPercRem, "BatteryNotFull", context) end
+
   checkChangedInterval(thisModel.VoltageSensor[context].cellInconsistent, "CellDelta", context)
-  checkChangedInterval(thisModel.VoltageSensor[context].PercRem, "Battery", context)
+
+  if thisModel.VoltageSensor[context].CurPercRem ~= "--" and thisModel.VoltageSensor[context].cellMissing == 0 then checkChangedInterval(thisModel.VoltageSensor[context].LatestPercRem, "Battery", context) end
 
   end
 
@@ -1096,13 +1100,13 @@ local function doAnnouncements(context)
           --queueSound(context,0)
           --queueSound("battery",0)
           queueSound(announcement.severity,0)
-          queueNumber(thisModel.VoltageSensor[context].PercRem, 13, 0 , 0 )
+          queueNumber(thisModel.VoltageSensor[context].LatestPercRem, 13, 0 , 0 )
 
         else
 
           --queueSound(context,0)
           --queueSound("battery",0)
-          queueNumber(thisModel.VoltageSensor[context].PercRem, 13, 0 , 0 )
+          queueNumber(thisModel.VoltageSensor[context].LatestPercRem, 13, 0 , 0 )
 
         end
       end
@@ -1170,6 +1174,7 @@ local function check_for_missing_cells(context)
     --local CfullVolt = BatteryDefinition[typeBattery[context]].highVoltage
     --local CfullVolt = thisModel.battery[context].highVoltage
 
+
 --debugPrint("MC VOL:" .. CfullVolt)
 
   -- If the number of cells detected by the voltage sensor does not match the value in GV6 then play the warning message
@@ -1208,6 +1213,7 @@ local function check_for_missing_cells(context)
     end
 
 
+    debugPrint("CBSF: " .. thisModel.VoltageSensor[context].cellMissing .. " CONTEXT: " .. context .. " CC: " .. thisModel.CellCount[context] .. " DETECT NOW: " .. thisModel.VoltageSensor[context].CellsDetectedCurrent )
 
     -- cellMissing[context] = missingCellDetected
     thisModel.VoltageSensor[context].cellMissing =  thisModel.VoltageSensor[context].CellsDetectedCurrent  - thisModel.CellCount[context]
@@ -1333,19 +1339,32 @@ local function checkAllBatStatuspreFlight()
   if not preFlightChecksPassed  and allSensorsValid then
     
   for _, context in ipairs(contexts) do
+
+    if thisModel.VoltageSensor[context].CurPercRem == "--"  then
+      pfStatus.text = context .. " Battery waiting for Percent update"
+      pfStatus.color = GREEN          
+      return false
+    end
+
+
+    if thisModel.VoltageSensor[context].cellMissing == 10 then
+      pfStatus.text = context .. " Battery waiting for Cell update"
+      pfStatus.color = GREEN          
+      return false
+    end
+
       if thisModel.VoltageSensor[context].cellMissing ~= 0  then
           pfStatus.text = context .. " Battery check Cell count"
           pfStatus.color = RED          
           return false
-      --else
-      --  pfStatus.text = "Battery Cells OK"
-      --  pfStatus.color = GREEN
       end
-      if thisModel.VoltageSensor[context].PercRem < thisModel.battery[context].notFullWarningThreshold then
+  
+      if thisModel.VoltageSensor[context].LatestPercRem < thisModel.battery[context].notFullWarningThreshold then
         pfStatus.text = context .. " Battery not Full"
         pfStatus.color = RED
         return false
-    end
+      end
+  
   end
   
   preFlightChecksPassed = true
@@ -1605,8 +1624,12 @@ pfStatus = {
   thisModel.CurrentSensor.receiver.LowestAmp = 0
   thisModel.CurrentSensor.receiver.HighestAmp = 0
 
-  thisModel.VoltageSensor.main.PercRem = 0
-  thisModel.VoltageSensor.receiver.PercRem = 0
+  thisModel.VoltageSensor.main.CurPercRem = 0
+  thisModel.VoltageSensor.receiver.CurPercRem = 0
+
+  thisModel.VoltageSensor.main.LatestPercRem = 0
+  thisModel.VoltageSensor.receiver.LatestPercRem = 0
+
 
   
   -- thisModel.MahSensor.main.CurAmp = 0
@@ -1620,8 +1643,8 @@ pfStatus = {
   -- cellMissing["main"] = 0
   -- cellMissing["receiver"] = 0
 
-  thisModel.VoltageSensor.main.cellMissing = 1
-  thisModel.VoltageSensor.receiver.cellMissing = 1
+  thisModel.VoltageSensor.main.cellMissing = 10
+  thisModel.VoltageSensor.receiver.cellMissing = 10
 
 -- 
   -- cellInconsistent = {}
@@ -1820,6 +1843,10 @@ local function checkForTelemetry()
     thisModel.VoltageSensor.receiver.CurVolt     = "--.--"
     thisModel.CurrentSensor.receiver.CurAmp      = "--.--"
 
+    thisModel.VoltageSensor.main.CurPercRem     = "--"
+    thisModel.VoltageSensor.receiver.CurPercRem     = "--"
+
+
     pfStatus.text = "Waiting for Telemetry"
     pfStatus.color = RED
   else
@@ -1916,10 +1943,15 @@ end
   
 
   --if not cellMissing[context] then
-  thisModel.VoltageSensor[context].PercRem  = findPercentRem( thisModel.VoltageSensor[context].LatestVolt/thisModel.CellCount[context],  context)
-    debugPrint(string.format("SUPD: Got Percent: %s for Context: %s", thisModel.VoltageSensor[context].PercRem, context))
+  thisModel.VoltageSensor[context].CurPercRem  = findPercentRem( thisModel.VoltageSensor[context].LatestVolt/thisModel.CellCount[context],  context) --here
 
-    BatRemPer = thisModel.VoltageSensor[context].PercRem -- todo eliminate
+    debugPrint(string.format("SUPD: Got Percent: %s for Context: %s", thisModel.VoltageSensor[context].CurPercRem, context))
+
+    if thisModel.VoltageSensor[context].LatestPercRem == 0  or thisModel.VoltageSensor[context].LatestPercRem ~= 0 then
+      thisModel.VoltageSensor[context].LatestPercRem = thisModel.VoltageSensor[context].CurPercRem
+    end
+
+    BatRemPer = thisModel.VoltageSensor[context].LatestPercRem -- todo eliminate
   --end
 
 
@@ -2117,6 +2149,8 @@ local function getPercentColor(cpercent, battery)
   local warn = battery.warningThreshold
   local crit = battery.criticalThreshold
 
+  if cpercent == "--" then return lcd.RGB(0xff, 0, 0) end
+
   if cpercent < crit then
     return lcd.RGB(0xff, 0, 0)  -- Red
   elseif cpercent < warn then
@@ -2233,10 +2267,11 @@ if size == "x" then
 
 end                   
 
-local percentage = thisModel.VoltageSensor[context].PercRem
+local percentage = thisModel.VoltageSensor[context].LatestPercRem
 local battery = thisModel.battery[context]
 
 --lcd.setColor(CUSTOM_COLOR, wgt.options.Color)
+if percentage == "--" then percentage = 0 end
 
 if percentage > 0 then -- Don't blink
   BlinkWhenZero = 0
@@ -2729,11 +2764,16 @@ end
     return y
   end
 
-  local function drawKeyValLine(key, value, keycol, valcol, y)
+  local function drawKeyValLine(key, value, keycol, valcol, y, optval, optvalcol )
+    local optval = optval or ""
+    local optvalcol = optvalcol or WHITE
     local offsetX = x + 2
     drawText(key, offsetX, y, "s", keycol)
     drawText(":", offsetX + fontSizes["s"].colSpacing * 10, y, "s", WHITE)
     drawText(value, offsetX + fontSizes["s"].colSpacing * 11, y, "s", valcol)
+    if optval ~= "" then
+    drawText(optval, offsetX + fontSizes["s"].colSpacing * 13, y, "s", optvalcol)
+    end
     y = y + fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing
     return y
   end
@@ -2746,18 +2786,28 @@ end
   --y = y + 70
 
   y = drawKeyValLine("Battery Type", thisModel.battery.main.displayName, COLOR_THEME_FOCUS, GREEN, y)
-  y = drawKeyValLine("Cell Count", string.format("%s (%s)", thisModel.CellCount.main, thisModel.VoltageSensor.main.CellsDetectedCurrent), COLOR_THEME_FOCUS, GREEN, y)
-  y = drawKeyValLine("Voltage", thisModel.VoltageSensor.main.CurVolt, COLOR_THEME_FOCUS, GREEN, y)
-  y = drawKeyValLine("Percentage", thisModel.VoltageSensor.main.PercRem, COLOR_THEME_FOCUS, getPercentColor(thisModel.VoltageSensor.main.PercRem, thisModel.battery["main"]), y)
+
+  if thisModel.VoltageSensor.main.CellsDetectedCurrent ~= thisModel.CellCount.main then CELLCOL = RED else CELLCOL = GREEN end
+
+  y = drawKeyValLine("Cell Count", thisModel.CellCount.main, COLOR_THEME_FOCUS, GREEN, y, "( " .. thisModel.VoltageSensor.main.CellsDetectedCurrent .. " detected )", CELLCOL )
+
+  if thisModel.VoltageSensor.main.CurVolt == "--.--" then VOLCOL = RED else VOLCOL = GREEN end
+  y = drawKeyValLine("Voltage", thisModel.VoltageSensor.main.CurVolt .. "V", COLOR_THEME_FOCUS, VOLCOL, y)
+  y = drawKeyValLine("Percentage", thisModel.VoltageSensor.main.CurPercRem .. "%", COLOR_THEME_FOCUS, getPercentColor(thisModel.VoltageSensor.main.LatestPercRem, thisModel.battery["main"]), y)
 
   -- Receiver Battery Section
   y = y + headerSpacing
   y = drawText("Receiver Battery", x, y, "m", COLOR_THEME_SECONDARY2)
 
   y = drawKeyValLine("Battery Type", thisModel.battery.receiver.displayName, COLOR_THEME_FOCUS, GREEN, y)
-  y = drawKeyValLine("Cell Count", string.format("%s (%s)", thisModel.CellCount.receiver, thisModel.VoltageSensor.receiver.CellsDetectedCurrent), COLOR_THEME_FOCUS, GREEN, y)
-  y = drawKeyValLine("Voltage", thisModel.VoltageSensor.receiver.CurVolt, COLOR_THEME_FOCUS, GREEN, y)
-  y = drawKeyValLine("Percentage", thisModel.VoltageSensor.receiver.PercRem, COLOR_THEME_FOCUS, getPercentColor(thisModel.VoltageSensor.receiver.PercRem, thisModel.battery["receiver"]), y)
+
+  if thisModel.VoltageSensor.receiver.CellsDetectedCurrent ~= thisModel.CellCount.receiver then CELLCOL = RED else CELLCOL = GREEN end
+
+  y = drawKeyValLine("Cell Count", thisModel.CellCount.receiver, COLOR_THEME_FOCUS, GREEN, y, "( " .. thisModel.VoltageSensor.receiver.CellsDetectedCurrent .. " detected )", CELLCOL )
+
+  if thisModel.VoltageSensor.receiver.CurVolt == "--.--" then VOLCOL = RED else VOLCOL = GREEN end
+  y = drawKeyValLine("Voltage", thisModel.VoltageSensor.receiver.CurVolt .. "V", COLOR_THEME_FOCUS, VOLCOL, y)
+  y = drawKeyValLine("Percentage", thisModel.VoltageSensor.receiver.CurPercRem .. "%", COLOR_THEME_FOCUS, getPercentColor(thisModel.VoltageSensor.receiver.LatestPercRem, thisModel.battery["receiver"]), y)
 
   -- Status Section
   y = y + headerSpacing
