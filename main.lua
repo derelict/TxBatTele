@@ -128,35 +128,10 @@ idstatusTele = getSwitchIndex("TELE")
 
 
 local SwitchAnnounceTable = {
-  {"sf","armed","disarm"},
+  {"sf","disarm","armed"},
   {"sh","safeon"},
   {"se","fm-nrm","fm-1","fm-2"}
 }
-
-local line1statsensors = {
-  {"RPM" ,"RPM","clh"},
-  {"RSSI","RSSI","hl"},
-  {"Tmp1","TMP1","c"}
-}
-
-local line2statsensors = {
-  {"Curr","CUR","lh"},
-  {"Fuel","FUL","clh"},
-  {"Tmp2","TMP2","h"}
-}
-
-line1 = "RPM [ H: #RPM+# L: #RPM-# ]" --another way to do it -- todo
---local line1statsensors = {
---  {"RPM", "RPM", "clh", {"white", "green", "red"}},
---  {"RSSI", "RSSI", "hl", {"red", "green"}},
---  {"Tmp1", "TMP1", "c", {"white"}}
---}
---
---local line2statsensors = {
---  {"Curr", "CUR", "lh", {"green", "red"}},
---  {"Fuel", "FUL", "clh", {"white", "green", "red"}},
---  {"Tmp2", "TMP2", "h", {"red"}}
---}
 
 
 local BattPackSelectorSwitch = {
@@ -212,6 +187,7 @@ local defaultAdlSensors = {
       { sensorName = "RPM-", prefix = "L:", color = RED    }
   }
 },
+---------------- Sensors below will only be shown on bigger widget sizes
 {
   name = "CEL",
   unit = "",
@@ -226,6 +202,202 @@ local defaultAdlSensors = {
       sensors = {
           { sensorName = "RxBt+", prefix = "H:", color = GREEN  },
           { sensorName = "RxBt-", prefix = "L:", color = RED    }
+      }
+  }
+}
+
+
+
+
+local mysensors = {
+  ["RPM+"] = {
+      displayName = "RPM+",
+      prefix = "[",
+      suffix = "]",
+      displayNameColor = COLOR_THEME_SECONDARY2,
+      prefixColor = BLUE,
+      valueColor = GREEN,
+      suffixColor = BLUE,
+      value = 1234,  -- Replace with actual value
+      unit = ""
+  },
+  ["RPM-"] = {
+      displayName = "RPM-",
+      prefix = "[",
+      suffix = "]",
+      displayNameColor = COLOR_THEME_SECONDARY2,
+      prefixColor = BLUE,
+      valueColor = RED,
+      suffixColor = BLUE,
+      value = 34.34,  -- Replace with actual value
+      unit = "V"
+  },
+  ["RPMx"] = {
+    displayName = "RPM-",
+    prefix = "[",
+    suffix = "]",
+    displayNameColor = COLOR_THEME_SECONDARY2,
+    prefixColor = BLUE,
+    valueColor = GREEN,
+    suffixColor = BLUE,
+    value = 5678,  -- Replace with actual value
+    unit = ""
+  },
+["RPMy"] = {
+  displayName = "RPM-",
+  prefix = "[",
+  suffix = "]",
+  displayNameColor = COLOR_THEME_SECONDARY2,
+  prefixColor = BLUE,
+  valueColor = RED,
+  suffixColor = BLUE,
+  value = 5678,  -- Replace with actual value
+  unit = ""
+}, 
+["RPMa"] = {
+  displayName = "RPM-",
+  prefix = "[",
+  suffix = "]",
+  displayNameColor = COLOR_THEME_SECONDARY2,
+  prefixColor = BLUE,
+  valueColor = RED,
+  suffixColor = BLUE,
+  value = 34.34,  -- Replace with actual value
+  unit = "V"
+},
+["RPMab"] = {
+  displayName = "RPM-",
+  prefix = "[",
+  suffix = "]",
+  displayNameColor = COLOR_THEME_SECONDARY2,
+  prefixColor = BLUE,
+  valueColor = RED,
+  suffixColor = BLUE,
+  value = 34.34,  -- Replace with actual value
+  unit = "V"
+},
+["RPMc"] = {
+  displayName = "RPM-",
+  prefix = "[",
+  suffix = "]",
+  displayNameColor = COLOR_THEME_SECONDARY2,
+  prefixColor = BLUE,
+  valueColor = RED,
+  suffixColor = BLUE,
+  value = 34.34,  -- Replace with actual value
+  unit = "V"
+},
+["RPMd"] = {
+  displayName = "RPM-",
+  prefix = "[",
+  suffix = "]",
+  displayNameColor = COLOR_THEME_SECONDARY2,
+  prefixColor = BLUE,
+  valueColor = RED,
+  suffixColor = BLUE,
+  value = 34.34,  -- Replace with actual value
+  unit = "V"
+},
+["RPMe"] = {
+  displayName = "RPM-",
+  prefix = "[",
+  suffix = "]",
+  displayNameColor = COLOR_THEME_SECONDARY2,
+  prefixColor = BLUE,
+  valueColor = RED,
+  suffixColor = BLUE,
+  value = 34.34,  -- Replace with actual value
+  unit = "V"
+},
+["RPMaw"] = {
+  displayName = "RPM-",
+  prefix = "[",
+  suffix = "]",
+  displayNameColor = COLOR_THEME_SECONDARY2,
+  prefixColor = BLUE,
+  valueColor = RED,
+  suffixColor = BLUE,
+  value = 34.34,  -- Replace with actual value
+  unit = "V"
+},
+["RPMw"] = {
+  displayName = "RPM-",
+  prefix = "[",
+  suffix = "]",
+  displayNameColor = COLOR_THEME_SECONDARY2,
+  prefixColor = BLUE,
+  valueColor = RED,
+  suffixColor = BLUE,
+  value = 34.34,  -- Replace with actual value
+  unit = "V"
+},
+["RPMq"] = {
+  displayName = "RPM-",
+  prefix = "[",
+  suffix = "]",
+  displayNameColor = COLOR_THEME_SECONDARY2,
+  prefixColor = BLUE,
+  valueColor = RED,
+  suffixColor = BLUE,
+  value = 34.34,  -- Replace with actual value
+  unit = "V"
+},
+
+}
+
+
+
+
+
+
+local sensg580 = {
+  {
+      name = "RPM",
+      unit = "",
+      sensors = {
+          { sensorName = "Erpm+", prefix = "H:", color = GREEN  },
+          { sensorName = "Erpm-", prefix = "L:", color = RED    }
+      }
+  },
+  {
+    name = "BEC",
+    unit = "V",
+    sensors = {
+        { sensorName = "VBEC+", prefix = "H:", color = GREEN  },
+        { sensorName = "VBEC-", prefix = "L:", color = RED    }
+    }
+},
+{
+  name = "LQF",
+  unit = "",
+  sensors = {
+      { sensorName = "FLss+", prefix = "S:", color = RED  },
+      { sensorName = "FdeA+", prefix = "D:", color = RED    }
+  }
+},  
+{
+  name = "LQH",
+  unit = "",
+  sensors = {
+      { sensorName = "Hold+", prefix = "H:", color = RED  },
+      { sensorName = "TRSS-", prefix = "T:", color = RED    }
+  }
+},
+---------------- Sensors below will only be shown on bigger widget sizes
+{
+  name = "TFET",
+  unit = "",
+  sensors = {
+      { sensorName = "TFET+", prefix = "H:", color = RED  },
+      { sensorName = "TFET-", prefix = "L:", color = GREEN    }
+  }
+},
+  {
+      name = "TEMP",
+      unit = "",
+      sensors = {
+          { sensorName = "RB1T+", prefix = "H:", color = RED  },
+          { sensorName = "RB1T-", prefix = "L:", color = GREEN    }
       }
   }
 }
@@ -339,6 +511,32 @@ local modelTable = {
       BattPackSelectorSwitch = BattPackSelectorSwitch
   },
   {
+    modelNameMatch         = "580t",
+    modelName              = "SAB RAW 580",
+    modelImage             = "580.png",
+    modelWav               = "sr580",
+    rxReferenceVoltage     = 7.85,
+    resetSwitch            = "TELE",
+    VoltageSensor          = {
+      main =      { sensorName = "RB1V"  },
+      receiver =  { sensorName = "RB2V"  }
+      },
+    CurrentSensor          = {
+      main =      { sensorName = "RB1A"  },
+      receiver =  { sensorName = ""  }
+      },
+    MahSensor              = {
+      main =      { sensorName = "RB1C"  },
+      receiver =  { sensorName = ""  }
+      },
+    AdlSensors             = sensg580,
+    battery                = { main = Batteries.lipo ,    receiver = Batteries.buffer },
+    CellCount              = { main = 12,        receiver = 2 },
+    capacities             = { main = { 500, 1000, 1500, 2000, 2500, 3000 }, receiver = { 500, 1000, 1500, 2000, 2500, 3000 } },
+    switchAnnounces        = SwitchAnnounceTable,
+    BattPackSelectorSwitch = BattPackSelectorSwitch
+},  
+  {
       modelNameMatch         = "heli",
       modelName              = "SAB Goblin 630",
       modelImage             = "goblin.png",
@@ -366,6 +564,7 @@ local modelTable = {
   }
 }
 
+local findPercentRempreviousValues = {}
 
 local modelAlreadyLoaded = false
 
@@ -595,26 +794,6 @@ local function processQueue()
 end
 
 
-
-
-
-local function print_table_structure(tbl)
-  for i, v in ipairs(tbl) do
-    debugPrint("TBLS: " .. i .. ": " .. v[1] .. ", " .. v[2])
-  end
-end
-
--- Function to simulate retrieving sensor values
-local function get_sensor_values(sensor)
-
-  local current_value = getValue(sensor)
-  local lowest_value  = getValue(sensor .. "-")
-  local highest_value = getValue(sensor .. "+")
-
-  return current_value, lowest_value, highest_value
-
-end
-
 local function format_number(number)
   -- Check if the number has decimals
   if math.floor(number) == number then
@@ -623,56 +802,6 @@ local function format_number(number)
       return string.format("%.2f", number)  -- Format to two decimal places if it's a float
   end
 end
-
--- Function to build the formatted string
-local function build_sensor_line(sensorinput)
-  local result = {}
-
-  for _, sens in ipairs(sensorinput) do
-    local sensor_name = sens[2]
-    local value_spec = sens[3]
-    local sensor = sens[1]
-
-    local current_value, lowest_value, highest_value = get_sensor_values(sensor)
-
-    local sensor_line = sensor_name .. " ["
-
-    -- Ensure correct order of output as per value_spec
-    for i = 1, #value_spec do
-      local spec = string.sub(value_spec, i, i)
-
-      if spec == "c" then
-        sensor_line = sensor_line .. "C: " .. format_number(current_value)
-      elseif spec == "l" then
-        sensor_line = sensor_line .. "L: " .. format_number(lowest_value)
-      elseif spec == "h" then
-        sensor_line = sensor_line .. "H: " .. format_number(highest_value)
-      end
-
-      -- Add space if there are more specs to follow
-      if i < #value_spec then
-        sensor_line = sensor_line .. " "
-      end
-    end
-
-    sensor_line = sensor_line .. "]"
-
-    table.insert(result, sensor_line)
-  end
-  
-  return table.concat(result, " / ")
-end
-   
-
-
--- string.format("%.2f", number)
--- string.format("%.2f", number)
--- string.format("%.2f", number)
-
-
--- local sensor      = sens[1]  
-
-
 
 -- Helper function to calculate linear discharge curve
 -- BatteryTypeDefaults.buffer.dischargeCurve = calculateLinearDischargeCurve(low, high)
@@ -689,30 +818,6 @@ local function calculateLinearDischargeCurve(lowVoltage, highVoltage)
   end
 
   return curve
-end
-
-
-
--- ########################## TESTING ##########################
-
-local function printHumanReadableTable(tbl, indent)
-  indent = indent or 0
-  local function indentStr(level)
-      return string.rep("  ", level)
-  end
-
-  for key, value in pairs(tbl) do
-      local keyStr = tostring(key)
-      local valueStr = tostring(value)
-
-      if type(value) == "table" then
-          debugPrint(indentStr(indent) .. "TBLDBG: " .. keyStr .. " = {")
-          printHumanReadableTable(value, indent + 1)
-          debugPrint(indentStr(indent) .. "TBLDBG: }")
-      else
-          debugPrint(indentStr(indent) .. "TBLDBG: " .. keyStr .. " = " .. valueStr)
-      end
-  end
 end
 
 
@@ -814,42 +919,6 @@ end
 
 
 -- ####################################################################
-
-local function findPercentRem( cellVoltage, context )
-
-  debugPrint("findPercentRem Cell Voltage: ", cellVoltage)
-  debugPrint("findPercentRem context: ", context)
-
-  --local low = batTypeLowHighValues[battype][1]
-  --local high = batTypeLowHighValues[battype][2]
-
-  -- local low = BatteryDefinition[battype] .lowVoltage
-  -- local high = BatteryDefinition[battype].highVoltage
-
-  --local low  = thisModel.battery[context].lowVoltage
-  --local high = thisModel.battery[context].highVoltage
-
-
-  --local discharcurve = BatteryTypeDischargeCurves[battype]
-  -- local discharcurve = BatteryDefinition[battype].dischargeCurve
-  --local discharcurve = thisModel.battery[context].dischargeCurve
-
-  if cellVoltage > thisModel.battery[context].highVoltage then
-    return 100
-  elseif	cellVoltage < thisModel.battery[context].lowVoltage then
-    return 0
-  else
-    -- method of finding percent in my array provided by on4mh (Mike)
-    for i, v in ipairs( thisModel.battery[context].dischargeCurve ) do
-      debugPrint(string.format("findPercentRem Check Voltage: %s ", v[ 1 ]))
-      if cellVoltage >= v[ 1 ] then
-        return v[ 2 ]
-      end
-    end
-  end
-end
-
--- ####################################################################
 local function Timer(name, time )
 
   if name == nil then
@@ -877,6 +946,83 @@ end
   end
 
 end
+
+
+
+-- ####################################################################
+
+-- local function findPercentRem( cellVoltage, context )
+-- 
+--   debugPrint("findPercentRem Cell Voltage: ", cellVoltage)
+--   debugPrint("findPercentRem context: ", context)
+-- 
+-- 
+--   if cellVoltage > thisModel.battery[context].highVoltage then
+--     return 100
+--   elseif	cellVoltage < thisModel.battery[context].lowVoltage then
+--     return 0
+--   else
+--     -- method of finding percent in my array provided by on4mh (Mike)
+--     for i, v in ipairs( thisModel.battery[context].dischargeCurve ) do
+--       debugPrint(string.format("findPercentRem Check Voltage: %s ", v[ 1 ]))
+--       if cellVoltage >= v[ 1 ] then
+--         return v[ 2 ]
+--       end
+--     end
+--   end
+-- end
+
+-- -- Store previous values and timestamps for each context
+-- local previousValues = {}
+-- local changeTimestamps = {}
+
+local function findPercentRem(cellVoltage, context)
+  debugPrint("findPercentRem Cell Voltage: ", cellVoltage)
+  debugPrint("findPercentRem context: ", context)
+
+  if cellVoltage > thisModel.battery[context].highVoltage then
+    return 100
+  elseif cellVoltage < thisModel.battery[context].lowVoltage then
+    return 0
+  else
+    -- Method of finding percent in array provided by on4mh (Mike)
+    for i, v in ipairs(thisModel.battery[context].dischargeCurve) do
+      debugPrint(string.format("findPercentRem Check Voltage: %s Context %s", v[1], context))
+      if cellVoltage >= v[1] then
+        local newPercent = v[2]
+
+        -- Initialize previous values if not present
+        if not findPercentRempreviousValues[context] then
+          findPercentRempreviousValues[context] = newPercent
+          return newPercent
+        end
+
+        local previousPercent = findPercentRempreviousValues[context]
+        local gracePeriod = thisModel.battery[context].graceperiod
+
+        debugPrint(string.format("findPercentRem CHG Previous Percent: %s", previousPercent))
+        debugPrint(string.format("findPercentRem CHG Grace Period: %s", gracePeriod))
+
+        -- Check if new value is different from the previous one
+        if newPercent ~= previousPercent then
+          -- Use Timer function to check grace period
+          if Timer(context, gracePeriod) then
+            findPercentRempreviousValues[context] = newPercent
+            return newPercent
+          else
+            return previousPercent
+          end
+        else
+          -- Reset the timer if the value hasn't changed
+          --Timer(context, nil)
+          TriggerTimers[context] = 0
+          return previousPercent
+        end
+      end
+    end
+  end
+end
+
 
 -- ####################################################################
 -- ####################################################################
@@ -936,7 +1082,8 @@ end
   critMD = config.announceCriticalMode
   warnMD = config.announceWarningMode
   normMD = config.announceNormalMode
-  graceP = config.graceperiod
+  --graceP = config.graceperiod
+  graceP = 0 -- done in findpercremaining now
 
 
 end
@@ -952,7 +1099,8 @@ if item == "BatteryNotFull" then
   critMD = config.announceNotFullCriticalMode
   warnMD = config.announceNotFullWarningMode
   normMD = "disable"
-  graceP = config.graceperiod
+  --graceP = config.graceperiod
+  graceP = 0 -- done in findpercremaining now
 
 
 end
@@ -1055,7 +1203,7 @@ local function doAnnouncements(context)
 -- here
 --debugPrint("CCIV: " .. context )
   checkChangedInterval(thisModel.VoltageSensor[context].cellMissing, "BatteryMissingCell", context)
-  checkChangedInterval(thisModel.VoltageSensor[context].PercRem, "BatteryNotFull", context)
+  if not preFlightChecksPassed then checkChangedInterval(thisModel.VoltageSensor[context].PercRem, "BatteryNotFull", context) end
   checkChangedInterval(thisModel.VoltageSensor[context].cellInconsistent, "CellDelta", context)
   checkChangedInterval(thisModel.VoltageSensor[context].PercRem, "Battery", context)
 
@@ -1201,19 +1349,6 @@ local vDelta = thisModel.battery[context].cellDeltaVoltage
       for j,v2 in ipairs(thisModel.VoltageSensor[context].value) do
         -- debugPrint(string.format("i: %d v: %f j: %d v: %f", i, v1, j,v2))
         if i~=j and (math.abs(v1 - v2) > vDelta) then
-          --debugPrint(string.format("i: %d v: %f j: %d v: %f", i, v1, j,v2))
-          --timeElapsed = HasSecondsElapsed(10)  -- check to see if the 10 second timer has elapsed
-          --if PlayFirstInconsistentCellWarning or (PlayInconsistentCellWarning == true and timeElapsed) then -- Play immediately upon detection and then every 10 seconds
-          --  --playFile(soundDirPath.."icw.wav")
-          --  queueSound("icw",2)
---
-          --  PlayFirstInconsistentCellWarning = false -- clear the first play flag, only reset on reset switch toggle
-          --  PlayInconsistentCellWarning = false -- clear the playing flag, only reset it at 10 second intervals
-          --end
-          --if not timeElapsed then  -- debounce so the sound is only played once in 10 seconds
-          --  PlayInconsistentCellWarning = true
-          --end
-          --return
           thisModel.VoltageSensor[context].cellInconsistent = true
         end
       end
@@ -1227,9 +1362,9 @@ local function check_for_missing_cells(context)
     -- local function check_for_missing_cells(voltageSensorValue, expectedCells )
 
     --local CfullVolt = BatteryDefinition[typeBattery[context]].highVoltage
-    local CfullVolt = thisModel.battery[context].highVoltage
+    --local CfullVolt = thisModel.battery[context].highVoltage
 
-debugPrint("MC VOL:" .. CfullVolt)
+--debugPrint("MC VOL:" .. CfullVolt)
 
   -- If the number of cells detected by the voltage sensor does not match the value in GV6 then play the warning message
   -- This is only for the dedicated voltage sensor
@@ -1253,7 +1388,10 @@ debugPrint("MC VOL:" .. CfullVolt)
       end
     --elseif VoltageSensor == "VFAS" and type(thisModel.VoltageSensor[context].value) == "number" then --this is for the vfas sensor
     elseif type(thisModel.VoltageSensor[context].value) == "number" then --this is for the vfas sensor
-      thisModel.VoltageSensor[context].CellsDetectedCurrent = math.ceil( thisModel.VoltageSensor[context].value / ( CfullVolt + 0.3) ) --todo 0.3 ??
+      --thisModel.VoltageSensor[context].CellsDetectedCurrent = math.ceil( thisModel.VoltageSensor[context].value / ( CfullVolt + 0.3) ) --todo 0.3 ??
+
+      thisModel.VoltageSensor[context].CellsDetectedCurrent = math.floor(thisModel.VoltageSensor[context].value / thisModel.battery[context].lowVoltage )
+
       --thisModel.VoltageSensor[context].CellsDetectedCurrent = math.floor( thisModel.VoltageSensor[context].value / 3.2 )
       --if (thisModel.CellCount[context] * 3.2) > (thisModel.VoltageSensor[context].value) then
         if thisModel.VoltageSensor[context].CellsDetectedCurrent ~= thisModel.CellCount[context]  then
@@ -1268,81 +1406,14 @@ debugPrint("MC VOL:" .. CfullVolt)
     -- cellMissing[context] = missingCellDetected
     thisModel.VoltageSensor[context].cellMissing =  thisModel.VoltageSensor[context].CellsDetectedCurrent  - thisModel.CellCount[context]
 
-    if thisModel.VoltageSensor[context].cellMissing == 0 then
-      thisModel.VoltageSensor[context].CellsDetected = true
-    end
+    -- if thisModel.VoltageSensor[context].cellMissing == 0 then
+    --   thisModel.VoltageSensor[context].CellsDetected = true
+    -- end
 
 
   end
 
 end
-
--- local function getInvalidSensorNames()
---   local invalidSensors = {}
---   local uniqueSensors = {}
--- 
---   -- Helper function to add a sensor name if it's not already in the set
---   local function addUniqueSensor(sensorName)
---       -- Extract the base sensor name without the suffixes "+", "-", or any numbers following
---       local baseName = string.match(sensorName, "^(.-)[+%-%d]*$")
---       if baseName and not uniqueSensors[baseName] then
---           uniqueSensors[baseName] = true
---           table.insert(invalidSensors, baseName)
---       end
---   end
--- 
---   -- Helper function to check and add invalid sensors
---   local function checkSensors(sensorList)
---       for _, sensor in ipairs(sensorList) do
---           if sensor.valid == false then
---               addUniqueSensor(sensor.sensorName)
---           end
---       end
---   end
--- 
---   -- Check standard sensors
---   checkSensors({
---       thisModel.VoltageSensor.main,
---       thisModel.VoltageSensor.receiver,
---       thisModel.CurrentSensor.main,
---       thisModel.CurrentSensor.receiver,
---       thisModel.MahSensor.main,
---       thisModel.MahSensor.receiver
---   })
--- 
---   -- Check additional sensors
---   for _, adlSensor in ipairs(thisModel.AdlSensors) do
---       checkSensors(adlSensor.sensors)
---   end
--- 
---   return invalidSensors
--- end
-
-
-
-
--- Function to initialize sensor IDs
--- local function initializeSensorId(sensor)
--- 
---   if not sensor.valid or sensor.valid == nil then
--- 
---   local fieldInfo = getFieldInfo(sensor.sensorName)
---   if fieldInfo then
---     sensor.sensorId = fieldInfo.id
---     sensor.valid = true
---     debugPrint("UPDSEN: INIT: " .. sensor.sensorName .. " ID: " .. fieldInfo.id)
---   else
---     print("Field info not found for sensor: " .. sensor.sensorName)
---     -- todo add to wrong sensor list
---     sensor.valid = false
--- 
---     --table.insert(badormissingsensors, sensor.sensorName)
--- 
---  end
--- 
--- end
--- 
--- end
 
 local function initializeSensorId(sensor)
   if not sensor.valid or sensor.valid == nil then
@@ -1417,18 +1488,18 @@ pfStatus.color = GREEN
   if thisModel.VoltageSensor.main.sensorId ~= nil then
     table.insert(contexts, "main")
     --CellsDetected["main"] = false
-    thisModel.VoltageSensor.main.CellsDetected = false
+    --thisModel.VoltageSensor.main.CellsDetected = false
     --numberOfBatteries = numberOfBatteries + 1
-  else
-    thisModel.VoltageSensor.main.CellsDetected = true
+  --else
+  --  thisModel.VoltageSensor.main.CellsDetected = true
   end
 
   if thisModel.VoltageSensor.receiver.sensorId ~= nil then
     table.insert(contexts, "receiver")
-    thisModel.VoltageSensor.receiver.CellsDetected = false
+    --thisModel.VoltageSensor.receiver.CellsDetected = false
     --numberOfBatteries = numberOfBatteries + 1
-  else
-    thisModel.VoltageSensor.receiver.CellsDetected = true
+  --else
+  --  thisModel.VoltageSensor.receiver.CellsDetected = true
   end
 
 else
@@ -1443,25 +1514,35 @@ end
 
 end
 
--- -- Update sensor values for all sensor groups
--- local function updateAllSensorValues(model)
---   updateSensorValue(model.VoltageSensor.main)
---   updateSensorValue(model.VoltageSensor.receiver)
---   updateSensorValue(model.CurrentSensor.main)
---   updateSensorValue(model.CurrentSensor.receiver)
---   updateSensorValue(model.MahSensor.main)
---   updateSensorValue(model.MahSensor.receiver)
--- 
--- 
---  for _, adlSensor in ipairs(model.AdlSensors) do
---     for _, sensor in ipairs(adlSensor.sensors) do
---       updateSensorValue(sensor)
---     end
---   end
--- end
 
 
+local function checkAllBatStatuspreFlight()
 
+  if not preFlightChecksPassed  and allSensorsValid then
+    
+  for _, context in ipairs(contexts) do
+      if thisModel.VoltageSensor[context].cellMissing ~= 0  then
+          pfStatus.text = context .. " Battery check Cell count"
+          pfStatus.color = RED          
+          return false
+      --else
+      --  pfStatus.text = "Battery Cells OK"
+      --  pfStatus.color = GREEN
+      end
+      if thisModel.VoltageSensor[context].PercRem < thisModel.battery[context].notFullWarningThreshold then
+        pfStatus.text = context .. " Battery not Full"
+        pfStatus.color = RED
+        return false
+    end
+  end
+  
+  preFlightChecksPassed = true
+
+  return true
+
+end
+
+end
 
 
 
@@ -1693,18 +1774,22 @@ pfStatus = {
   -- valueVoltsPercentRemaining["receiver"] = 0
 
   thisModel.VoltageSensor.main.CurVolt = 0
+  thisModel.VoltageSensor.main.LatestVolt = 0
   thisModel.VoltageSensor.main.LowestVolt = 0
   thisModel.VoltageSensor.main.HighestVolt = 0
 
   thisModel.CurrentSensor.main.CurAmp = 0
+  thisModel.CurrentSensor.main.LatestAmp = 0
   thisModel.CurrentSensor.main.LowestAmp = 0
   thisModel.CurrentSensor.main.HighestAmp = 0
 
   thisModel.VoltageSensor.receiver.CurVolt = 0
+  thisModel.VoltageSensor.receiver.LatestVolt = 0
   thisModel.VoltageSensor.receiver.LowestVolt = 0
   thisModel.VoltageSensor.receiver.HighestVolt = 0
 
   thisModel.CurrentSensor.receiver.CurAmp = 0
+  thisModel.CurrentSensor.receiver.LatestAmp = 0
   thisModel.CurrentSensor.receiver.LowestAmp = 0
   thisModel.CurrentSensor.receiver.HighestAmp = 0
 
@@ -1723,8 +1808,8 @@ pfStatus = {
   -- cellMissing["main"] = 0
   -- cellMissing["receiver"] = 0
 
-  thisModel.VoltageSensor.main.cellMissing = 0
-  thisModel.VoltageSensor.receiver.cellMissing = 0
+  thisModel.VoltageSensor.main.cellMissing = 1
+  thisModel.VoltageSensor.receiver.cellMissing = 1
 
 -- 
   -- cellInconsistent = {}
@@ -1766,7 +1851,7 @@ pfStatus = {
   --detectedBatteryValid["main"] = false
   --detectedBatteryValid["receiver"] = false
 
-  batCheckPassed = false
+  preFlightChecksPassed = false
 
   --badormissingsensors = {}
 
@@ -2166,17 +2251,17 @@ switchAnnounce()
 
   end
 
+  checkAllBatStatuspreFlight()
 
-
-  if thisModel.VoltageSensor.receiver.CellsDetected and thisModel.VoltageSensor.main.CellsDetected then -- sanity checks passed ... we can move to normal operation and switch the status widget
-   batCheckPassed = true
-   pfStatus.text = "OK"
-   pfStatus.color = GREEN
-   else
-    pfStatus.text = "Check Battery"
-    pfStatus.color = YELLOW
-    batCheckPassed = false
-  end
+  -- if thisModel.VoltageSensor.receiver.CellsDetected and thisModel.VoltageSensor.main.CellsDetected then -- sanity checks passed ... we can move to normal operation and switch the status widget
+  --  batCheckPassed = true
+  --  pfStatus.text = "OK"
+  --  pfStatus.color = GREEN
+  --  else
+  --   pfStatus.text = "Check Battery Cells"
+  --   pfStatus.color = YELLOW
+  --   batCheckPassed = false
+  -- end
 
 
 end -- end of if telemetry
@@ -2192,20 +2277,42 @@ end
 end
 
 -- ####################################################################
+-- local function getPercentColor(cpercent, battery)
+--   -- This function returns green at 100%, red bellow 30% and graduate in between
+-- 
+--   --local warn = batTypeWarnCritThresh[battype][1] 
+--   local warn = battery.warningThreshold
+-- 
+-- 
+-- 
+--   if cpercent < warn then
+--     return lcd.RGB(0xff, 0, 0)
+--   else
+--     g = math.floor(0xdf * cpercent / 100)
+--     r = 0xdf - g
+--     return lcd.RGB(r, g, 0)
+--   end
+-- end
+
 local function getPercentColor(cpercent, battery)
-  -- This function returns green at 100%, red bellow 30% and graduate in between
-
-  --local warn = batTypeWarnCritThresh[battype][1] 
+  -- This function returns:
+  -- - Red if below the critical threshold
+  -- - Graduated color between red and yellow if below the warning threshold
+  -- - Green if above the warning threshold
+  
   local warn = battery.warningThreshold
+  local crit = battery.criticalThreshold
 
-
-
-  if cpercent < warn then
-    return lcd.RGB(0xff, 0, 0)
+  if cpercent < crit then
+    return lcd.RGB(0xff, 0, 0)  -- Red
+  elseif cpercent < warn then
+    local r = 0xff
+    local g = math.floor(0xff * (cpercent - crit) / (warn - crit))
+    return lcd.RGB(r, g, 0)  -- Graduated color between red and yellow
   else
-    g = math.floor(0xdf * cpercent / 100)
-    r = 0xdf - g
-    return lcd.RGB(r, g, 0)
+    local g = math.floor(0xdf * (cpercent - warn) / (100 - warn))
+    local r = 0xdf - g
+    return lcd.RGB(r, g, 0)  -- Graduated color between yellow and green
   end
 end
 
@@ -2341,40 +2448,14 @@ lcd.drawFilledRectangle(wgt.zone.x + myBatt.x + myBatt.w,
 lcd.drawText(wgt.zone.x + myBatt.x + 20, wgt.zone.y + myBatt.y + 5, string.format("%d%%", percentage), LEFT + myBatt.font + batCol)
 
   -- draw values
+if  thisModel.MahSensor[context].value ~= nil then
 lcd.drawText(wgt.zone.x + myBatt.x, wgt.zone.y + myBatt.y + myBatt.h,
 string.format("%d mAh used", thisModel.MahSensor[context].value), myBatt.font + txtCol + BlinkWhenZero) -- todo -- original line --below just for display testing
 --"3456 mAh (8000)", myBatt.font + txtCol + BlinkWhenZero)
 end
 
-
-local function draw_sensor_line(wgt, sensor_line_data, x, y)
-  local line_x = x
-
-  for _, entry in ipairs(sensor_line_data) do
-    local current_x = line_x
-
-    -- Draw sensor name with primary color
-    lcd.setColor(CUSTOM_COLOR, COLOR_THEME_PRIMARY1)
-    lcd.drawText(current_x, y, entry.sensor_name .. " [", SMLSIZE)
-
-    current_x = current_x + #entry.sensor_name * 6  -- Adjust spacing based on your font width
-
-    -- Draw each value segment with its respective color
-    for _, value_str in ipairs(entry.values) do
-      lcd.setColor(CUSTOM_COLOR, value_str.color)
-      lcd.drawText(current_x, y, value_str.text, SMLSIZE)
-
-      current_x = current_x + #value_str.text * 6  -- Adjust spacing based on your font width
-    end
-
-    -- Add closing bracket with primary color
-    lcd.setColor(CUSTOM_COLOR, COLOR_THEME_PRIMARY1)
-    lcd.drawText(current_x, y, "]", SMLSIZE)
-
-    -- Move to the next line (adjust the y position if needed)
-    y = y + 12  -- Adjust vertical spacing as needed
-  end
 end
+
 
 
 
@@ -2446,197 +2527,6 @@ local function refreshZoneMedium(wgt)
 
 end
 
-local function lcdText(text,width,height,fontsize,color,rowDirection,row,colDirection,column)
-
-  local smallestStepY = 14
-  local smallestStepX = 12
-  local maxMaxCol = 19 -- for RM TX16S ! -- todo get screen maxsize somehow ?
-
-  if     fontsize == "xl"  then FONT , fontpxl, lineSpaceing, colSpacing  = XXLSIZE , 72 , 6 , 19
-  elseif fontsize == "x"   then FONT , fontpxl, lineSpaceing, colSpacing  = DBLSIZE , 32 , 5 , 18
-  elseif fontsize == "l"   then FONT , fontpxl, lineSpaceing, colSpacing  = MIDSIZE , 24 , 4 , 17   -- <----
-  elseif fontsize == "m"   then FONT , fontpxl, lineSpaceing, colSpacing  = 0       , 16 , 3 , 16
-  else                          FONT , fontpxl, lineSpaceing, colSpacing  = SMLSIZE , 12 , 2 , 8
-  end
-
- linex = 0
- liney = 0
-
- maxrow = math.floor(height / ( fontpxl + lineSpaceing ) )
- maxcol = math.floor(width / colSpacing )
-
- xStep = colSpacing
- yStep = fontpxl + lineSpaceing
-
- column = column - 1
-
-
-
-  debugPrint("SCREEN: maxrow: " .. maxrow .. " maxcol: " .. maxcol .. " Size: " .. fontsize )
-
-  if rowDirection == "b" then
-    liney = (maxrow - row) * yStep
-  else
-    liney = yStep * ( row - 1)
-  end
-
-
-  if colDirection == "r" then
-    linex = (maxcol - column) * colSpacing
-  else
-    linex = linex +  ( column * colSpacing )
-  end
-
-
-  lcd.drawText(linex, liney , text, FONT + color )
-
-
-
-end
-
-
-local function renderScreen(layout, width, height)
-  local smallestStepY = 14
-  local smallestStepX = 12
-
-  local fontSizes = {
-      xl = { FONT = XXLSIZE, fontpxl = 72, lineSpacing = 6, colSpacing = 19 },
-      x  = { FONT = DBLSIZE, fontpxl = 32, lineSpacing = 5, colSpacing = 18 },
-      l  = { FONT = MIDSIZE, fontpxl = 24, lineSpacing = 4, colSpacing = 17 },
-      m  = { FONT = 0,       fontpxl = 16, lineSpacing = 3, colSpacing = 16 },
-      s  = { FONT = SMLSIZE, fontpxl = 12, lineSpacing = 2, colSpacing = 8 }
-  }
-
-
-
-
-
-  local maxrow = math.floor(height / (fontSizes["l"].fontpxl + fontSizes["l"].lineSpacing))
-  local maxcol = math.floor(width / fontSizes["l"].colSpacing)
-
-  -- Define the starting positions
-  local y = 0
-  local x = 0
-
-  -- Function to draw text with given parameters
-  local function drawText(text, x, y, fontsize, color)
-    local offsetX = x + 2 -- a little bit from left
-
-      local fontData = fontSizes[fontsize]
-      lcd.drawText(offsetX, y, text, fontData.FONT + color)
-  end
-
-  -- Function to draw a sensor line
-  local function drawSensorLine(sensors, y)
-      local offsetX = x + 2 -- a little bit from left
-      for _, sensor in ipairs(sensors) do
-          drawText(sensor.label, offsetX, y, "m", sensor.labelColor)
-          drawText(sensor.value, offsetX + fontSizes["m"].colSpacing * 2, y, "m", sensor.valuecolor)
-          offsetX = offsetX + fontSizes["m"].colSpacing * 6
-      end
-  end
-
-  -- Function to draw a bottom sensor line with high and low values
-  --local function drawBottomSensorLine(sensors, y)
-  --    local offsetX = x + 1 -- a little bit from left
-  --    for _, sensor in ipairs(sensors) do
-  --        drawText(sensor.label, offsetX, y, "s", sensor.labelColor)
-  --        drawText(":", offsetX + fontSizes["s"].colSpacing * 5, y, "s", WHITE)
-  --        drawText("[", offsetX + fontSizes["s"].colSpacing * 6, y, "s", WHITE)
-  --        drawText("L:", offsetX + fontSizes["s"].colSpacing * 7, y, "s", sensor.labelColor)
-  --        drawText(sensor.lowValue, offsetX + fontSizes["s"].colSpacing * 9, y, "s", sensor.lowValueColor)
-  --        drawText("H:", offsetX + fontSizes["s"].colSpacing * 13, y, "s", sensor.labelColor)
-  --        drawText(sensor.highValue, offsetX + fontSizes["s"].colSpacing * 15, y, "s", sensor.highValueColor)
-  --        drawText("]", offsetX + fontSizes["s"].colSpacing * 19, y, "s", WHITE)
-  --        offsetX = offsetX + fontSizes["s"].colSpacing * 20
-  --    end
-  --end
-
-  local function drawBottomSensorLine(sensors, y)
-    local offsetX = x + 1 -- a little bit from left
-    local totalSensors = #sensors
-    local sensorsPerLine = 2
-    local sensorWidth = width / sensorsPerLine
-
-    for i, sensor in ipairs(sensors) do
-        local currentLine = math.floor((i - 1) / sensorsPerLine)
-        local colIndex = (i - 1) % sensorsPerLine
-        local lineOffsetX = offsetX + colIndex * sensorWidth
-
-        drawText(sensor.label, lineOffsetX, y, "s", sensor.labelColor)
-        drawText("[", lineOffsetX + fontSizes["s"].colSpacing * 6, y, "s", WHITE)
-        drawText("L:", lineOffsetX + fontSizes["s"].colSpacing * 7, y, "s", sensor.labelColor)
-        drawText(sensor.lowValue, lineOffsetX + fontSizes["s"].colSpacing * 9, y, "s", sensor.lowValueColor)
-        drawText("H:", lineOffsetX + fontSizes["s"].colSpacing * 15, y, "s", sensor.labelColor)
-        drawText(sensor.highValue, lineOffsetX + fontSizes["s"].colSpacing * 17, y, "s", sensor.highValueColor)
-        drawText("]", lineOffsetX + fontSizes["s"].colSpacing * 23, y, "s", WHITE)
-
-        -- Move to the next line if it's a new set of sensors
-        if colIndex == sensorsPerLine - 1 and i < totalSensors then
-            y = y + fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing
-        end
-    end
-end
-
-  -- Iterate through the layout and render each element
-  for _, item in ipairs(layout) do
-      if item.type == "header" then
-          drawText(item.text, x, y, "l", item.color)
-          y = y + fontSizes["l"].fontpxl + fontSizes["l"].lineSpacing
-      elseif item.type == "sensorLine" then
-          drawSensorLine(item.sensors, y)
-          y = y + fontSizes["m"].fontpxl + fontSizes["m"].lineSpacing
-      elseif item.type == "bottom" then
-          drawBottomSensorLine(item.sensors, height - fontSizes["s"].fontpxl - fontSizes["s"].lineSpacing - 8) -- -8 to lift it from the bottom ... but should be adapted to screen height
-          height = height - fontSizes["s"].fontpxl - fontSizes["s"].lineSpacing
-      end
-  end
-end
-
-
-
-
-
-local function preFlightStatusScreen(layout, width, height)
-  local y = 0
-  local xlineStart = 10
-  local ylineStart = 25
-  local ylineinc = 20
-  local fontSizes = {
-      l = { FONT = DBLSIZE, lineSpacing = 5 },
-      m = { FONT = MIDSIZE, lineSpacing = 3 }
-  }
-
-  -- Helper function to draw text with given parameters
-  local function drawText(text, x, y, fontsize, color, alignment)
-      local fontData = fontSizes[fontsize]
-      local textColor = color or WHITE  -- Default color if not provided
-      local textAlignment = alignment or TEXT_LEFT  -- Default alignment if not provided
-      lcd.drawText(x, y, text, fontData.FONT + textColor )
-      y = y + fontData.lineSpacing
-      return y
-  end
-
-  -- Iterate through the layout and render each element
-  for _, item in ipairs(layout) do
-      if item.type == "header" then
-          y = drawText(item.text, xlineStart, y, "l", item.color, CENTER)
-      elseif item.type == "modelInfo" then
-          -- Draw model name and image
-          lcd.drawText(width / 2, y, item.modelName, MIDSIZE + COLOR_THEME_PRIMARY1 + DBLSIZE + CENTER)
-          lcd.drawBitmap(item.modelImage, width / 2 - 25, y + 20, 50)
-          y = y + 70  -- Adjust based on image size and spacing
-      elseif item.type == "sensorValue" then
-          y = drawText(item.label, xlineStart, y, "m", item.labelColor)
-          lcd.drawText(xlineStart + 100, y - fontSizes["m"].lineSpacing, ":", COLOR_THEME_PRIMARY2 + BOLD)
-          lcd.drawText(xlineStart + 120, y - fontSizes["m"].lineSpacing, item.value, WHITE + BOLD)
-      elseif item.type == "statusMessage" then
-          -- Render status message with wrapping
-          local lines = lcd.drawText(xlineStart, y, item.text, MIDSIZE + item.color , width - 20)
-          y = y + lines * (MIDSIZE.lineSpacing + 1)  -- Adjust based on line spacing and wrapping
-      end
-  end
-end
 
 local function preFlightStatusScreen(layout, width, height)
 
@@ -2862,10 +2752,17 @@ local function drawBottomSensorLine(sensors, y)
 
       drawText(sensor.name, lineOffsetX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", COLOR_THEME_SECONDARY2)
       drawText("[", lineOffsetX + fontSizes["s"].colSpacing * 6, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", WHITE)
+      
+      if sensor.val1prefix ~= nil then
       drawText(sensor.val1prefix, lineOffsetX + fontSizes["s"].colSpacing * 7, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", WHITE)
       drawText(sensor.val1 .. sensor.unit, lineOffsetX + fontSizes["s"].colSpacing * 9, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.val1Color)
+      end
+
+      if sensor.val2prefix ~= nil then
       drawText(sensor.val2prefix, lineOffsetX + fontSizes["s"].colSpacing * 15, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", WHITE)
       drawText(sensor.val2 .. sensor.unit, lineOffsetX + fontSizes["s"].colSpacing * 17, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.val2Color)
+      end
+
       drawText("]", lineOffsetX + fontSizes["s"].colSpacing * 23, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", WHITE)
 
       if colIndex == sensorsPerLine - 1 and i < totalSensors then
@@ -3062,7 +2959,7 @@ if testing then
 
 
 
-  if batCheckPassed or not ShowPreFlightStatus then
+  if preFlightChecksPassed or not ShowPreFlightStatus then
 
 
 
@@ -3196,40 +3093,309 @@ local bottomSection = {
   sensors = {}
 }
 
+--local bottomSection = bottomSection or {}
+--local bottomSection.sensors = bottomSection.sensors or {}
+
 -- Populate the bottom section dynamically from thisModel.AdlSensors
+-- for _, adlSensor in ipairs(thisModel.AdlSensors) do
+--   table.insert(bottomSection.sensors, {
+--     name = adlSensor.name,
+--     unit = adlSensor.unit,
+--     
+--     val1prefix = adlSensor.sensors[1].prefix or "N/A",
+--     val1 = format_number(adlSensor.sensors[1].value or 0),
+--     val1Color = adlSensor.sensors[1].color,
+--     
+--     val2prefix = adlSensor.sensors[2].prefix or "N/A",
+--     val2 = format_number(adlSensor.sensors[2].value or 0),
+--     val2Color = adlSensor.sensors[2].color,
+--     
+--     })
+-- end
+-- 
+-- -- Insert the bottom section into the screen layout
+-- table.insert(screenLayout, bottomSection)
+
 for _, adlSensor in ipairs(thisModel.AdlSensors) do
-  table.insert(bottomSection.sensors, {
-    name = adlSensor.name,
-    unit = adlSensor.unit,
-    val1prefix = adlSensor.sensors[1].prefix,
-    val1 = format_number(adlSensor.sensors[1].value or 0),
-    val1Color = adlSensor.sensors[1].color,
-    val2prefix = adlSensor.sensors[2].prefix,
-    val2 = format_number(adlSensor.sensors[2].value or 0),
-    val2Color = adlSensor.sensors[2].color,
-    })
+  local sensorEntry = {
+      name = adlSensor.name or "N/A",
+      unit = adlSensor.unit
+  }
+  
+  -- Ensure adlSensor.sensors[1] exists and has a value field
+  if adlSensor.sensors[1] and adlSensor.sensors[1].value then
+      sensorEntry.val1prefix = adlSensor.sensors[1].prefix
+      sensorEntry.val1 = format_number(adlSensor.sensors[1].value)
+      sensorEntry.val1Color = adlSensor.sensors[1].color or WHITE
+  end
+  
+  -- Ensure adlSensor.sensors[2] exists and has a value field
+  if adlSensor.sensors[2] and adlSensor.sensors[2].value then
+      sensorEntry.val2prefix = adlSensor.sensors[2].prefix
+      sensorEntry.val2 = format_number(adlSensor.sensors[2].value)
+      sensorEntry.val2Color = adlSensor.sensors[2].color or WHITE
+  end
+  
+  table.insert(bottomSection.sensors, sensorEntry)
 end
 
--- Insert the bottom section into the screen layout
+
 table.insert(screenLayout, bottomSection)
 
 -- 
 
 
-renderScreen(screenLayout, wgt.zone.w, wgt.zone.h)
+-- renderScreen(screenLayout, wgt.zone.w, wgt.zone.h)
+
+
+
+
+-- wgt.zone.w
+
+local headerSpacing = 0
+local topSpacing = 0
+
+
+
+local fontSizes = {
+  l  = { FONT = MIDSIZE, fontpxl = 24, lineSpacing = 4, colSpacing = 17 },
+  m  = { FONT = 0,       fontpxl = 16, lineSpacing = 3, colSpacing = 16 },
+  s  = { FONT = SMLSIZE, fontpxl = 12, lineSpacing = 2, colSpacing = 9 }
+}
+
+if wgt.zone.h >= 106 then
+  headerSpacing = 15
+end
+
+if wgt.zone.h >= 272 then
+  fontSizes = {
+    l  = { FONT = DBLSIZE, fontpxl = 32, lineSpacing = 4, colSpacing = 18 },
+    m  = { FONT = MIDSIZE, fontpxl = 24, lineSpacing = 3, colSpacing = 22 },
+    s  = { FONT = 0,       fontpxl = 16, lineSpacing = 2, colSpacing = 11 }
+  }
+  headerSpacing = 15
+  topSpacing = 5
+
+end
+
+
+
+
+local y = 0
+local x = 0
+
+local function drawText(text, x, y, fontsize, color)
+  debugPrint("SCRN:" .. text)
+  local offsetX = x + 2
+  local fontData = fontSizes[fontsize]
+  lcd.drawText(offsetX, y, text, fontData.FONT + color)
+  --y = y + headerSpacing
+  y = y + fontSizes[fontsize].fontpxl + fontSizes[fontsize].lineSpacing
+  return y
+end
+
+local function drawSensorLine(label1, label1col, value1, value1col, label2, label2col, value2, value2col, y)
+  local offsetX = x + 2
+  drawText(label1, offsetX, y, "m", label1col)
+  drawText(value1, offsetX + fontSizes["m"].colSpacing * 2, y, "m", value1col)
+  offsetX = offsetX + fontSizes["m"].colSpacing * 6
+  drawText(label2, offsetX, y, "m", label2col)
+  drawText(value2, offsetX + fontSizes["m"].colSpacing * 2, y, "m", value2col)
+  y = y + fontSizes["m"].fontpxl + fontSizes["m"].lineSpacing
+  return y
+end
+
+local function drawBottomSensorLine(sensors, y)
+
+  local offsetX = x + 1
+  local totalSensors = #sensors
+  local sensorsPerLine = 2
+  local sensorWidth = wgt.zone.w / sensorsPerLine
+
+  for i = 1, totalSensors do
+
+    if wgt.zone.h <= 168 and i > 4 then break end
+
+    local sensor = sensors[i]
+    local currentLine = math.floor((i - 1) / sensorsPerLine)
+    local colIndex = (i - 1) % sensorsPerLine
+    local lineOffsetX = offsetX + colIndex * sensorWidth
+
+    drawText(sensor.name, lineOffsetX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", COLOR_THEME_SECONDARY2)
+    drawText("[", lineOffsetX + fontSizes["s"].colSpacing * 6, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", WHITE)
+    
+    if sensor.val1prefix ~= nil then
+      drawText(sensor.val1prefix, lineOffsetX + fontSizes["s"].colSpacing * 7, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", WHITE)
+      drawText(sensor.val1 .. sensor.unit, lineOffsetX + fontSizes["s"].colSpacing * 9, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.val1Color)
+    end
+
+    if sensor.val2prefix ~= nil then
+      drawText(sensor.val2prefix, lineOffsetX + fontSizes["s"].colSpacing * 15, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", WHITE)
+      drawText(sensor.val2 .. sensor.unit, lineOffsetX + fontSizes["s"].colSpacing * 17, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.val2Color)
+    end
+
+    drawText("]", lineOffsetX + fontSizes["s"].colSpacing * 23, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", WHITE)
+
+    if colIndex == sensorsPerLine - 1 and i < totalSensors then
+      y = y -  fontSizes["s"].lineSpacing
+    end
+  end
+  return y
+end
+
+
+local function drawBottomSensorLine(sensors, y)
+  local offsetX = x + 1
+  local totalSensors = #sensors
+  local sensorsPerLine = 2
+  local sensorWidth = wgt.zone.w / sensorsPerLine
+
+  for i = 1, totalSensors do
+    if wgt.zone.h <= 168 and i > 4 then 
+      break 
+    end
+
+    local sensor = sensors[i]
+    local currentLine = math.floor((i - 1) / sensorsPerLine)
+    local colIndex = (i - 1) % sensorsPerLine
+    local lineOffsetX = offsetX + colIndex * sensorWidth
+
+    drawText(sensor.name, lineOffsetX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", COLOR_THEME_SECONDARY2)
+    drawText("[", lineOffsetX + fontSizes["s"].colSpacing * 6, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", WHITE)
+    
+    if sensor.sensors[1] then
+      drawText(sensor.sensors[1].prefix, lineOffsetX + fontSizes["s"].colSpacing * 7, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", WHITE)
+      drawText(format_number(sensor.sensors[1].value) .. sensor.unit, lineOffsetX + fontSizes["s"].colSpacing * 9, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.sensors[1].color)
+    end
+
+    if sensor.sensors[2] then
+      drawText(sensor.sensors[2].prefix, lineOffsetX + fontSizes["s"].colSpacing * 15, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", WHITE)
+      drawText(format_number(sensor.sensors[2].value) .. sensor.unit , lineOffsetX + fontSizes["s"].colSpacing * 17, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.sensors[2].color)
+    end
+
+    drawText("]", lineOffsetX + fontSizes["s"].colSpacing * 23, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", WHITE)
+
+    if colIndex == sensorsPerLine - 1 and i < totalSensors then
+      y = y -  fontSizes["s"].lineSpacing
+    end
+  end
+  return y
+end
+
+
+
+local sensorsPerLine = 4  -- Define the number of sensors per line
+
+local function drawBottomSensorLine(sensors, y)
+    local offsetX = x + 1
+    local totalSensors = 0  -- Initialize total sensors count
+
+    -- Iterate over mysensors table using pairs
+    for sensorKey, sensor in pairs(mysensors) do
+        totalSensors = totalSensors + 1  -- Increment total sensors count
+
+        if wgt.zone.h <= 168 and totalSensors > 8 then 
+          break 
+        end
+
+
+        -- Calculate position based on totalSensors and sensorsPerLine
+        local currentLine = math.floor((totalSensors - 1) / sensorsPerLine)
+        local colIndex = (totalSensors - 1) % sensorsPerLine
+        local sensorWidth = wgt.zone.w / sensorsPerLine
+        local lineOffsetX = offsetX + colIndex * sensorWidth
+
+        -- Starting X position for elements
+        local elementX = lineOffsetX
+
+        -- Print debug info
+        print("SNLN - Processing sensor:", sensor.displayName)
+
+        -- Draw displayName with its color and update position
+        drawText(sensor.displayName, elementX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.displayNameColor)
+        elementX = elementX + #sensor.displayName * fontSizes["s"].colSpacing
+
+        -- Draw prefix with its color and update position
+        drawText(sensor.prefix, elementX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.prefixColor)
+        elementX = elementX + #sensor.prefix * fontSizes["s"].colSpacing
+
+        -- Draw value with its color and update position
+        --local valueStr = tostring(sensor.value)
+        --valueStr = valueStr  .. sensor.unit
+
+
+        drawText(sensor.value .. sensor.unit, elementX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.valueColor)
+        --elementX = elementX + #valueStr * fontSizes["s"].colSpacing
+      
+      --   if string.find(valueStr, "%.") then
+      --     elementX = elementX - (fontSizes["s"].colSpacing + 0)
+      -- end
+      
+        -- -- Draw suffix with its color and update position
+        -- drawText(sensor.suffix, elementX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.suffixColor)
+
+        -- Draw suffix with its color at the end of the quarter
+        local suffixX = lineOffsetX + sensorWidth - (#sensor.suffix ) * fontSizes["s"].colSpacing
+        drawText(sensor.suffix, suffixX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.suffixColor)
+
+
+
+        -- Adjust y position for new line if necessary
+        if colIndex == sensorsPerLine - 1 and totalSensors < #mysensors then
+            y = y - fontSizes["s"].lineSpacing
+        end
+    end
+
+    print("SNLN - Total Sensors:", totalSensors)  -- Print total sensors processed
+    return y
+end
+
+
+
+
+
+
+
+
+
+-- Main Section
+y = drawText("Main", x, y + topSpacing, "l", COLOR_THEME_SECONDARY2)
+--y = y + fontSizes["l"].fontpxl + fontSizes["l"].lineSpacing
+
+y = drawSensorLine("C:", COLOR_THEME_FOCUS, thisModel.VoltageSensor.main.CurVolt .. "V", GREEN, "L:", COLOR_THEME_FOCUS, thisModel.VoltageSensor.main.LowestVolt .. "V", RED, y)
+y = drawSensorLine("C:", COLOR_THEME_FOCUS, thisModel.CurrentSensor.main.CurAmp .. "A", GREEN, "H:", COLOR_THEME_FOCUS,thisModel.CurrentSensor.main.HighestAmp .. "A", RED, y)
+
+-- Receiver Section
+y = y + headerSpacing
+
+y = drawText("Receiver", x, y, "l", COLOR_THEME_SECONDARY2)
+--y = y + fontSizes["l"].fontpxl + fontSizes["l"].lineSpacing
+
+y = drawSensorLine("C:", COLOR_THEME_FOCUS, thisModel.VoltageSensor.receiver.CurVolt .. "V", GREEN, "L:", COLOR_THEME_FOCUS,thisModel.VoltageSensor.receiver.LowestVolt .. "V", RED, y)
+y = drawSensorLine("C:", COLOR_THEME_FOCUS, thisModel.CurrentSensor.receiver.CurAmp .. "A", GREEN, "H:", COLOR_THEME_FOCUS,thisModel.CurrentSensor.receiver.HighestAmp .. "A", RED, y)
+
+-- Bottom Section
+--drawBottomSensorLine(thisModel.AdlSensors, wgt.zone.h - fontSizes["s"].fontpxl - fontSizes["s"].lineSpacing - 5)
+
+
+drawBottomSensorLine(mysensors, wgt.zone.h - fontSizes["s"].fontpxl - fontSizes["s"].lineSpacing - 5)
+
+
+
+
 
 if wgt.zone.h >= 272 then
 
 -- local function drawNewBattery(xOrigin, yOrigin, percentage, wgt, battery, batCol, txtCol, size)
 
-drawNewBattery(280, 25,  "main"     , wgt , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE, "x" )
-drawNewBattery(280, 135, "receiver" , wgt , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE,"x")
+drawNewBattery(280, 20 + headerSpacing,  "main"     , wgt , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE, "x" )
+drawNewBattery(280, 125 + headerSpacing , "receiver" , wgt , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE,"x")
 
 else
 
-  drawNewBattery(230, 15, "main"     , wgt  , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE,"l" )
-drawNewBattery(230, 80,   "receiver" , wgt  , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE, "l")
-
+  drawNewBattery(230, 15 + headerSpacing, "main"     , wgt  , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE,"l" )
+drawNewBattery(230, 80 + headerSpacing,   "receiver" , wgt  , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE, "l")
+--
 end
 
 
@@ -3246,19 +3412,89 @@ end
       { type = "keyvalue", label = "Battery Type", value = thisModel.battery.main.displayName, labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
       { type = "keyvalue", label = "Cell Count", value = string.format("%s (%s)", thisModel.CellCount.main, thisModel.VoltageSensor.main.CellsDetectedCurrent), labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
       { type = "keyvalue", label = "Voltage", value = thisModel.VoltageSensor.main.CurVolt, labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
-      { type = "keyvalue", label = "Percentage", value = thisModel.VoltageSensor.main.PercRem, labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
+      { type = "keyvalue", label = "Percentage", value = thisModel.VoltageSensor.main.PercRem, labelColor = COLOR_THEME_FOCUS, valuecolor = getPercentColor(thisModel.VoltageSensor.main.PercRem, thisModel.battery["main"]) },
   
       { type = "header", text = "Receiver Battery", color = COLOR_THEME_SECONDARY2 },
       { type = "keyvalue", label = "Battery Type", value = thisModel.battery.receiver.displayName, labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
       { type = "keyvalue", label = "Cell Count", value = string.format("%s (%s)", thisModel.CellCount.receiver, thisModel.VoltageSensor.receiver.CellsDetectedCurrent), labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
       { type = "keyvalue", label = "Voltage", value = thisModel.VoltageSensor.receiver.CurVolt, labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
-      { type = "keyvalue", label = "Percentage", value = thisModel.VoltageSensor.receiver.PercRem, labelColor = COLOR_THEME_FOCUS, valuecolor = GREEN },
+      { type = "keyvalue", label = "Percentage", value = thisModel.VoltageSensor.receiver.PercRem, labelColor = COLOR_THEME_FOCUS, valuecolor = getPercentColor(thisModel.VoltageSensor.receiver.PercRem, thisModel.battery["receiver"]) },
   
       { type = "header", text = "Status:", color = COLOR_THEME_SECONDARY2 },
       { type = "statusMessage", status = pfStatus  , color = GREEN}  -- Placeholder for dynamic status message
   }
     
-  preFlightStatusScreen(screenLayout, wgt.zone.w, wgt.zone.h)
+  -- preFlightStatusScreen(screenLayout, wgt.zone.w, wgt.zone.h)
+
+
+  local topSpacing = 0
+  local headerSpacing = 0
+  local firstHeader = true
+
+  local fontSizes = {
+      l = { FONT = MIDSIZE, fontpxl = 24, lineSpacing = 4, colSpacing = 17 },
+      m = { FONT = 0,       fontpxl = 16, lineSpacing = 3, colSpacing = 16 },
+      s = { FONT = SMLSIZE, fontpxl = 12, lineSpacing = 2, colSpacing = 8 }
+  }
+
+  if wgt.zone.h >= 272 then
+    fontSizes = {
+      l = { FONT = DBLSIZE, fontpxl = 32, lineSpacing = 4, colSpacing = 18 },
+      m = { FONT = MIDSIZE, fontpxl = 24, lineSpacing = 3, colSpacing = 22 },
+      s = { FONT = 0,       fontpxl = 16, lineSpacing = 2, colSpacing = 10 },
+    }
+    headerSpacing = 5
+    topSpacing = 5
+  end
+
+  local y = 0
+  local x = 0
+
+  local function drawText(text, x, y, fontsize, color)
+    debugPrint("SCRN:" .. text)
+    local offsetX = x + 2
+    local fontData = fontSizes[fontsize]
+    lcd.drawText(offsetX, y, text, fontData.FONT + color)
+    --y = y + headerSpacing
+    y = y + fontSizes[fontsize].fontpxl + fontSizes[fontsize].lineSpacing
+    return y
+  end
+
+  local function drawKeyValLine(key, value, keycol, valcol, y)
+    local offsetX = x + 2
+    drawText(key, offsetX, y, "s", keycol)
+    drawText(":", offsetX + fontSizes["s"].colSpacing * 10, y, "s", WHITE)
+    drawText(value, offsetX + fontSizes["s"].colSpacing * 11, y, "s", valcol)
+    y = y + fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing
+    return y
+  end
+
+  -- Main Battery Section
+ y = drawText("Main Battery", x, topSpacing , "m", COLOR_THEME_SECONDARY2)
+
+ drawText(thisModel.modelName, wgt.zone.w / 2, topSpacing, "l", COLOR_THEME_SECONDARY2)
+  lcd.drawBitmap(thisModel.bmpSizedModelImage, wgt.zone.w / 2, topSpacing + fontSizes["l"].fontpxl + fontSizes["l"].lineSpacing, 50)
+  --y = y + 70
+
+  y = drawKeyValLine("Battery Type", thisModel.battery.main.displayName, COLOR_THEME_FOCUS, GREEN, y)
+  y = drawKeyValLine("Cell Count", string.format("%s (%s)", thisModel.CellCount.main, thisModel.VoltageSensor.main.CellsDetectedCurrent), COLOR_THEME_FOCUS, GREEN, y)
+  y = drawKeyValLine("Voltage", thisModel.VoltageSensor.main.CurVolt, COLOR_THEME_FOCUS, GREEN, y)
+  y = drawKeyValLine("Percentage", thisModel.VoltageSensor.main.PercRem, COLOR_THEME_FOCUS, getPercentColor(thisModel.VoltageSensor.main.PercRem, thisModel.battery["main"]), y)
+
+  -- Receiver Battery Section
+  y = y + headerSpacing
+  y = drawText("Receiver Battery", x, y, "m", COLOR_THEME_SECONDARY2)
+
+  y = drawKeyValLine("Battery Type", thisModel.battery.receiver.displayName, COLOR_THEME_FOCUS, GREEN, y)
+  y = drawKeyValLine("Cell Count", string.format("%s (%s)", thisModel.CellCount.receiver, thisModel.VoltageSensor.receiver.CellsDetectedCurrent), COLOR_THEME_FOCUS, GREEN, y)
+  y = drawKeyValLine("Voltage", thisModel.VoltageSensor.receiver.CurVolt, COLOR_THEME_FOCUS, GREEN, y)
+  y = drawKeyValLine("Percentage", thisModel.VoltageSensor.receiver.PercRem, COLOR_THEME_FOCUS, getPercentColor(thisModel.VoltageSensor.receiver.PercRem, thisModel.battery["receiver"]), y)
+
+  -- Status Section
+  y = y + headerSpacing
+  y = drawText("Status:", x, y, "m", COLOR_THEME_SECONDARY2)
+  drawText(pfStatus.text, x, y, "s", pfStatus.color)
+
 
 
 end
@@ -3397,7 +3633,7 @@ if not testing then
       lcd.drawFilledRectangle(0, 0, wgt.zone.w, wgt.zone.h, BGColor, 5)
 
 
-  if batCheckPassed or not ShowPreFlightStatus then
+  if preFlightChecksPassed or not ShowPreFlightStatus then
 
 
   -- Draw the top-left 1/4 of the screen
