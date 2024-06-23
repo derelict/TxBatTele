@@ -19,7 +19,7 @@ EdgeTX/OpenTX Battery and Telemetry Monitoring LUA Widget which tries to rely as
 - **Status Pages**: Show pre, post and in flight Statuspage (widget)
 - **Pre-Flight Checks**: Check for missing/inconsistent Cells, Battery not full conditions before flight
 - **Voice Announcements**: Get Voice Announcements for any Condition including haptic Feedback if needed
-- **Logging**: Take Screenshot of the Statuspage after flight or turn on logging if/as needed based on Conditions (like Battery at 30%) ( not yet possible ... but maybe >= EdgeTX 2.11 )
+- **Logging**: Take Screenshot of the Statuspage after flight or turn on logging if/as needed based on Conditions (like Battery at 30%) ( not yet possible ... but maybe >= EdgeTX 2.11 ... see pending Feature Request: https://github.com/EdgeTX/edgetx/issues/5191 and pending pull request: https://github.com/EdgeTX/edgetx/pull/5181 )
 
 ## Video :tv:
 [<img src="demov1.gif">](https://youtu.be/zkkMqSeXS8w)
