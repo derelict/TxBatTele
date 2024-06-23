@@ -21,8 +21,8 @@ EdgeTX/OpenTX Battery and Telemetry Monitoring LUA Widget which tries to rely as
 - **Voice Announcements**: Get Voice Announcements for any Condition including haptic Feedback if needed
 - **Logging**: Take Screenshot of the Statuspage after flight or turn on logging if/as needed based on Conditions (like Battery at 30%) ( not yet possible ... but maybe >= EdgeTX 2.11 )
 
-## Screenshots :tv:
-![companion_S17qJbUCZB](https://github.com/derelict/TxBatTele/assets/2826671/82cedd0c-646f-4c8c-9e1c-0d3817aa7ea2)
+## Video :tv:
+![companion_S17qJbUCZB](https://youtu.be/zkkMqSeXS8w)
 
 ## Note
 - **This is currently in alpha/"works for me" state ... use/try at your own Risk**
