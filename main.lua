@@ -192,15 +192,15 @@ local sensg580 = {
 
 local sensSimulator = {
   --- first bottom line
-  { sensorName = "RPM+" , displayName = "RPM+", prefix = "[", suffix = "]", displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, value = 1, unit = "" },
   { sensorName = "RPM-" , displayName = "RPM-", prefix = "[", suffix = "]", displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = RED   , suffixColor = BLUE, value = 2, unit = "" },
-  { sensorName = "RxBt+" , displayName = "RXB+", prefix = "[", suffix = "]", displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, value = 3, unit = "V" },
+  { sensorName = "RPM+" , displayName = "RPM+", prefix = "[", suffix = "]", displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, value = 1, unit = "" },
   { sensorName = "RxBt-" , displayName = "RXB-", prefix = "[", suffix = "]", displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = RED   , suffixColor = BLUE, value = 4, unit = "V" },
+  { sensorName = "RxBt+" , displayName = "RXB+", prefix = "[", suffix = "]", displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, value = 3, unit = "V" },
   --- second line from the bottom
-  { sensorName = "RSSI+", displayName = "RSI+", prefix = "[", suffix = "]", displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN   , suffixColor = BLUE, value = 5, unit = "" },
   { sensorName = "RSSI-", displayName = "RSI-", prefix = "[", suffix = "]", displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = RED   , suffixColor = BLUE, value = 6, unit = "" },
-  { sensorName = "Fuel+", displayName = "FUE+", prefix = "[", suffix = "]", displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN   , suffixColor = BLUE, value = 7, unit = "" },
+  { sensorName = "RSSI+", displayName = "RSI+", prefix = "[", suffix = "]", displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN   , suffixColor = BLUE, value = 5, unit = "" },
   { sensorName = "Fuel-", displayName = "FUE-", prefix = "[", suffix = "]", displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = RED   , suffixColor = BLUE, value = 8, unit = "" },
+  { sensorName = "Fuel+", displayName = "FUE+", prefix = "[", suffix = "]", displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN   , suffixColor = BLUE, value = 7, unit = "" },
   -- third line from the bottom (will not be shown on smaller widget sizes)
   { sensorName = "Tmp1+" , displayName = "TP1+", prefix = "[", suffix = "]", displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = RED   , suffixColor = BLUE, value = 9,  unit = "°C" },
   { sensorName = "Tmp1-" , displayName = "TP1-", prefix = "[", suffix = "]", displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN   , suffixColor = BLUE, value = 10, unit = "°C" },
