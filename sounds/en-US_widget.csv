@@ -16,6 +16,7 @@ full,full.wav
 empty,empty.wav
 missing,missing.wav
 cell,cell.wav
+cells,cells.wav
 SAB Goblin 630,sg630.wav
 T-Rex 600,t600.wav
 Goosky RS 7,grs7.wav
@@ -30,3 +31,12 @@ of,of.wav
 cells detected,cdt.wav
 cell missing,cm.wav
 ok,ok.wav
+power,power.wav
+Buffer,buffer.wav
+Pack,pack.wav
+lipo,lipo.wav
+low,low.wav
+high,high.wav
+voltage,voltage.wav
+percent,percent.wav
+
