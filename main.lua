@@ -210,15 +210,10 @@ local sensSimulator = {
 
 local sensSimulator = { -- testing with less sensors but more width (because less sensors on three rows) in display -- todo
   --- first bottom line
-  { sensorName = "RPM+"  , displayName = "RPM+" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
-  { sensorName = "RPM-"  , displayName = "RPM-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = "< 1500" , condColor = RED },
-  { sensorName = "VFAS+" , displayName = "BAT+" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "V"  , cond = ">40"    , condColor = RED },
-  { sensorName = "VFAS-" , displayName = "BAT-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "V"  , cond = "<7"     , condColor = RED },
-  --- second line from the bottom
-  { sensorName = "Curr"  , displayName = "CURR" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "A"  , cond = ""       , condColor = RED },
-  { sensorName = "RSSI+" , displayName = "RSI+" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
-  { sensorName = "RSSI-" , displayName = "RSI-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
-  { sensorName = "RPM-"  , displayName = "RPM-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
+  { sensorName = "Tmp1+" , displayName = "TF+ " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED },
+  { sensorName = "Tmp1-" , displayName = "TF- " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED },
+  { sensorName = "Tmp2+" , displayName = "ET+ " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED },
+  { sensorName = "Tmp2-" , displayName = "ET- " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED }
 }
 
 
@@ -3657,100 +3652,89 @@ local function drawSensorLine(label1, label1col, value1, value1col, label2, labe
 end
 
 
-local sensorsPerLine = 4  -- Define the number of sensors per line
 
 local function drawBottomSensorLine(sensors, y)
-    local offsetX = x + 1
-    local totalSensors = 0  -- Initialize total sensors count
+  local offsetX = x + 1
+  local totalSensors = #sensors  -- Get total number of sensors
+  local maxLines = 3
 
-        -- Helper function to evaluate conditions
-        local function evaluateCondition(value, condition)
-          --local operator, threshold = condition:match("([><=])%s*(%d+%.?%d*)")
-          local operator, threshold = string.match(condition, "([><=])%s*(%d+%.?%d*)")
-          threshold = tonumber(threshold)
-          if operator == ">" then
-              return value > threshold
-          elseif operator == "<" then
-              return value < threshold
-          elseif operator == "=" then
-              return value == threshold
-          else
-              return false
+  -- Determine the optimal number of sensors per line
+  local sensorsPerLine = math.ceil(totalSensors / maxLines)
+
+  -- Helper function to evaluate conditions
+  local function evaluateCondition(value, condition)
+      local operator, threshold = string.match(condition, "([><=])%s*(%d+%.?%d*)")
+      threshold = tonumber(threshold)
+      if operator == ">" then
+          return value > threshold
+      elseif operator == "<" then
+          return value < threshold
+      elseif operator == "=" then
+          return value == threshold
+      else
+          return false
+      end
+  end
+
+  -- Iterate over sensors table using ipairs
+  for i, sensor in ipairs(sensors) do
+      if wgt.zone.h <= 168 and i > 8 then 
+          break 
+      end
+
+      -- Calculate position based on sensor index and sensorsPerLine
+      local currentLine = math.floor((i - 1) / sensorsPerLine)
+      local colIndex = (i - 1) % sensorsPerLine
+      local sensorWidth = wgt.zone.w / sensorsPerLine
+      local lineOffsetX = offsetX + colIndex * sensorWidth
+
+      -- Starting X position for elements
+      local elementX = lineOffsetX
+
+      -- Print debug info
+      print("SNLN - Processing sensor:", sensor.displayName)
+
+      -- Draw displayName with its color and update position
+      drawText(sensor.displayName, elementX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.displayNameColor)
+      elementX = elementX + #sensor.displayName * fontSizes["s"].colSpacing
+
+      -- Draw prefix with its color and update position
+      drawText(sensor.prefix, elementX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.prefixColor)
+      elementX = elementX + #sensor.prefix * fontSizes["s"].colSpacing
+
+      -- Determine the value color based on the condition
+      local valueColor = sensor.valueColor
+      if sensor.cond and sensor.cond ~= "" then
+          if evaluateCondition(sensor.value, sensor.cond) then
+              valueColor = sensor.condColor or WHITE
           end
       end
 
-    -- Iterate over mysensors table using pairs
-    for _, sensor in pairs(sensors) do
-        totalSensors = totalSensors + 1  -- Increment total sensors count
+      local formattedValue = sensor.value
+      if type(sensor.value) == "number" then
+          if math.floor(sensor.value) ~= sensor.value then
+              formattedValue = string.format("%.2f", sensor.value)
+          else
+              formattedValue = tostring(sensor.value)
+          end
+      end
 
-        if wgt.zone.h <= 168 and totalSensors > 8 then 
-          break 
-        end
+      drawText(formattedValue .. sensor.unit, elementX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", valueColor)
 
+      -- Draw suffix with its color at the end of the quarter
+      local suffixX = lineOffsetX + sensorWidth - (#sensor.suffix) * fontSizes["s"].colSpacing
+      drawText(sensor.suffix, suffixX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.suffixColor)
 
-        -- Calculate position based on totalSensors and sensorsPerLine
-        local currentLine = math.floor((totalSensors - 1) / sensorsPerLine)
-        local colIndex = (totalSensors - 1) % sensorsPerLine
-        local sensorWidth = wgt.zone.w / sensorsPerLine
-        local lineOffsetX = offsetX + colIndex * sensorWidth
+      -- Adjust y position for new line if necessary
+      if colIndex == sensorsPerLine - 1 and i < totalSensors then
+          y = y - fontSizes["s"].lineSpacing
+      end
+  end
 
-        -- Starting X position for elements
-        local elementX = lineOffsetX
-
-        -- Print debug info
-        print("SNLN - Processing sensor:", sensor.displayName)
-
-        -- Draw displayName with its color and update position
-        drawText(sensor.displayName, elementX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.displayNameColor)
-        elementX = elementX + #sensor.displayName * fontSizes["s"].colSpacing
-
-        -- Draw prefix with its color and update position
-        drawText(sensor.prefix, elementX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.prefixColor)
-        elementX = elementX + #sensor.prefix * fontSizes["s"].colSpacing
-
-        -- Determine the value color based on the condition
-        local valueColor = sensor.valueColor
-        if sensor.cond and sensor.cond ~= "" then
-            if evaluateCondition(sensor.value, sensor.cond) then
-                valueColor = sensor.condColor or WHITE
-            end
-        end
-
-        local formattedValue = sensor.value
-        if type(sensor.value) == "number" then
-            if math.floor(sensor.value) ~= sensor.value then
-                formattedValue = string.format("%.2f", sensor.value)
-            else
-                formattedValue = tostring(sensor.value)
-            end
-        end
-
-
-        drawText(formattedValue .. sensor.unit, elementX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", valueColor)
-        --elementX = elementX + #valueStr * fontSizes["s"].colSpacing
-      
-      --   if string.find(valueStr, "%.") then
-      --     elementX = elementX - (fontSizes["s"].colSpacing + 0)
-      -- end
-      
-        -- -- Draw suffix with its color and update position
-        -- drawText(sensor.suffix, elementX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.suffixColor)
-
-        -- Draw suffix with its color at the end of the quarter
-        local suffixX = lineOffsetX + sensorWidth - (#sensor.suffix ) * fontSizes["s"].colSpacing
-        drawText(sensor.suffix, suffixX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.suffixColor)
-
-
-
-        -- Adjust y position for new line if necessary
-        if colIndex == sensorsPerLine - 1 and totalSensors < #sensors then
-            y = y - fontSizes["s"].lineSpacing
-        end
-    end
-
-    print("SNLN - Total Sensors:", totalSensors)  -- Print total sensors processed
-    return y
+  print("SNLN - Total Sensors:", totalSensors)  -- Print total sensors processed
+  return y
 end
+
 
 
 
