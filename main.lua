@@ -210,6 +210,16 @@ local sensSimulator = {
 
 local sensSimulator = { -- testing with less sensors but more width (because less sensors on three rows) in display -- todo
   --- first bottom line
+  { sensorName = "RPM+"  , displayName = "RPM+" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
+  { sensorName = "RPM-"  , displayName = "RPM-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = "< 1500" , condColor = RED },
+  { sensorName = "VFAS+" , displayName = "BAT+" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "V"  , cond = ">40"    , condColor = RED },
+  { sensorName = "VFAS-" , displayName = "BAT-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "V"  , cond = "<7"     , condColor = RED },
+  --- second line from the bottom
+  { sensorName = "Curr"  , displayName = "CURR" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "A"  , cond = ""       , condColor = RED },
+  { sensorName = "RSSI+" , displayName = "RSI+" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
+  { sensorName = "RSSI-" , displayName = "RSI-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
+  { sensorName = "RPM-"  , displayName = "RPM-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
+  --- third line from the bottom (will not be shown on smaller widget sizes)
   { sensorName = "Tmp1+" , displayName = "TF+ " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED },
   { sensorName = "Tmp1-" , displayName = "TF- " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED },
   { sensorName = "Tmp2+" , displayName = "ET+ " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED },
@@ -3653,6 +3663,8 @@ end
 
 
 
+
+
 local function drawBottomSensorLine(sensors, y)
   local offsetX = x + 1
   local totalSensors = #sensors  -- Get total number of sensors
@@ -3699,8 +3711,10 @@ local function drawBottomSensorLine(sensors, y)
       elementX = elementX + #sensor.displayName * fontSizes["s"].colSpacing
 
       -- Draw prefix with its color and update position
-      drawText(sensor.prefix, elementX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.prefixColor)
-      elementX = elementX + #sensor.prefix * fontSizes["s"].colSpacing
+      local prefixX = elementX
+      drawText(sensor.prefix, prefixX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.prefixColor)
+      local prefixWidth = #sensor.prefix * fontSizes["s"].colSpacing
+      elementX = elementX + prefixWidth
 
       -- Determine the value color based on the condition
       local valueColor = sensor.valueColor
@@ -3718,12 +3732,18 @@ local function drawBottomSensorLine(sensors, y)
               formattedValue = tostring(sensor.value)
           end
       end
-
-      drawText(formattedValue .. sensor.unit, elementX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", valueColor)
+      local valueWithUnit = formattedValue .. sensor.unit
+      local valueWidth = #valueWithUnit * fontSizes["s"].colSpacing
 
       -- Draw suffix with its color at the end of the quarter
       local suffixX = lineOffsetX + sensorWidth - (#sensor.suffix) * fontSizes["s"].colSpacing
       drawText(sensor.suffix, suffixX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.suffixColor)
+      local suffixWidth = #sensor.suffix * fontSizes["s"].colSpacing
+
+      -- Center the value between prefix and suffix
+      local availableWidth = sensorWidth - prefixWidth - suffixWidth
+      local valueX = prefixX + (availableWidth - valueWidth) / 2
+      drawText(valueWithUnit, valueX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", valueColor)
 
       -- Adjust y position for new line if necessary
       if colIndex == sensorsPerLine - 1 and i < totalSensors then
@@ -3734,6 +3754,11 @@ local function drawBottomSensorLine(sensors, y)
   print("SNLN - Total Sensors:", totalSensors)  -- Print total sensors processed
   return y
 end
+
+
+
+
+
 
 
 
