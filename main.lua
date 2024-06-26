@@ -208,7 +208,7 @@ local sensSimulator = {
   { sensorName = "Tmp2-" , displayName = "ET- " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED }
 }
 
-local sensSimulator = { -- testing with less sensors but more width (because less sensors on three rows) in display -- todo
+local sensSimulator = {
   --- first bottom line
   { sensorName = "RPM+"  , displayName = "RPM+" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
   { sensorName = "RPM-"  , displayName = "RPM-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = "< 1500" , condColor = RED },
@@ -225,6 +225,8 @@ local sensSimulator = { -- testing with less sensors but more width (because les
   { sensorName = "Tmp2+" , displayName = "ET+ " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED },
   { sensorName = "Tmp2-" , displayName = "ET- " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED }
 }
+
+
 
 
 -- Based on results from http://rcdiy.ca/taranis-q-x7-battery-run-time/
@@ -3670,8 +3672,65 @@ local function drawBottomSensorLine(sensors, y)
   local totalSensors = #sensors  -- Get total number of sensors
   local maxLines = 3
 
+  local lowestCharDisplayname = 4
+  local lowestCharValue = 6
+
+  local totalCharsperLine = math.floor(( wgt.zone.w - offsetX ) / fontSizes["s"].colSpacing)
+
   -- Determine the optimal number of sensors per line
-  local sensorsPerLine = math.ceil(totalSensors / maxLines)
+  local sensorsPerLine = math.min(4, math.ceil(totalSensors / maxLines))
+
+  local charsPerCell = math.floor(totalCharsperLine / sensorsPerLine)
+  
+  --local charsPerCell = math.ceil(totalCharsperLine / sensorsPerLine)
+
+-- Calculate remaining chars after allocating charsPerCell to each sensor
+local remainingChars = totalCharsperLine - (charsPerCell * sensorsPerLine)
+
+
+-- Calculate additional characters to add to each sensor beyond charsPerCell
+local additionalCharsPerSensor = math.floor(remainingChars / (sensorsPerLine - 1))
+
+if additionalCharsPerSensor > 0 then charsPerCell = charsPerCell + additionalCharsPerSensor end
+
+  local charsRemaining = charsPerCell - lowestCharDisplayname - lowestCharValue - 2 -- 2 for pre and suffix
+
+
+  local function splitInTwo(total)
+    local part1 = math.floor((2/3) * total)
+    local part2 = total - part1
+    
+    -- Adjust if part1 or part2 is negative
+    if part1 < 0 then
+        part1 = 0
+    end
+    if part2 < 0 then
+        part2 = 0
+    end
+    
+    return part1, part2
+end
+
+  addCharsDisplay, addCharsValue = splitInTwo(charsRemaining)
+  addCharsValue = addCharsValue / 2
+
+  local suffixCharPosition = charsPerCell - 1
+  local prefixCharPosition = lowestCharDisplayname + addCharsDisplay  -- 1 for prefix itself
+
+  local valuePxlWidth = ( suffixCharPosition - prefixCharPosition + 1 ) * fontSizes["s"].colSpacing
+
+
+-- Print debug information
+print(string.format("SCCOL - valuePxlWidth: %s totalCharsperLine: %s, sensorsPerLine: %s, remainingChars: %s, additionalCharsPerSensor: %s, charsPerCell: %s, suffixCharPosition: %s, prefixCharPosition: %s, charsRemaining: %s, addCharsDisplay: %s, addCharsValue: %s width: %s colspacing: %s",
+valuePxlWidth, totalCharsperLine, sensorsPerLine, remainingChars, additionalCharsPerSensor, charsPerCell, suffixCharPosition, prefixCharPosition, charsRemaining, addCharsDisplay, addCharsValue, wgt.zone.w, fontSizes["s"].colSpacing))
+
+-- SCCOL - valuePxlWidth: 72 totalCharsperLine: 47, sensorsPerLine: 4, remainingChars: 3, additionalCharsPerSensor: 1, charsPerCell: 12, suffixCharPosition: 11, prefixCharPosition: 4, charsRemaining: 0, addCharsDisplay: 0, addCharsValue: 0 width: 426 colspacing: 9
+
+
+
+
+
+
 
   -- Helper function to evaluate conditions
   local function evaluateCondition(value, condition)
@@ -3688,35 +3747,63 @@ local function drawBottomSensorLine(sensors, y)
       end
   end
 
+  -- Helper function to calculate text width with special character adjustments
+  local function calculateTextWidth(text, fontSize)
+      local specialChars = { [","] = 2, ["."] = 2, ["°"] = -2 }
+      local width = 0
+
+
+      for i = 1, #text do
+
+          local char = string.sub(text, i, i)
+          
+          local byte1 = string.byte(text, i)
+          local byte2 = string.byte(text, i + 1)
+          
+          print(string.format("CHAR: %s SPC: %d %d", char, byte1 or 0, byte2 or 0))  -- Should print 194 176 for ° in UTF-8
+  
+          if byte1 == 194 and byte2 == 176 then
+              char = "°"
+              i = i + 2 -- Skip the next byte since we processed the degree symbol
+          else
+              i = i + 1
+          end
+
+          if specialChars[char] then
+              width = width + specialChars[char]
+          else
+              width = width + fontSize.colSpacing
+          end
+      end
+      return width
+  end
+
   -- Iterate over sensors table using ipairs
   for i, sensor in ipairs(sensors) do
-      if wgt.zone.h <= 168 and i > 8 then 
-          break 
+
+      if wgt.zone.h <= 168 and i > 8 then
+          break
       end
 
       -- Calculate position based on sensor index and sensorsPerLine
       local currentLine = math.floor((i - 1) / sensorsPerLine)
       local colIndex = (i - 1) % sensorsPerLine
-      local sensorWidth = wgt.zone.w / sensorsPerLine
-      local lineOffsetX = offsetX + colIndex * sensorWidth
+      --local sensorWidth = wgt.zone.w / sensorsPerLine
+      local lineOffsetX = offsetX + colIndex * ( charsPerCell * fontSizes["s"].colSpacing )
+--
+      ---- Starting X position for elements
+      --local elementX = lineOffsetX
 
-      -- Starting X position for elements
-      local elementX = lineOffsetX
+      drawText(sensor.displayName, lineOffsetX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.displayNameColor)
 
-      -- Print debug info
-      print("SNLN - Processing sensor:", sensor.displayName)
+      lineOffsetX =  ( prefixCharPosition + ( colIndex * charsPerCell ) ) * fontSizes["s"].colSpacing
+      --lineOffsetX =  prefixCharPosition  * fontSizes["s"].colSpacing * ( charsPerCell * fontSizes["s"].colSpacing * (colIndex + 1) )
 
-      -- Draw displayName with its color and update position
-      drawText(sensor.displayName, elementX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.displayNameColor)
-      elementX = elementX + #sensor.displayName * fontSizes["s"].colSpacing
+      drawText(sensor.prefix, lineOffsetX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.prefixColor)
 
-      -- Draw prefix with its color and update position
-      local prefixX = elementX
-      drawText(sensor.prefix, prefixX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.prefixColor)
-      local prefixWidth = #sensor.prefix * fontSizes["s"].colSpacing
-      elementX = elementX + prefixWidth
 
-      -- Determine the value color based on the condition
+
+
       local valueColor = sensor.valueColor
       if sensor.cond and sensor.cond ~= "" then
           if evaluateCondition(sensor.value, sensor.cond) then
@@ -3732,18 +3819,31 @@ local function drawBottomSensorLine(sensors, y)
               formattedValue = tostring(sensor.value)
           end
       end
+
+      -- Limit value to 7 characters maximum
+      -- local maxValueLength = 7
+      -- formattedValue = string.sub(formattedValue, 1, maxValueLength)
       local valueWithUnit = formattedValue .. sensor.unit
-      local valueWidth = #valueWithUnit * fontSizes["s"].colSpacing
+      local valueWidth = calculateTextWidth(valueWithUnit, fontSizes["s"])
 
-      -- Draw suffix with its color at the end of the quarter
-      local suffixX = lineOffsetX + sensorWidth - (#sensor.suffix) * fontSizes["s"].colSpacing
-      drawText(sensor.suffix, suffixX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.suffixColor)
-      local suffixWidth = #sensor.suffix * fontSizes["s"].colSpacing
+      -- print(string.format("SCCOL - valueWidth: %d",
+      -- valueWidth ))
 
-      -- Center the value between prefix and suffix
-      local availableWidth = sensorWidth - prefixWidth - suffixWidth
-      local valueX = prefixX + (availableWidth - valueWidth) / 2
-      drawText(valueWithUnit, valueX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", valueColor)
+      lineOffsetX =  lineOffsetX + ( ( valuePxlWidth - valueWidth ) / 2 )
+
+      drawText(valueWithUnit, lineOffsetX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", valueColor )
+
+
+
+
+      
+      lineOffsetX =  ( suffixCharPosition + ( colIndex * charsPerCell ) ) * fontSizes["s"].colSpacing
+      --lineOffsetX =  prefixCharPosition  * fontSizes["s"].colSpacing * ( charsPerCell * fontSizes["s"].colSpacing * (colIndex + 1) )
+
+      drawText(sensor.suffix, lineOffsetX, y - currentLine * (fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing), "s", sensor.suffixColor)
+      
+      
+
 
       -- Adjust y position for new line if necessary
       if colIndex == sensorsPerLine - 1 and i < totalSensors then
@@ -3754,13 +3854,6 @@ local function drawBottomSensorLine(sensors, y)
   print("SNLN - Total Sensors:", totalSensors)  -- Print total sensors processed
   return y
 end
-
-
-
-
-
-
-
 
 
 
