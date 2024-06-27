@@ -469,6 +469,116 @@ local modelTable = {
   }
 }
 
+
+
+local modelTable = {
+  {
+      modelNameMatch         = "DEFAULT",
+      modelName              = "DEFAULT",
+      modelImage             = "goblin.png",
+      modelWav               = "sg630",
+      rxReferenceVoltage     = 8.2,
+      resetSwitch            = "TELE",
+      VoltageSensor          = {
+        main =      { sensorName = "Cels"  },
+        receiver =  { sensorName = "RxBt"  }
+        },
+      CurrentSensor          = {
+        main =      { sensorName = "Curr"  },
+        receiver =  { sensorName = "Curr"  }
+        },
+      MahSensor              = {
+        main =      { sensorName = "mah"  },
+        receiver =  { sensorName = "mah"  }
+        },
+      AdlSensors             = defaultAdlSensors,
+      battery               = { main = Batteries.lipo ,    receiver = Batteries.buffer },
+      CellCount              = { main = 12,        receiver = 2 },
+      capacities             = { main = { 500, 1000, 1500, 2000, 2500, 3000 }, receiver = { 500, 1000, 1500, 2000, 2500, 3000 } },
+      switchAnnounces        = SwitchAnnounceTable,
+      BattPackSelectorSwitch = BattPackSelectorSwitch
+  },
+  {
+    modelNameMatch         = "580t",
+    modelName              = "SAB RAW 580",
+    modelImage             = "580.png",
+    modelWav               = "sr580",
+    rxReferenceVoltage     = 7.85,
+    resetSwitch            = "TELE",
+    VoltageSensor          = {
+      main =      { sensorName = "RB1V"  },
+      receiver =  { sensorName = "RB2V"  }
+      },
+    CurrentSensor          = {
+      main =      { sensorName = "RB1A"  },
+      receiver =  { sensorName = ""  }
+      },
+    MahSensor              = {
+      main =      { sensorName = "RB1C"  },
+      receiver =  { sensorName = ""  }
+      },
+    AdlSensors             = sensg580,
+    battery                = { main = Batteries.lipo ,    receiver = Batteries.buffer },
+    CellCount              = { main = 12,        receiver = 2 },
+    capacities             = { main = { 500, 1000, 1500, 2000, 2500, 3000 }, receiver = { 500, 1000, 1500, 2000, 2500, 3000 } },
+    switchAnnounces        = SwitchAnnounceTable,
+    BattPackSelectorSwitch = BattPackSelectorSwitch
+},  
+  {
+      modelNameMatch         = "heli",
+      modelName              = "SAB Goblin 630",
+      modelImage             = "goblin.png",
+      modelWav               = "sg630",
+      rxReferenceVoltage     = 8.2,
+      resetSwitch            = "TELE",
+      AdlSensors             = sensSimulator,
+
+      switchAnnounces        = SwitchAnnounceTable,
+      BattPackSelectorSwitch = BattPackSelectorSwitch,
+
+      powerSources           = {
+
+        {
+          displayName = "Main", -- single words have to be present as wav or voice announce wont work
+          VoltageSensor = { sensorName = "Cels" },
+          CurrentSensor = { sensorName = "Curr" },
+          MahSensor = { sensorName = "mah" },
+          type = powerSources.lipo,
+          CellCount = 8,
+          capacities = { 500, 1000, 1500, 2000, 2500, 3000 } -- not used as of now
+        },
+  
+
+        {
+          displayName = "Receiver", -- single words have to be present as wav or voice announce wont work
+          VoltageSensor = { sensorName = "RxBt" },
+          CurrentSensor = { sensorName = "Curr" },
+          MahSensor = { sensorName = "mah" },
+          type = powerSources.buffer,
+          CellCount = 2,
+          capacities = { 500, 1000, 1500, 2000, 2500, 3000 } -- not used as of now
+        },
+  
+      }
+
+  }
+}
+
+
+local properties = {
+  "CurVolt", "LatestVolt", "LowestVolt", "HighestVolt",
+  "CurPercRem", "LatestPercRem", "CurAmp", "LatestAmp",
+  "LowestAmp", "HighestAmp", "CellsDetectedCurrent",
+  "cellMissing", "cellInconsistent"
+}
+
+local sensornamedefs = {
+  "VoltageSensor", "CurrentSensor", "MahSensor"
+}
+
+local mySources = { "source1", "source2" }
+
+
 local findPercentRempreviousValues = {}
 
 local modelAlreadyLoaded = false
@@ -979,6 +1089,100 @@ local function findPercentRemNew(source)
   end
 end
 
+local function findPercentRemNew(source)
+  local cellVoltage = source.VoltageSensor.LatestVolt / source.CellCount
+
+  debugPrint("findPercentRem Cell Voltage: ", cellVoltage)
+  debugPrint("findPercentRem context: ", context)
+
+  if cellVoltage > source.type.highVoltage then
+      return 100
+  elseif cellVoltage < source.type.lowVoltage then
+      return 0
+  else
+      -- Method of finding percent in array provided by on4mh (Mike)
+      for i, v in ipairs(source.type.dischargeCurve) do
+          debugPrint(string.format("findPercentRem Check Voltage: %s Context %s", v[1], context))
+          if cellVoltage >= v[1] then
+              local newPercent = v[2]
+
+              -- Initialize previous values if not present
+              if not findPercentRempreviousValues[context] then
+                  findPercentRempreviousValues[context] = newPercent
+                  return newPercent
+              end
+
+              local previousPercent = findPercentRempreviousValues[context]
+              local gracePeriod = source.type.graceperiod
+
+              debugPrint(string.format("findPercentRem CHG Previous Percent: %s", previousPercent))
+              debugPrint(string.format("findPercentRem CHG Grace Period: %s", gracePeriod))
+
+              -- Check if new value is different from the previous one
+              if newPercent ~= previousPercent then
+                  -- Use Timer function to check grace period
+                  if Timer(context, gracePeriod) then
+                      findPercentRempreviousValues[context] = newPercent
+                      return newPercent
+                  else
+                      return previousPercent
+                  end
+              else
+                  -- Reset the timer if the value hasn't changed
+                  TriggerTimers[context] = 0
+                  return previousPercent
+              end
+          end
+      end
+  end
+end
+
+local function findPercentRemNew(source)
+  local cellVoltage = source.VoltageSensor.LatestVolt / source.CellCount
+
+  debugPrint("findPercentRem Cell Voltage: ", cellVoltage)
+
+  if cellVoltage > source.type.highVoltage then
+      return 100
+  elseif cellVoltage < source.type.lowVoltage then
+      return 0
+  else
+      -- Method of finding percent in array provided by on4mh (Mike)
+      for i, v in ipairs(source.type.dischargeCurve) do
+          debugPrint(string.format("findPercentRem Check Voltage: %s", v[1]))
+          if cellVoltage >= v[1] then
+              local newPercent = v[2]
+
+              -- Initialize previous value if not present
+              source.findPercentRempreviousValue = source.findPercentRempreviousValue or newPercent
+
+              local previousPercent = source.findPercentRempreviousValue
+              local gracePeriod = source.type.graceperiod
+
+              debugPrint(string.format("findPercentRem CHG Previous Percent: %s", previousPercent))
+              debugPrint(string.format("findPercentRem CHG Grace Period: %s", gracePeriod))
+
+              -- Check if new value is different from the previous one
+              if newPercent ~= previousPercent then
+                  -- Use Timer function to check grace period
+                  if Timer(source.displayName, gracePeriod) then
+                      source.findPercentRempreviousValue = newPercent
+                      return newPercent
+                  else
+                      return previousPercent
+                  end
+              else
+                  -- Reset the timer if the value hasn't changed
+                  TriggerTimers[source.displayName] = 0
+                  return previousPercent
+              end
+          end
+      end
+  end
+end
+
+
+
 
 -- ####################################################################
 -- ####################################################################
@@ -1307,6 +1511,125 @@ end
   end
 end
 
+local function checkChangedIntervalNew(currentStatus, item, source)
+
+--   if not source then
+--     debugPrint("checkChangedIntervalNew: 'source' is nil for item: " .. tostring(item))
+--     return
+-- end
+
+local context = source and source.displayName or "global"
+
+  -- Get the configuration for the item or use announcementConfigDefault
+  local config, critTH, warnTH, critMD, warnMD, normMD, graceP
+
+  if item ~= "Battery" and item ~= "BatteryNotFull" then
+      config = announcementConfig[item] or announcementConfigDefault
+      critTH = config.critical.threshold
+      warnTH = config.warning.threshold
+      critMD = config.critical.mode
+      warnMD = config.warning.mode
+      normMD = config.normal.mode
+      graceP = config.normal.gracePeriod
+  else
+      config = source.type
+      if item == "Battery" then
+          critTH = config.criticalThreshold
+          warnTH = config.warningThreshold
+          critMD = config.announceCriticalMode
+          warnMD = config.announceWarningMode
+          normMD = config.announceNormalMode
+          graceP = 0 -- handled in findpercremaining
+      elseif item == "BatteryNotFull" then
+          critTH = config.notFullCriticalThreshold
+          warnTH = config.notFullWarningThreshold
+          critMD = config.announceNotFullCriticalMode
+          warnMD = config.announceNotFullWarningMode
+          normMD = "disable"
+          graceP = 0 -- handled in findpercremaining
+      end
+  end
+
+  -- local context = source.displayName or "global"
+  local itemNameWithContext = context .. item
+
+  -- Initialize statusTable entry for the item if it doesn't exist
+  if not statusTable[itemNameWithContext] then
+      statusTable[itemNameWithContext] = { lastStatus = nil, lastAnnounceTime = 0, changeStartTime = 0, context = context }
+  end
+
+  local itemStatus = statusTable[itemNameWithContext]
+  local currentTime = getTime() / 100  -- Get current time in seconds
+
+  debugPrint(string.format("DBGANO: Item: %s, Current Status: %s, Context: %s, Critical Threshold: %s, Warning Threshold: %s, Critical Mode: %s, Warning Mode: %s, Normal Mode: %s, Grace Period: %s",
+  item, tostring(currentStatus), context, tostring(critTH), tostring(warnTH), tostring(critMD), tostring(warnMD), tostring(normMD), tostring(graceP)))
+
+  -- Determine severity and mode
+  local severity, mode = "normal", normMD
+  if type(currentStatus) == "number" then
+      if currentStatus <= critTH then
+          severity, mode = "critical", critMD
+      elseif currentStatus <= warnTH then
+          severity, mode = "warning", warnMD
+      end
+  elseif type(currentStatus) == "boolean" then
+      if currentStatus == warnTH then
+          severity, mode = "warning", warnMD
+      elseif currentStatus == critTH then
+          severity, mode = "critical", critMD
+      end
+  end
+
+  debugPrint(string.format("STCHDET: Item: %s, Current Status: %s, Severity Level: %s, Mode: %s, Context: %s",
+  item, tostring(currentStatus), severity, mode, context))
+
+  if mode == "disable" then
+      -- Do nothing if announcements are disabled
+      debugPrint(string.format("STCHDET: Announcements are disabled for item: %s, Context: %s", item, context))
+      return
+  end
+
+  local announceNow = false
+
+  if mode == "change" then
+      if itemStatus.lastStatus ~= currentStatus then
+          if itemStatus.changeStartTime == 0 then
+              -- Start the grace period
+              itemStatus.changeStartTime = currentTime
+              debugPrint(string.format("STCHDET: Change detected for item: %s, Starting grace period at time: %.2f, Context: %s", item, currentTime, context))
+          else
+              local elapsedGracePeriod = currentTime - itemStatus.changeStartTime
+              debugPrint(string.format("STCHDET: Elapsed grace period for item %s: %.2f seconds, Context: %s", item, elapsedGracePeriod, context))
+              if elapsedGracePeriod >= graceP then
+                  -- Announce if grace period has passed (config.normal.gracePeriod is in seconds)
+                  announceNow = true
+                  debugPrint(string.format("STCHDET: Grace period passed for item: %s, Announcing change, Context: %s", item, context))
+                  itemStatus.lastStatus = currentStatus
+              end
+          end
+      else
+          -- Reset grace period if status reverts to previous within grace period
+          if itemStatus.changeStartTime ~= 0 then
+              debugPrint(string.format("STCHDET: Status reverted to previous within grace period for item: %s, Resetting grace period, Context: %s", item, context))
+              itemStatus.changeStartTime = 0
+          end
+      end
+  elseif type(mode) == "number" then
+      -- Interval mode
+      local interval = mode
+      if (currentTime - itemStatus.lastAnnounceTime) >= interval then
+          announceNow = true
+          debugPrint(string.format("STCHDET: Interval passed for item: %s, Announcing at interval, Context: %s", item, context))
+      end
+  end
+
+  -- Collect announcements
+  if announceNow then
+      debugPrint(string.format("STCHDET: Adding announcement for item: %s, Current status: %s, Severity level: %s, Context: %s", item, currentStatus, severity, context))
+      table.insert(announcements, { item = item, status = currentStatus, severity = severity, context = context })
+      itemStatus.lastAnnounceTime = currentTime
+  end
+end
 
 
 local function doAnnouncements(context)
@@ -1601,6 +1924,90 @@ end
 
 
 
+local function doAnnouncementsNew(source)
+  -- Clear announcements table at the start of each call
+  announcements = {}
+
+  if statusTele and allSensorsValid then
+      -- Debug print the current percentage remaining
+      debugPrint("CCIV: " .. source.VoltageSensor.CurPercRem)
+
+      -- Check for missing cells and trigger interval announcement if applicable
+      if source.VoltageSensor.cellMissing ~= 10 then
+          checkChangedIntervalNew(source.VoltageSensor.cellMissing, "BatteryMissingCell", source)
+      end
+
+      -- Check battery not full condition before pre-flight checks
+      if not preFlightChecksPassed and source.VoltageSensor.CurPercRem ~= "--" and source.VoltageSensor.cellMissing == 0 then
+          checkChangedIntervalNew(source.VoltageSensor.LatestPercRem, "BatteryNotFull", source)
+      end
+
+      -- Check for inconsistent cell voltages
+      checkChangedIntervalNew(source.VoltageSensor.cellInconsistent, "CellDelta", source)
+
+      -- Check the battery status if no cells are missing
+      if source.VoltageSensor.CurPercRem ~= "--" and source.VoltageSensor.cellMissing == 0 then
+          checkChangedIntervalNew(source.VoltageSensor.LatestPercRem, "Battery", source)
+      end
+  end
+
+  -- Process collected announcements
+  if next(announcements) ~= nil then
+      debugPrint("STCHDET: Found announcements to be done.")
+      local contextAnnounceDone = false
+
+      for _, announcement in ipairs(announcements) do
+          debugPrint(string.format("STCHDET: Announcing item: %s, Severity: %s, Current value: %s", announcement.item, announcement.severity, announcement.status))
+
+          -- Announce the source display name and type name once per context
+          if not contextAnnounceDone then
+              for word in string.gmatch(source.displayName .. " " .. source.type.name, "%S+") do
+                  local lowerWord = string.lower(word)
+                  queueSound(lowerWord, 0)
+              end
+              contextAnnounceDone = true
+          end
+
+          -- Announce based on the item type and severity
+          if announcement.item == "BatteryMissingCell" then
+              if announcement.severity == "critical" or announcement.severity == "warning" then
+                  local reverseValue = math.abs(source.VoltageSensor.cellMissing)
+
+                  if source.type.isNotABattery then
+                      queueSound(announcement.severity, 0)
+                      queueSound("low", 0)
+                      queueSound("voltage", 0)
+                  else
+                      queueSound(announcement.severity, 0)
+                      queueSound("missing", 0)
+                      queueNumber(reverseValue, 0, 0, 0)
+                      queueSound("of", 0)
+                      queueNumber(source.CellCount, 0, 0, 0)
+                      queueSound("cells", 0)
+                  end
+              end
+          elseif announcement.item == "CellDelta" then
+              if announcement.severity == "critical" or announcement.severity == "warning" then
+                  queueSound(announcement.severity, 0)
+                  queueSound("icw", 0)
+              end
+          elseif announcement.item == "BatteryNotFull" then
+              if announcement.severity == "critical" or announcement.severity == "warning" then
+                  queueSound(announcement.severity, 0)
+                  queueSound("notfull", 0)
+              end
+          elseif announcement.item == "Battery" then
+              queueSound(announcement.severity, 0)
+              queueNumber(source.VoltageSensor.LatestPercRem, 13, 0, 0)
+          end
+      end
+  else
+      debugPrint("STCHDET: No announcements to be done.")
+  end
+end
+
+
+
 local function doGeneralAnnouncements()
   -- checkChangedInterval(85, "telemetry", context) -- Numerical status example
   -- checkChangedInterval("online", "telemetry", context) -- Boolean status example
@@ -1719,6 +2126,31 @@ local vDelta = thisModel.powerSources[source].type.cellDeltaVoltage
     end
   end
 end
+
+local function check_cell_delta_voltageNew(source)
+  -- Get the cell voltage delta threshold for the power source type
+  local vDelta = source.type.cellDeltaVoltage
+
+  -- Check if the VoltageSensor value is a table
+  if type(source.VoltageSensor.value) == "table" then
+      source.VoltageSensor.cellInconsistent = false
+
+      -- Compare each cell voltage with every other cell voltage
+      for i, v1 in ipairs(source.VoltageSensor.value) do
+          for j, v2 in ipairs(source.VoltageSensor.value) do
+              -- If the difference between any two cells is greater than the threshold, mark as inconsistent
+              if i ~= j and (math.abs(v1 - v2) > vDelta) then
+                  source.VoltageSensor.cellInconsistent = true
+                  break
+              end
+          end
+          if source.VoltageSensor.cellInconsistent then
+              break
+          end
+      end
+  end
+end
+
 
 -- ####################################################################
 local function check_for_missing_cells(context)
@@ -1847,6 +2279,34 @@ end
 
 end
 
+-- ####################################################################
+local function check_for_missing_cellsNew(source)
+  -- Check if the cell count is greater than 0
+  if source.CellCount > 0 then
+      local missingCellDetected = false
+
+      -- Handle case where VoltageSensor value is a table
+      if type(source.VoltageSensor.value) == "table" then
+          source.VoltageSensor.CellsDetectedCurrent = #source.VoltageSensor.value
+          if #source.VoltageSensor.value ~= source.CellCount then
+              missingCellDetected = true
+          end
+
+      -- Handle case where VoltageSensor value is a number (e.g., VFAS sensor)
+      elseif type(source.VoltageSensor.value) == "number" then
+          source.VoltageSensor.CellsDetectedCurrent = math.floor(source.VoltageSensor.value / source.type.lowVoltage)
+          if source.VoltageSensor.CellsDetectedCurrent ~= source.CellCount then
+              missingCellDetected = true
+          end
+      end
+
+      -- Debug print statement for verification
+      debugPrint("CBSF: " .. tostring(source.VoltageSensor.cellMissing) .. " SOURCE: " .. source.displayName .. " CC: " .. source.CellCount .. " DETECT NOW: " .. source.VoltageSensor.CellsDetectedCurrent)
+
+      -- Set cellMissing value
+      source.VoltageSensor.cellMissing = source.VoltageSensor.CellsDetectedCurrent - source.CellCount
+  end
+end
 
 
 local function initializeSensorId(sensor)
@@ -1899,15 +2359,28 @@ local function initializeAndCheckAllSensorIds()
   --initializeSensorId(thisModel.MahSensor.main)
   --initializeSensorId(thisModel.MahSensor.receiver)
 
-  initializeSensorId(thisModel.powerSources.source1.VoltageSensor)
-  initializeSensorId(thisModel.powerSources.source1.CurrentSensor)
-  initializeSensorId(thisModel.powerSources.source1.MahSensor)
+ -- initializeSensorId(thisModel.powerSources.source1.VoltageSensor)
+ -- initializeSensorId(thisModel.powerSources.source1.CurrentSensor)
+ -- initializeSensorId(thisModel.powerSources.source1.MahSensor)
 
-  initializeSensorId(thisModel.powerSources.source2.VoltageSensor)
-  initializeSensorId(thisModel.powerSources.source2.CurrentSensor)
-  initializeSensorId(thisModel.powerSources.source2.MahSensor)
+ -- initializeSensorId(thisModel.powerSources.source2.VoltageSensor)
+ -- initializeSensorId(thisModel.powerSources.source2.CurrentSensor)
+ -- initializeSensorId(thisModel.powerSources.source2.MahSensor)
+debugPrint("IAS: start")
+ for _, source in ipairs(thisModel.powerSources) do
+  debugPrint("IAS: Source: " .. source.displayName )
+  --if thisModel.powerSources[source] then
+    for _, name in ipairs(sensornamedefs) do
+      local sensor = source[name]
+      if sensor then
+        debugPrint("IAS: Source: Name: " .. name)
+        initializeSensorId(sensor)
+      end
+    end
+  --end
+end
 
-
+  
  --for _, adlSensor in ipairs(thisModel.AdlSensors) do
  --   for _, sensor in ipairs(adlSensor.sensors) do
  --     initializeSensorId(sensor)
@@ -2052,6 +2525,45 @@ return true
 end
 
 
+local function checkAllSourceStatuspreFlight(source)
+
+  --debugPrint("PFS CELL COUNT: " .. source.VoltageSensor.cellMissing .. "1:" .. preFlightChecksPassed .. "2:" .. allSensorsValid)
+
+  if not preFlightChecksPassed and allSensorsValid then
+      -- Check if the VoltageSensor current percentage remaining is valid
+
+      if source.VoltageSensor.CurPercRem == "--" then
+          pfStatus.text = source.displayName .. " " .. source.type.name .. " waiting for Percent update"
+          pfStatus.color = GREEN          
+          return false
+      end
+
+      -- Check if the cell count update is still pending
+      if source.VoltageSensor.cellMissing == 10 then
+          pfStatus.text = source.displayName .. " " .. source.type.name .. " waiting for Cell update"
+          pfStatus.color = GREEN          
+          return false
+      end
+
+      -- Check for missing cells
+      if source.VoltageSensor.cellMissing ~= 0 then
+          pfStatus.text = source.displayName .. " " .. source.type.name .. " check Cell count"
+          pfStatus.color = RED          
+          return false
+      end
+
+      -- Check if the latest percentage remaining is below the threshold
+      if source.VoltageSensor.LatestPercRem < source.type.notFullWarningThreshold then
+          pfStatus.text = source.displayName .. " " .. source.type.name .. " not Full"
+          pfStatus.color = RED
+          return false
+      end
+  end
+
+  return true
+end
+
+
 -- ####################################################################
 local function init_func()
 
@@ -2140,62 +2652,140 @@ thisModel = modelDetails
 
 -- NEW
 
-if thisModel.powerSources.source1.type.lowVoltage == nil then
-  thisModel.powerSources.source1.type.lowVoltage = 3.27 --todo is this wise todo ?
+-- if thisModel.powerSources.source1 then
+-- 
+-- if thisModel.powerSources.source1.type.lowVoltage == nil then
+--   thisModel.powerSources.source1.type.lowVoltage = 3.27 --todo is this wise todo ?
+-- end
+-- 
+-- if thisModel.powerSources.source1.type.highVoltage == nil then
+--   thisModel.powerSources.source1.type.highVoltage = 4.2 --todo is this wise todo ?
+-- end
+-- 
+-- if thisModel.powerSources.source1.type.dischargeCurve == nil then -- we have no discharge curve .... lets build a linear one at runtime
+-- 
+--  debugPrint("NO DISCHARGE CURVE FOR MAIN")
+-- 
+--  thisModel.powerSources.source1.type.dischargeCurve = calculateLinearDischargeCurve(thisModel.powerSources.source1.type.lowVoltage, thisModel.powerSources.source1.type.highVoltage)
+-- 
+-- end
+-- 
+-- end
+-- 
+-- if thisModel.powerSources.source2 then
+-- 
+-- if thisModel.powerSources.source2.type.lowVoltage == nil  then
+--  if thisModel.powerSources.source2.type.isNotABattery then
+--   thisModel.powerSources.source2.type.lowVoltage = 6 --todo is this wise todo ?
+--  else
+--   thisModel.powerSources.source2.type.lowVoltage = 3.27
+--  end
+-- end
+-- 
+-- if thisModel.powerSources.source2.type.highVoltage == nil  then
+--  if thisModel.powerSources.source2.type.isNotABattery then
+--   thisModel.powerSources.source2.type.highVoltage = rxReferenceVoltage
+--  else
+--   thisModel.powerSources.source2.type.highVoltage = 4.2
+--  end
+-- end
+-- 
+-- 
+-- if thisModel.powerSources.source2.type.isNotABattery then
+-- 
+--   thisModel.powerSources.source2.type.lowVoltage  = thisModel.powerSources.source2.type.lowVoltage / 2
+--   thisModel.powerSources.source2.type.highVoltage = thisModel.powerSources.source2.type.highVoltage / 2
+-- 
+-- end
+-- 
+-- 
+-- if thisModel.powerSources.source2.type.dischargeCurve == nil  then-- we have no discharge curve .... lets build a linear one at runtime
+-- 
+-- debugPrint("NO DISCHARGE CURVE FOR RECEIVER")
+-- 
+-- 
+-- 
+-- thisModel.powerSources.source2.type.dischargeCurve = calculateLinearDischargeCurve(thisModel.powerSources.source2.type.lowVoltage, thisModel.powerSources.source2.type.highVoltage)
+-- 
+-- end
+-- 
+-- end
+-- 
+
+
+
+-- Iterate over each power source
+for _, source in ipairs(thisModel.powerSources) do
+
+  -- Initialize sensor properties
+  for _, property in ipairs(properties) do
+    if property == "cellMissing" then
+      source.VoltageSensor[property] = 10
+    elseif property == "cellInconsistent" then
+      source.VoltageSensor[property] = false
+    else
+      if string.find(property, "Amp") then
+        source.CurrentSensor[property] = 0
+      else
+        source.VoltageSensor[property] = 0
+      end
+    end
+  end
+
+  -- Set default voltage values
+  if source.type.lowVoltage == nil then
+    if source.type.isNotABattery then
+      source.type.lowVoltage = 6 -- Default for non-battery sources
+    else
+      source.type.lowVoltage = 3.27 -- Default for battery sources
+    end
+  end
+
+  if source.type.highVoltage == nil then
+    if source.type.isNotABattery then
+      source.type.highVoltage = rxReferenceVoltage
+    else
+      source.type.highVoltage = 4.2 -- Default for battery sources
+    end
+  end
+
+  -- Adjust voltages for non-battery sources
+  if source.type.isNotABattery then
+    source.type.lowVoltage = source.type.lowVoltage / 2
+    source.type.highVoltage = source.type.highVoltage / 2
+  end
+
+  -- Calculate linear discharge curve if not defined
+  if source.type.dischargeCurve == nil then
+    debugPrint("NO DISCHARGE CURVE FOR " .. (source.displayName or "UNKNOWN SOURCE"))
+    source.type.dischargeCurve = calculateLinearDischargeCurve(source.type.lowVoltage, source.type.highVoltage)
+  end
 end
 
-if thisModel.powerSources.source1.type.highVoltage == nil then
-  thisModel.powerSources.source1.type.highVoltage = 4.2 --todo is this wise todo ?
-end
-
-if thisModel.powerSources.source1.type.dischargeCurve == nil then -- we have no discharge curve .... lets build a linear one at runtime
-
- debugPrint("NO DISCHARGE CURVE FOR MAIN")
-
- thisModel.powerSources.source1.type.dischargeCurve = calculateLinearDischargeCurve(thisModel.powerSources.source1.type.lowVoltage, thisModel.powerSources.source1.type.highVoltage)
-
-end
 
 
 
-if thisModel.powerSources.source2.type.lowVoltage == nil  then
- if thisModel.powerSources.source2.type.isNotABattery then
-  thisModel.powerSources.source2.type.lowVoltage = 6 --todo is this wise todo ?
- else
-  thisModel.powerSources.source2.type.lowVoltage = 3.27
- end
-end
-
-if thisModel.powerSources.source2.type.highVoltage == nil  then
- if thisModel.powerSources.source2.type.isNotABattery then
-  thisModel.powerSources.source2.type.highVoltage = rxReferenceVoltage
- else
-  thisModel.powerSources.source2.type.highVoltage = 4.2
- end
-end
-
-
-if thisModel.powerSources.source2.type.isNotABattery then
-
-  thisModel.powerSources.source2.type.lowVoltage  = thisModel.powerSources.source2.type.lowVoltage / 2
-  thisModel.powerSources.source2.type.highVoltage = thisModel.powerSources.source2.type.highVoltage / 2
-
-end
 
 
 
-if thisModel.powerSources.source2.type.dischargeCurve == nil  then-- we have no discharge curve .... lets build a linear one at runtime
 
-debugPrint("NO DISCHARGE CURVE FOR RECEIVER")
+-- for _, source in ipairs(thisModel.powerSources) do
+--   for _, property in ipairs(properties) do
+--     if property == "cellMissing" then
+--       source.VoltageSensor[property] = 10
+--     elseif property == "cellInconsistent" then
+--       source.VoltageSensor[property] = false
+--     else
+--       if string.find(property, "Amp") then
+--         source.CurrentSensor[property] = 0
+--       else
+--         source.VoltageSensor[property] = 0
+--       end
+--     end
+--   end
+-- end
 
 
-
-thisModel.powerSources.source2.type.dischargeCurve = calculateLinearDischargeCurve(thisModel.powerSources.source2.type.lowVoltage, thisModel.powerSources.source2.type.highVoltage)
-
-end
-
-
- 
 
 -- Call the function to update the config
 --updateAnnouncementConfig(announcementConfig, BatteryTypeDefaults, typeBattery["main"], typeBattery["receiver"])
@@ -2264,8 +2854,7 @@ pfStatus = {
   -- thisModel.VoltageSensor.main.CellsDetectedCurrent = 0
   -- thisModel.VoltageSensor.receiver.CellsDetectedCurrent = 0
 
-  thisModel.powerSources.source1.VoltageSensor.CellsDetectedCurrent = 0
-  thisModel.powerSources.source2.VoltageSensor.CellsDetectedCurrent = 0
+
 
 
   -- thisModel.powerSources.source2.type.
@@ -2374,29 +2963,87 @@ pfStatus = {
 --  thisModel.VoltageSensor.receiver.LatestPercRem = 0
 
 -- NEW
-  thisModel.powerSources.source1.VoltageSensor.CurVolt = 0
-  thisModel.powerSources.source1.VoltageSensor.LatestVolt = 0
-  thisModel.powerSources.source1.VoltageSensor.LowestVolt = 0
-  thisModel.powerSources.source1.VoltageSensor.HighestVolt = 0
-  thisModel.powerSources.source1.VoltageSensor.CurPercRem = 0
-  thisModel.powerSources.source1.VoltageSensor.LatestPercRem = 0
+--  thisModel.powerSources.source1.VoltageSensor.CurVolt = 0
+--  thisModel.powerSources.source1.VoltageSensor.LatestVolt = 0
+--  thisModel.powerSources.source1.VoltageSensor.LowestVolt = 0
+--  thisModel.powerSources.source1.VoltageSensor.HighestVolt = 0
+--  thisModel.powerSources.source1.VoltageSensor.CurPercRem = 0
+--  thisModel.powerSources.source1.VoltageSensor.LatestPercRem = 0
+--
+--  thisModel.powerSources.source1.CurrentSensor.CurAmp = 0
+--  thisModel.powerSources.source1.CurrentSensor.LatestAmp = 0
+--  thisModel.powerSources.source1.CurrentSensor.LowestAmp = 0
+--  thisModel.powerSources.source1.CurrentSensor.HighestAmp = 0
+--
+--  thisModel.powerSources.source2.VoltageSensor.CurVolt = 0
+--  thisModel.powerSources.source2.VoltageSensor.LatestVolt = 0
+--  thisModel.powerSources.source2.VoltageSensor.LowestVolt = 0
+--  thisModel.powerSources.source2.VoltageSensor.HighestVolt = 0
+--  thisModel.powerSources.source2.VoltageSensor.CurPercRem = 0
+--  thisModel.powerSources.source2.VoltageSensor.LatestPercRem = 0
+--
+--  thisModel.powerSources.source2.CurrentSensor.CurAmp = 0
+--  thisModel.powerSources.source2.CurrentSensor.LatestAmp = 0
+--  thisModel.powerSources.source2.CurrentSensor.LowestAmp = 0
+--  thisModel.powerSources.source2.CurrentSensor.HighestAmp = 0
+--
+--  thisModel.powerSources.source1.VoltageSensor.CellsDetectedCurrent = 0
+--  thisModel.powerSources.source2.VoltageSensor.CellsDetectedCurrent = 0
+--
+--  thisModel.powerSources.source1.VoltageSensor.cellMissing = 10
+--  thisModel.powerSources.source2.VoltageSensor.cellMissing = 10
+--
+--  thisModel.powerSources.source1.VoltageSensor.cellInconsistent = false
+--  thisModel.powerSources.source2.VoltageSensor.cellInconsistent = false
 
-  thisModel.powerSources.source1.CurrentSensor.CurAmp = 0
-  thisModel.powerSources.source1.CurrentSensor.LatestAmp = 0
-  thisModel.powerSources.source1.CurrentSensor.LowestAmp = 0
-  thisModel.powerSources.source1.CurrentSensor.HighestAmp = 0
+-- availSources = {}
+-- 
+-- for _, source in ipairs(mySources) do
+--     -- Ensure the source exists
+--     if thisModel.powerSources[source] then
+--         local validSource = true
+--         
+--         ---- Check if the VoltageSensor exists
+--         --if not thisModel.powerSources[source].VoltageSensor then
+--         --    validSource = false
+--         --end
+-- --
+--         ---- Check if the CurrentSensor exists
+--         --if not thisModel.powerSources[source].CurrentSensor then
+--         --    validSource = false
+--         --end
+-- 
+--         -- Initialize properties if the source and its sensors exist
+--         if validSource then
+--             for _, property in ipairs(properties) do
+--                 if property == "cellMissing" then
+--                     thisModel.powerSources[source].VoltageSensor[property] = 10
+--                 elseif property == "cellInconsistent" then
+--                     thisModel.powerSources[source].VoltageSensor[property] = false
+--                 else
+--                     if string.find(property, "Amp") then
+--                         thisModel.powerSources[source].CurrentSensor[property] = 0
+--                     else
+--                         thisModel.powerSources[source].VoltageSensor[property] = 0
+--                     end
+--                 end
+--             end
+-- 
+--             -- Add the valid source to availSources
+--             table.insert(availSources, source)
+--         end
+--     end
+-- end
 
-  thisModel.powerSources.source2.VoltageSensor.CurVolt = 0
-  thisModel.powerSources.source2.VoltageSensor.LatestVolt = 0
-  thisModel.powerSources.source2.VoltageSensor.LowestVolt = 0
-  thisModel.powerSources.source2.VoltageSensor.HighestVolt = 0
-  thisModel.powerSources.source2.VoltageSensor.CurPercRem = 0
-  thisModel.powerSources.source2.VoltageSensor.LatestPercRem = 0
 
-  thisModel.powerSources.source2.CurrentSensor.CurAmp = 0
-  thisModel.powerSources.source2.CurrentSensor.LatestAmp = 0
-  thisModel.powerSources.source2.CurrentSensor.LowestAmp = 0
-  thisModel.powerSources.source2.CurrentSensor.HighestAmp = 0
+
+
+--local availSources = {}
+
+-- for i, source in ipairs(thisModel.powerSources) do
+--   table.insert(availSources, source)
+-- end
+
 
 -- thisModel.powerSources.source1.VoltageSensor.
 
@@ -2412,8 +3059,7 @@ pfStatus = {
   -- cellMissing["main"] = 0
   -- cellMissing["receiver"] = 0
 
-  thisModel.powerSources.source1.VoltageSensor.cellMissing = 10
-  thisModel.powerSources.source2.VoltageSensor.cellMissing = 10
+
 
  -- thisModel.VoltageSensor.main.cellMissing = 10
  -- thisModel.VoltageSensor.receiver.cellMissing = 10
@@ -2427,8 +3073,7 @@ pfStatus = {
  -- thisModel.VoltageSensor.main.cellInconsistent = false
  -- thisModel.VoltageSensor.receiver.cellInconsistent = false
 
-  thisModel.powerSources.source1.VoltageSensor.cellInconsistent = false
-  thisModel.powerSources.source2.VoltageSensor.cellInconsistent = false
+
 
 
 
@@ -2624,17 +3269,13 @@ local function checkForTelemetry()
   --  thisModel.VoltageSensor.main.CurPercRem     = "--"
   --  thisModel.VoltageSensor.receiver.CurPercRem     = "--"
 
-
-    thisModel.powerSources.source1.VoltageSensor.CurVolt     = "--.--"
-    thisModel.powerSources.source2.VoltageSensor.CurVolt     = "--.--"
-
-    thisModel.powerSources.source1.VoltageSensor.CurPercRem     = "--"
-    thisModel.powerSources.source2.VoltageSensor.CurPercRem     = "--"    
-
-    thisModel.powerSources.source1.CurrentSensor.CurAmp      = "--.--"
-    thisModel.powerSources.source2.CurrentSensor.CurAmp      = "--.--"
-
-
+  for _, source in ipairs(thisModel.powerSources) do
+    if thisModel.powerSources[source] then
+      thisModel.powerSources[source].VoltageSensor.CurVolt = "--.--"
+      thisModel.powerSources[source].VoltageSensor.CurPercRem = "--"
+      thisModel.powerSources[source].CurrentSensor.CurAmp = "--.--"
+    end
+  end
 
     pfStatus.text = "Waiting for Telemetry"
     pfStatus.color = RED
@@ -2870,6 +3511,65 @@ debugPrint("UPDSEN: " .. source)
 
 end
 
+local function updateMinMaxValues(currentValue, valueType, sensor)
+  if sensor["Latest" .. valueType] == 0 or currentValue ~= 0 then
+      sensor["Latest" .. valueType] = currentValue
+  end
+
+  if sensor["Highest" .. valueType] == 0 or (currentValue > sensor["Highest" .. valueType] and currentValue ~= 0.00) then
+      sensor["Highest" .. valueType] = currentValue
+  end
+
+  if sensor["Lowest" .. valueType] == 0 or (currentValue < sensor["Lowest" .. valueType] and currentValue ~= 0.00) then
+      sensor["Lowest" .. valueType] = currentValue
+  end
+end
+
+-- ####################################################################
+local function updatePowerSourceSensorValues(source)
+  debugPrint("UPDSEN: " .. source.displayName)
+
+  -- Update sensor values
+  updateSensorValue(source.VoltageSensor)
+  updateSensorValue(source.CurrentSensor)
+  updateSensorValue(source.MahSensor)
+
+  -- Update current values for display
+  source.VoltageSensor.CurVolt = math.floor(getCellVoltage(source.VoltageSensor.value) * 100) / 100
+  source.CurrentSensor.CurAmp = math.floor(getAmp(source.CurrentSensor.value) * 100) / 100
+
+  -- Debug print updated sensor values
+  debugPrint(string.format("SUPD Updated Sensor Values: source: %s Sensor Voltage: %s (Cell: %s) Sensor Current: %s Sensor mah: %s Volt: %s Current: %s mAh: %s",
+      source.displayName,
+      source.VoltageSensor.sensorName,
+      source.VoltageSensor.CurVolt,
+      source.CurrentSensor.sensorName,
+      source.MahSensor.sensorName,
+      source.VoltageSensor.value,
+      source.CurrentSensor.value,
+      source.MahSensor.value))
+
+  -- Update Latest, Highest, and Lowest values if conditions are met
+  updateMinMaxValues(source.VoltageSensor.CurVolt, "Volt", source.VoltageSensor)
+  updateMinMaxValues(source.CurrentSensor.CurAmp, "Amp", source.CurrentSensor)
+
+  -- Update percentage remaining if necessary
+  --if not source.VoltageSensor.cellMissing then
+      source.VoltageSensor.CurPercRem = findPercentRemNew(source)
+      debugPrint(string.format("SUPD: Got Percent: %s for source: %s", source.VoltageSensor.CurPercRem, source.displayName))
+
+      if source.VoltageSensor.LatestPercRem == 0 or source.VoltageSensor.LatestPercRem ~= 0 then
+          source.VoltageSensor.LatestPercRem = source.VoltageSensor.CurPercRem
+      end
+  --end
+
+  -- Perform additional operations if needed
+  -- sensorline1 = build_sensor_line(tableLine1StatSensors)
+  -- sensorline2 = build_sensor_line(tableLine2StatSensors)
+  -- debugPrint("SENSLINE: " .. sensorline1)
+  -- debugPrint("SENSLINE: " .. sensorline2)
+end
+
 
 
 -- ####################################################################
@@ -3073,35 +3773,64 @@ switchAnnounce()
 
   local allSourcesPassed = true
 
-  local Sources = {"source1", "source2"}
+--   local Sources = {"source1", "source2"}
+-- 
+--   for _, source in ipairs(Sources) do
+-- 
+--     if thisModel.powerSources[source].VoltageSensor.valid then -- only do these if we have a valid Voltage sensor
+-- 
+--   updatePowerSourceSensorValues(source)
+-- 
+-- 
+--   check_for_missing_cellsNew(source)
+-- 
+--   if thisModel.powerSources[source].VoltageSensor.cellMissing == 0 then -- if cell number is fine we have got voltage and can do the rest of the checks
+-- 
+--   check_cell_delta_voltageNew(source)
+-- 
+--   end
+-- 
+--     local sourceStatus = checkAllSourceStatuspreFlight(source)
+--     debugPrint("PFST: " .. tostring(preFlightChecksPassed) .. " source: " .. source .. " Status: " .. tostring(sourceStatus))
+-- 
+--     if not sourceStatus then
+--       allSourcesPassed = false -- If any source fails, set the local variable to false
+--     end
+-- 
+--     doAnnouncementsNew(source)
+-- 
+--   end
+-- 
+-- end
 
-  for _, source in ipairs(Sources) do
+for _, source in ipairs(thisModel.powerSources) do
+  -- Check if the Voltage sensor is valid for the current source
+  if source.VoltageSensor.valid then
 
-    if thisModel.powerSources[source].VoltageSensor.valid then -- only do these if we have a valid Voltage sensor
+    debugPrint("MNL: " .. source.displayName )
+      updatePowerSourceSensorValues(source)
+      check_for_missing_cellsNew(source)
 
-  updatePowerSourceSensorValues(source)
+      -- Perform additional checks if cell number is fine
+      if source.VoltageSensor.cellMissing == 0 then
+          check_cell_delta_voltageNew(source)
+      end
 
+      -- Check source status and print debug information
+      local sourceStatus = checkAllSourceStatuspreFlight(source)
+      debugPrint("PFST: " .. tostring(preFlightChecksPassed) .. " source: " .. source.displayName .. " Status: " .. tostring(sourceStatus))
 
-  check_for_missing_cellsNew(source)
+      -- Update overall status
+      if not sourceStatus then
+          allSourcesPassed = false
+      end
 
-  if thisModel.powerSources[source].VoltageSensor.cellMissing == 0 then -- if cell number is fine we have got voltage and can do the rest of the checks
-
-  check_cell_delta_voltageNew(source)
-
+      -- Perform announcements based on the source
+      doAnnouncementsNew(source)
   end
-
-    local sourceStatus = checkAllSourceStatuspreFlight(source)
-    debugPrint("PFST: " .. tostring(preFlightChecksPassed) .. " source: " .. source .. " Status: " .. tostring(sourceStatus))
-
-    if not sourceStatus then
-      allSourcesPassed = false -- If any source fails, set the local variable to false
-    end
-
-    doAnnouncementsNew(source)
-
-  end
-
 end
+
+
 
 
 preFlightChecksPassed = allSourcesPassed -- Update the main flag based on the local variable
@@ -3360,6 +4089,63 @@ end
 
 end
 
+local function drawNewBatteryNew(xOrigin, yOrigin, source, wgt, batCol, txtCol, size)
+  -- Context
+  local myBatt = {
+    ["x"] = xOrigin,
+    ["y"] = yOrigin,
+    ["w"] = 120,
+    ["h"] = 30,
+    ["segments_w"] = 15,
+    ["color"] = WHITE,
+    ["cath_w"] = 4,
+    ["font"] = 0,
+    ["cath_h"] = 18
+  }
+
+  if size == "x" then
+    myBatt.h = 40
+    myBatt.cath_w = 6
+    myBatt.cath_h = 22
+    myBatt.w = 160
+    myBatt.font = MIDSIZE
+  end
+
+  local percentage = source.VoltageSensor.LatestPercRem
+  local battery = source.type
+
+  if percentage == "--" then
+    percentage = 0
+  end
+
+  if percentage > 0 then
+    BlinkWhenZero = 0
+  else
+    BlinkWhenZero = BLINK
+  end
+
+  -- Fill battery gauge
+  lcd.setColor(CUSTOM_COLOR, getPercentColor(percentage, battery))
+  lcd.drawGauge(wgt.zone.x + myBatt.x, wgt.zone.y + myBatt.y, myBatt.w, myBatt.h, percentage, 100, CUSTOM_COLOR)
+
+  -- Draw battery outline
+  lcd.setColor(CUSTOM_COLOR, batCol)
+  lcd.drawRectangle(wgt.zone.x + myBatt.x, wgt.zone.y + myBatt.y, myBatt.w, myBatt.h, batCol, 2)
+  lcd.drawFilledRectangle(wgt.zone.x + myBatt.x + myBatt.w,
+                          wgt.zone.y + myBatt.y + myBatt.cath_h / 2 - 2.5,
+                          myBatt.cath_w,
+                          myBatt.cath_h,
+                          batCol)
+
+  -- Draw battery percentage text
+  lcd.drawText(wgt.zone.x + myBatt.x + 20, wgt.zone.y + myBatt.y + 5, string.format("%d%%", percentage), LEFT + myBatt.font + batCol)
+
+  -- Draw additional information if available
+  if source.MahSensor.value ~= nil and source.MahSensor.value ~= 0 then
+    lcd.drawText(wgt.zone.x + myBatt.x, wgt.zone.y + myBatt.y + myBatt.h,
+                 string.format("%d mAh used", source.MahSensor.value), myBatt.font + txtCol + BlinkWhenZero)
+  end
+end
 
 
 
@@ -3551,9 +4337,13 @@ local function refreshZoneXLarge(wgt)
   -- if thisModel.VoltageSensor.main.valid or thisModel.CurrentSensor.main.valid then drawMain = true else drawMain = false end
   -- if thisModel.VoltageSensor.receiver.valid or thisModel.CurrentSensor.receiver.valid then drawReceiver = true else drawReceiver = false end
   
-  if thisModel.powerSources.source1.VoltageSensor.valid or thisModel.powerSources.source1.CurrentSensor.valid then drawMain = true else drawMain = false end
-  if thisModel.powerSources.source2.VoltageSensor.valid or thisModel.powerSources.source2.CurrentSensor.valid then drawReceiver = true else drawReceiver = false end
-  
+  --for _, source in ipairs(availSources) do
+--
+  --if thisModel.powerSources[source].VoltageSensor.valid or thisModel.powerSources[source].CurrentSensor.valid then drawMain = true else drawMain = false end
+  --if thisModel.powerSources.source2.VoltageSensor.valid or thisModel.powerSources.source2.CurrentSensor.valid then drawReceiver = true else drawReceiver = false end
+  --
+  --end
+
 
   x = 0
   y = 0
@@ -3675,7 +4465,7 @@ local function drawBottomSensorLine(sensors, y)
   local lowestCharDisplayname = 4
   local lowestCharValue = 6
 
-  local totalCharsperLine = math.floor(( wgt.zone.w - offsetX ) / fontSizes["s"].colSpacing)
+  local totalCharsperLine = math.floor(( wgt.zone.w - offsetX ) / fontSizes["s"].colSpacing) 
 
   -- Determine the optimal number of sensors per line
   local sensorsPerLine = math.min(4, math.ceil(totalSensors / maxLines))
@@ -3781,7 +4571,7 @@ valuePxlWidth, totalCharsperLine, sensorsPerLine, remainingChars, additionalChar
   -- Iterate over sensors table using ipairs
   for i, sensor in ipairs(sensors) do
 
-      if wgt.zone.h <= 168 and i > 8 then
+      if y > wgt.zone.h  then
           break
       end
 
@@ -3847,7 +4637,7 @@ valuePxlWidth, totalCharsperLine, sensorsPerLine, remainingChars, additionalChar
 
       -- Adjust y position for new line if necessary
       if colIndex == sensorsPerLine - 1 and i < totalSensors then
-          y = y - fontSizes["s"].lineSpacing
+          y = y + fontSizes["s"].lineSpacing
       end
   end
 
@@ -3889,55 +4679,94 @@ end
 
 
 
-if drawMain then
--- Main Section
-y = drawText(thisModel.powerSources.source1.displayName .. " " .. thisModel.powerSources.source1.type.name , x, y + topSpacing, "l", COLOR_THEME_SECONDARY2)
---y = y + fontSizes["l"].fontpxl + fontSizes["l"].lineSpacing
+--  if drawMain then
+--  -- Main Section
+--  y = drawText(thisModel.powerSources.source1.displayName .. " " .. thisModel.powerSources.source1.type.name , x, y + topSpacing, "l", COLOR_THEME_SECONDARY2)
+--  --y = y + fontSizes["l"].fontpxl + fontSizes["l"].lineSpacing
+--  
+--  --y = drawSensorLine("C:", COLOR_THEME_FOCUS, thisModel.VoltageSensor.main.CurVolt .. "V", GREEN, "L:", COLOR_THEME_FOCUS, thisModel.VoltageSensor.main.LowestVolt .. "V", RED, y)
+--  --y = drawSensorLine("C:", COLOR_THEME_FOCUS, thisModel.CurrentSensor.main.CurAmp .. "A", GREEN, "H:", COLOR_THEME_FOCUS,thisModel.CurrentSensor.main.HighestAmp .. "A", RED, y)
+--  y = drawSensorLineNew(thisModel.powerSources.source1.VoltageSensor , "V", y)
+--  y = drawSensorLineNew(thisModel.powerSources.source1.CurrentSensor, "A", y)
+--  -- Receiver Section
+--  y = y + headerSpacing
+--  
+--  end
+--  
+--  if drawReceiver then
+--  
+--  y = drawText(thisModel.powerSources.source2.displayName .. " " .. thisModel.powerSources.source2.type.name, x, y, "l", COLOR_THEME_SECONDARY2)
+--  --y = y + fontSizes["l"].fontpxl + fontSizes["l"].lineSpacing
+--  
+--  --y = drawSensorLine("C:", COLOR_THEME_FOCUS, thisModel.VoltageSensor.receiver.CurVolt .. "V", GREEN, "L:", COLOR_THEME_FOCUS,thisModel.VoltageSensor.receiver.LowestVolt .. "V", RED, y)
+--  --y = drawSensorLine("C:", COLOR_THEME_FOCUS, thisModel.CurrentSensor.receiver.CurAmp .. "A", GREEN, "H:", COLOR_THEME_FOCUS,thisModel.CurrentSensor.receiver.HighestAmp .. "A", RED, y)
+--  y = drawSensorLineNew(thisModel.powerSources.source2.VoltageSensor, "V", y)
+--  y = drawSensorLineNew(thisModel.powerSources.source2.CurrentSensor, "A", y)
+--  
+--  end
+--  
+--  -- Bottom Section
+--  --drawBottomSensorLine(thisModel.AdlSensors, wgt.zone.h - fontSizes["s"].fontpxl - fontSizes["s"].lineSpacing - 5)
+--  
+--  
+--  drawBottomSensorLine(thisModel.AdlSensors, wgt.zone.h - fontSizes["s"].fontpxl - fontSizes["s"].lineSpacing - 5)
+--  
+--  
+--  
+--  
+--  
+--  if wgt.zone.h >= 272 then
+--  
+--  -- local function drawNewBattery(xOrigin, yOrigin, percentage, wgt, battery, batCol, txtCol, size)
+--  
+--  if drawMain then drawNewBatteryNew(280, 20 + headerSpacing,  "source1"     , wgt , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE, "x" ) end
+--  if drawReceiver then drawNewBatteryNew(280, 125 + headerSpacing , "source2" , wgt , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE,"x") end
+--  
+--  else
+--  
+--    if drawMain then drawNewBatteryNew(230, 15 + headerSpacing, "source1"     , wgt  , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE,"l" ) end
+--    if drawReceiver then drawNewBatteryNew(230, 80 + headerSpacing,   "source2" , wgt  , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE, "l") end
+--  --
+--  end
 
---y = drawSensorLine("C:", COLOR_THEME_FOCUS, thisModel.VoltageSensor.main.CurVolt .. "V", GREEN, "L:", COLOR_THEME_FOCUS, thisModel.VoltageSensor.main.LowestVolt .. "V", RED, y)
---y = drawSensorLine("C:", COLOR_THEME_FOCUS, thisModel.CurrentSensor.main.CurAmp .. "A", GREEN, "H:", COLOR_THEME_FOCUS,thisModel.CurrentSensor.main.HighestAmp .. "A", RED, y)
-y = drawSensorLineNew(thisModel.powerSources.source1.VoltageSensor , "V", y)
-y = drawSensorLineNew(thisModel.powerSources.source1.CurrentSensor, "A", y)
--- Receiver Section
+y = 0
 y = y + headerSpacing
 
+if #thisModel.powerSources < 2 then 
+  y = y + ( ( wgt.zone.h / 6 ) * #thisModel.powerSources )
 end
 
-if drawReceiver then
 
-y = drawText(thisModel.powerSources.source2.displayName .. " " .. thisModel.powerSources.source2.type.name, x, y, "l", COLOR_THEME_SECONDARY2)
---y = y + fontSizes["l"].fontpxl + fontSizes["l"].lineSpacing
+-- Iterate over each power source
+for index, source in ipairs(thisModel.powerSources) do
 
---y = drawSensorLine("C:", COLOR_THEME_FOCUS, thisModel.VoltageSensor.receiver.CurVolt .. "V", GREEN, "L:", COLOR_THEME_FOCUS,thisModel.VoltageSensor.receiver.LowestVolt .. "V", RED, y)
---y = drawSensorLine("C:", COLOR_THEME_FOCUS, thisModel.CurrentSensor.receiver.CurAmp .. "A", GREEN, "H:", COLOR_THEME_FOCUS,thisModel.CurrentSensor.receiver.HighestAmp .. "A", RED, y)
-y = drawSensorLineNew(thisModel.powerSources.source1.VoltageSensor, "V", y)
-y = drawSensorLineNew(thisModel.powerSources.source2.CurrentSensor, "A", y)
+  -- local yOffset = topSpacing + index * (fontSizes["l"].fontpxl + fontSizes["l"].lineSpacing + headerSpacing)
+
+  -- Draw section for each source
+  y = drawText(source.displayName .. " " .. source.type.name, x, y, "l", COLOR_THEME_SECONDARY2)
+  baty = y - ( fontSizes["l"].fontpxl / 2 )
+
+  y = drawSensorLineNew(source.VoltageSensor, "V", y)
+  y = drawSensorLineNew(source.CurrentSensor, "A", y)
+
+  y = y + headerSpacing
+
+  -- Draw battery indicator based on screen height
+  if wgt.zone.h >= 272 then
+    drawNewBatteryNew(280, baty , source,  wgt, COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE, "x")
+  else
+    drawNewBatteryNew(230, baty, source, wgt, COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE, "l")
+  end
+
 
 end
 
--- Bottom Section
---drawBottomSensorLine(thisModel.AdlSensors, wgt.zone.h - fontSizes["s"].fontpxl - fontSizes["s"].lineSpacing - 5)
+-- bottomlift = 0
 
-
-drawBottomSensorLine(thisModel.AdlSensors, wgt.zone.h - fontSizes["s"].fontpxl - fontSizes["s"].lineSpacing - 5)
-
-
-
-
-
-if wgt.zone.h >= 272 then
-
--- local function drawNewBattery(xOrigin, yOrigin, percentage, wgt, battery, batCol, txtCol, size)
-
-if drawMain then drawNewBatteryNew(280, 20 + headerSpacing,  "source1"     , wgt , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE, "x" ) end
-if drawReceiver then drawNewBatteryNew(280, 125 + headerSpacing , "source2" , wgt , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE,"x") end
-
-else
-
-  if drawMain then drawNewBatteryNew(230, 15 + headerSpacing, "source1"     , wgt  , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE,"l" ) end
-  if drawReceiver then drawNewBatteryNew(230, 80 + headerSpacing,   "source2" , wgt  , COLOR_THEME_PRIMARY2, COLOR_THEME_ACTIVE, "l") end
---
-end
+-- Draw bottom sensor line
+-- drawBottomSensorLine(thisModel.AdlSensors, wgt.zone.h - fontSizes["s"].fontpxl - fontSizes["s"].lineSpacing - 5)
+y = y + ( fontSizes["s"].fontpxl * 2 )
+drawBottomSensorLine(thisModel.AdlSensors, y)
 
 
 
@@ -3994,36 +4823,83 @@ end
     return y
   end
 
-  -- Main Battery Section
- y = drawText(thisModel.powerSources.source1.displayName .. " " .. thisModel.powerSources.source1.type.name , x, topSpacing , "m", COLOR_THEME_SECONDARY2)
 
- drawText(thisModel.modelName, wgt.zone.w / 2, topSpacing, "l", COLOR_THEME_SECONDARY2)
-  lcd.drawBitmap(thisModel.bmpSizedModelImage, wgt.zone.w / 2, topSpacing + fontSizes["l"].fontpxl + fontSizes["l"].lineSpacing, 50)
-  --y = y + 70
 
-  y = drawKeyValLine("Battery Type", thisModel.powerSources.source1.type.typeName, COLOR_THEME_FOCUS, GREEN, y)
 
-  if thisModel.powerSources.source1.VoltageSensor.CellsDetectedCurrent ~= thisModel.powerSources.source1.CellCount then CELLCOL = RED else CELLCOL = GREEN end
+  drawText(thisModel.modelName, wgt.zone.w / 2, y, "l", COLOR_THEME_SECONDARY2)
+  lcd.drawBitmap(thisModel.bmpSizedModelImage, wgt.zone.w / 2, y + fontSizes["l"].fontpxl + fontSizes["l"].lineSpacing, 50)
 
-  y = drawKeyValLine("Cell Count", thisModel.powerSources.source1.CellCount, COLOR_THEME_FOCUS, GREEN, y, "( " .. thisModel.powerSources.source1.VoltageSensor.CellsDetectedCurrent .. " detected )", CELLCOL )
+  y = topSpacing
 
-  if thisModel.powerSources.source1.VoltageSensor.CurVolt == "--.--" then VOLCOL = RED else VOLCOL = GREEN end
-  y = drawKeyValLine("Voltage", thisModel.powerSources.source1.VoltageSensor.CurVolt .. "V", COLOR_THEME_FOCUS, VOLCOL, y)
-  y = drawKeyValLine("Percentage", thisModel.powerSources.source1.VoltageSensor.CurPercRem .. "%", COLOR_THEME_FOCUS, getPercentColor(thisModel.powerSources.source1.VoltageSensor.LatestPercRem, thisModel.powerSources.source1.type), y)
+  if #thisModel.powerSources < 2 then 
+    y = topSpacing + ( ( wgt.zone.h / 6 ) * #thisModel.powerSources )
+  end
 
-  -- Receiver Battery Section
+  -- Iterate over each power source in thisModel.powerSources
+for index, source in ipairs(thisModel.powerSources) do
+  -- Determine the y position based on the index and section spacing
+  --y = topSpacing + index * (fontSizes["m"].fontpxl + fontSizes["m"].lineSpacing )
+
+
+  -- Draw the display information for each source
+  y = drawText(source.displayName .. " " .. source.type.name, x, y, "m", COLOR_THEME_SECONDARY2)
+
+
+  y = drawKeyValLine("Battery Type", source.type.typeName, COLOR_THEME_FOCUS, GREEN, y)
+
+  local CELLCOL = source.VoltageSensor.CellsDetectedCurrent ~= source.CellCount and RED or GREEN
+  y = drawKeyValLine("Cell Count", source.CellCount, COLOR_THEME_FOCUS, GREEN, y, "( " .. source.VoltageSensor.CellsDetectedCurrent .. " detected )", CELLCOL)
+
+  local VOLCOL = source.VoltageSensor.CurVolt == "--.--" and RED or GREEN
+  y = drawKeyValLine("Voltage", source.VoltageSensor.CurVolt .. "V", COLOR_THEME_FOCUS, VOLCOL, y)
+  y = drawKeyValLine("Percentage", source.VoltageSensor.CurPercRem .. "%", COLOR_THEME_FOCUS, getPercentColor(source.VoltageSensor.LatestPercRem, source.type), y)
+
   y = y + headerSpacing
-  y = drawText(thisModel.powerSources.source2.displayName .. " " .. thisModel.powerSources.source2.type.name , x, y, "m", COLOR_THEME_SECONDARY2)
 
-  y = drawKeyValLine("Battery Type", thisModel.powerSources.source2.type.typeName, COLOR_THEME_FOCUS, GREEN, y)
+end
 
-  if thisModel.powerSources.source2.VoltageSensor.CellsDetectedCurrent ~= thisModel.powerSources.source2.CellCount then CELLCOL = RED else CELLCOL = GREEN end
 
-  y = drawKeyValLine("Cell Count", thisModel.powerSources.source2.CellCount, COLOR_THEME_FOCUS, GREEN, y, "( " .. thisModel.powerSources.source2.VoltageSensor.CellsDetectedCurrent .. " detected )", CELLCOL )
-
-  if thisModel.powerSources.source2.VoltageSensor.CurVolt == "--.--" then VOLCOL = RED else VOLCOL = GREEN end
-  y = drawKeyValLine("Voltage", thisModel.powerSources.source2.VoltageSensor.CurVolt .. "V", COLOR_THEME_FOCUS, VOLCOL, y)
-  y = drawKeyValLine("Percentage", thisModel.powerSources.source2.VoltageSensor.CurPercRem .. "%", COLOR_THEME_FOCUS, getPercentColor(thisModel.powerSources.source2.VoltageSensor.LatestPercRem, thisModel.powerSources.source2.type), y)
+--   -- Main Battery Section
+-- 
+--   if thisModel.powerSources and thisModel.powerSources[1] then
+--     local source = thisModel.powerSources[1]
+-- 
+--  y = drawText(source.displayName .. " " .. source.type.name , x, topSpacing , "m", COLOR_THEME_SECONDARY2)
+-- 
+--  drawText(thisModel.modelName, wgt.zone.w / 2, topSpacing, "l", COLOR_THEME_SECONDARY2)
+--   lcd.drawBitmap(thisModel.bmpSizedModelImage, wgt.zone.w / 2, topSpacing + fontSizes["l"].fontpxl + fontSizes["l"].lineSpacing, 50)
+--   --y = y + 70
+-- 
+--   y = drawKeyValLine("Battery Type", source.type.typeName, COLOR_THEME_FOCUS, GREEN, y)
+-- 
+--   if source.VoltageSensor.CellsDetectedCurrent ~= source.CellCount then CELLCOL = RED else CELLCOL = GREEN end
+-- 
+--   y = drawKeyValLine("Cell Count", source.CellCount, COLOR_THEME_FOCUS, GREEN, y, "( " .. source.VoltageSensor.CellsDetectedCurrent .. " detected )", CELLCOL )
+-- 
+--   if source.VoltageSensor.CurVolt == "--.--" then VOLCOL = RED else VOLCOL = GREEN end
+--   y = drawKeyValLine("Voltage", source.VoltageSensor.CurVolt .. "V", COLOR_THEME_FOCUS, VOLCOL, y)
+--   y = drawKeyValLine("Percentage", source.VoltageSensor.CurPercRem .. "%", COLOR_THEME_FOCUS, getPercentColor(source.VoltageSensor.LatestPercRem, source.type), y)
+-- 
+--   end
+-- 
+--   if thisModel.powerSources and thisModel.powerSources[2] then
+--     local source = thisModel.powerSources[2]
+-- 
+--   -- Receiver Battery Section
+--   y = y + headerSpacing
+--   y = drawText(thisModel.powerSources.source2.displayName .. " " .. thisModel.powerSources.source2.type.name , x, y, "m", COLOR_THEME_SECONDARY2)
+-- 
+--   y = drawKeyValLine("Battery Type", thisModel.powerSources.source2.type.typeName, COLOR_THEME_FOCUS, GREEN, y)
+-- 
+--   if thisModel.powerSources.source2.VoltageSensor.CellsDetectedCurrent ~= thisModel.powerSources.source2.CellCount then CELLCOL = RED else CELLCOL = GREEN end
+-- 
+--   y = drawKeyValLine("Cell Count", thisModel.powerSources.source2.CellCount, COLOR_THEME_FOCUS, GREEN, y, "( " .. thisModel.powerSources.source2.VoltageSensor.CellsDetectedCurrent .. " detected )", CELLCOL )
+-- 
+--   if thisModel.powerSources.source2.VoltageSensor.CurVolt == "--.--" then VOLCOL = RED else VOLCOL = GREEN end
+--   y = drawKeyValLine("Voltage", thisModel.powerSources.source2.VoltageSensor.CurVolt .. "V", COLOR_THEME_FOCUS, VOLCOL, y)
+--   y = drawKeyValLine("Percentage", thisModel.powerSources.source2.VoltageSensor.CurPercRem .. "%", COLOR_THEME_FOCUS, getPercentColor(thisModel.powerSources.source2.VoltageSensor.LatestPercRem, thisModel.powerSources.source2.type), y)
+-- 
+--   end
 
   -- Status Section
   y = y + headerSpacing
@@ -4038,6 +4914,7 @@ end
 end
 
 end
+
 
 
 -- ####################################################################
