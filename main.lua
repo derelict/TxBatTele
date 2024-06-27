@@ -132,6 +132,7 @@ local sensSimulator = { -- this is what i use for testing and development -- can
 -- - Just see comments and examples below
 
   local powerSources = {
+
     lipo = {  -- normal lipo Battery
         dischargeCurve           = {
             {4.20, 100}, {4.17, 97.5}, {4.15, 95}, {4.13, 92.5},
@@ -203,6 +204,7 @@ local sensSimulator = { -- this is what i use for testing and development -- can
         cellDeltaVoltage            = nil,     -- Cell delta voltage -- irrelevant for buffer or bec
         isNotABattery               = true   -- BEC is not a battery and values for high and low voltage represent real voltages and will be devided by 2 by the script to get a theoretical cell value
       },
+
     }
 
 ----------------------------------------------------------------------------------------------------------------------
@@ -220,7 +222,7 @@ local modelTable = {
       AdlSensors             = defaultAdlSensors,
 
       switchAnnounces        = SwitchAnnounceTable,
-      BattPackSelectorSwitch = BattPackSelectorSwitch, -- !!! NOT IMPLEMENTED YET !!!
+      BattPackSelectorSwitch = nil, -- !!! NOT IMPLEMENTED YET !!!
 
       powerSources           = {
 
@@ -258,7 +260,7 @@ local modelTable = {
     AdlSensors             = sensg580,
 
     switchAnnounces        = SwitchAnnounceTable,
-    BattPackSelectorSwitch = BattPackSelectorSwitch, -- !!! NOT IMPLEMENTED YET !!!
+    BattPackSelectorSwitch = nil, -- !!! NOT IMPLEMENTED YET !!!
 
     powerSources           = {
 
