@@ -230,7 +230,7 @@ local modelTable = {
           displayName = "Main", -- single words have to be present as wav or voice announce wont work
           VoltageSensor = { sensorName = "Cels" },
           CurrentSensor = { sensorName = "Curr" },
-          MahSensor = { sensorName = "mah" },
+          MahSensor =     { sensorName = "mah" },
           type = powerSources.lipo,
           CellCount = 8,
           capacities = { 500, 1000, 1500, 2000, 2500, 3000 } -- not used as of now
@@ -241,7 +241,7 @@ local modelTable = {
           displayName = "Receiver", -- single words have to be present as wav or voice announce wont work
           VoltageSensor = { sensorName = "RxBt" },
           CurrentSensor = { sensorName = "Curr" },
-          MahSensor = { sensorName = "mah" },
+          MahSensor =     { sensorName = "mah" },
           type = powerSources.buffer,
           CellCount = 2,
           capacities = { 500, 1000, 1500, 2000, 2500, 3000 } -- not used as of now
@@ -268,7 +268,7 @@ local modelTable = {
         displayName = "Main", -- single words have to be present as wav or voice announce wont work
         VoltageSensor = { sensorName = "RB1V" },
         CurrentSensor = { sensorName = "RB1A" },
-        MahSensor = { sensorName = "RB1C" },
+        MahSensor =     { sensorName = "RB1C" },
         type = powerSources.lipo,
         CellCount = 12,
         capacities = { 500, 1000, 1500, 2000, 2500, 3000 } -- not used as of now
@@ -279,7 +279,7 @@ local modelTable = {
         displayName = "Receiver", -- single words have to be present as wav or voice announce wont work
         VoltageSensor = { sensorName = "RB2V" },
         CurrentSensor = { sensorName = "" },
-        MahSensor = { sensorName = "" },
+        MahSensor =     { sensorName = "" },
         type = powerSources.buffer,
         CellCount = 2,
         capacities = { 500, 1000, 1500, 2000, 2500, 3000 } -- not used as of now
@@ -305,7 +305,7 @@ local modelTable = {
           displayName = "Main", -- single words have to be present as wav or voice announce wont work
           VoltageSensor = { sensorName = "Cels" },
           CurrentSensor = { sensorName = "Curr" },
-          MahSensor = { sensorName = "mah" },
+          MahSensor =     { sensorName = "mah" },
           type = powerSources.lipo,
           CellCount = 8,
           capacities = { 500, 1000, 1500, 2000, 2500, 3000 } -- not used as of now
@@ -316,7 +316,7 @@ local modelTable = {
           displayName = "Receiver", -- single words have to be present as wav or voice announce wont work
           VoltageSensor = { sensorName = "RxBt" },
           CurrentSensor = { sensorName = "Curr" },
-          MahSensor = { sensorName = "mah" },
+          MahSensor =     { sensorName = "mah" },
           type = powerSources.buffer,
           CellCount = 2,
           capacities = { 500, 1000, 1500, 2000, 2500, 3000 } -- not used as of now
@@ -493,15 +493,6 @@ local WriteGVBatRemPer = true
 local GVBatRemmAh = GV[8] -- Write remaining mAh, 2345 mAh will be writen as 23, floor(2345/100)
 local GVBatRemPer = GV[9] -- Write remaining percentage, 76.7% will be writen as 76, floor(76)
 
--- If you have set either write to false you may set the corresponding
---	variable to ""
--- example local GVBatRemmAh = ""
-
--- ----------------------------------------------------------------------------------------
--- ----------------------------------------------------------------------------------------
--- AVOID EDITING BELOW HERE
---
-
 local CanCallInitFuncAgain = false		-- updated in bg_func
 
 local VoltageHistory = {}   -- updated in bg_func
@@ -642,7 +633,6 @@ local function matchModelName(mname, pattern)
  
   -- Check if the pattern is a substring of the currentModelName
   return string.find(lmname, lpattern) ~= nil
-
 
 end
 
@@ -1158,20 +1148,6 @@ local function initializeAndCheckAllSensorIds()
 
   invalidSensorList = ""
 
-  --initializeSensorId(thisModel.VoltageSensor.main)
-  --initializeSensorId(thisModel.VoltageSensor.receiver)
-  --initializeSensorId(thisModel.CurrentSensor.main)
-  --initializeSensorId(thisModel.CurrentSensor.receiver)
-  --initializeSensorId(thisModel.MahSensor.main)
-  --initializeSensorId(thisModel.MahSensor.receiver)
-
- -- initializeSensorId(thisModel.powerSources.source1.VoltageSensor)
- -- initializeSensorId(thisModel.powerSources.source1.CurrentSensor)
- -- initializeSensorId(thisModel.powerSources.source1.MahSensor)
-
- -- initializeSensorId(thisModel.powerSources.source2.VoltageSensor)
- -- initializeSensorId(thisModel.powerSources.source2.CurrentSensor)
- -- initializeSensorId(thisModel.powerSources.source2.MahSensor)
 debugPrint("IAS: start")
  for _, source in ipairs(thisModel.powerSources) do
   debugPrint("IAS: Source: " .. source.displayName )
@@ -1185,13 +1161,6 @@ debugPrint("IAS: start")
     end
   --end
 end
-
-  
- --for _, adlSensor in ipairs(thisModel.AdlSensors) do
- --   for _, sensor in ipairs(adlSensor.sensors) do
- --     initializeSensorId(sensor)
- --   end
- -- end
 
  for sensorKey, sensor in pairs(thisModel.AdlSensors) do
   initializeSensorId(sensor)
@@ -1210,24 +1179,6 @@ debugPrint("INVS: All Sensors valid")
 
 pfStatus.text = "All Sensors valid"
 pfStatus.color = GREEN
-
-  -- todo: maybe consider/adapt to use cases with only current and/or mah sensors
---  if thisModel.VoltageSensor.main.sensorId ~= nil then
---    table.insert(contexts, "main")
---    --CellsDetected["main"] = false
---    --thisModel.VoltageSensor.main.CellsDetected = false
---    --numberOfBatteries = numberOfBatteries + 1
---  --else
---  --  thisModel.VoltageSensor.main.CellsDetected = true
---  end
---
---  if thisModel.VoltageSensor.receiver.sensorId ~= nil then
---    table.insert(contexts, "receiver")
---    --thisModel.VoltageSensor.receiver.CellsDetected = false
---    --numberOfBatteries = numberOfBatteries + 1
---  --else
---  --  thisModel.VoltageSensor.receiver.CellsDetected = true
---  end
 
 else
   debugPrint("INVS: Invalid Sensors: " .. invalidSensorList)
@@ -1280,7 +1231,6 @@ local function checkAllSourceStatuspreFlight(source)
 
   return true
 end
-
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1346,7 +1296,6 @@ for _, source in ipairs(thisModel.powerSources) do
     source.type.dischargeCurve = calculateLinearDischargeCurve(source.type.lowVoltage, source.type.highVoltage)
   end
 end
-
 
 
 pfStatus = {
@@ -1444,9 +1393,6 @@ local function reset_if_needed()
 
     end
 
-
-
-
   if ResetSwitchState  and AutomaticResetOnNextChange then
     --return
 
@@ -1472,23 +1418,17 @@ local function reset_if_needed()
       VoltageHistory = {}
       ResetDebounced = false
 
-
-
       AutomaticResetOnResetPrevState = nil
 
       AutomaticResetStateChangeCount = 0
       AutomaticResetOnNextChange = false
-
 
       MaxWatts = "-----"  -- todo ... do we want to display ---- ? makes sense if sensor not present
       MaxAmps = "-----"  -- todo ... do we want to display ---- ? makes sense if sensor not present
 
       -- CellsDetected = false
 
-
-
       FirstModelInit = true -- todo maybe there is a better place to put this ... maybe init ?
-
 
   end
 end
@@ -1499,9 +1439,6 @@ end
 local function checkForTelemetry()
 
   local currentStatusTele = getSwitchValue(idstatusTele)
-
-
-
 
   if not statusTele and currentStatusTele and not Timer("telegrace", 2) then
     debugPrint("TELEDELAY:")
@@ -1531,7 +1468,6 @@ local function checkForTelemetry()
 
   statusTele = currentStatusTele
 
-
 end
 ---------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1543,7 +1479,9 @@ local function updateOtherSensorValues(source)
 
 end
 ---------------------------------------------------------------------------------------------------------------------------------------
+
 local function updateMinMaxValues(currentValue, valueType, sensor)
+
   if sensor["Latest" .. valueType] == 0 or currentValue ~= 0 then
       sensor["Latest" .. valueType] = currentValue
   end
@@ -1555,6 +1493,7 @@ local function updateMinMaxValues(currentValue, valueType, sensor)
   if sensor["Lowest" .. valueType] == 0 or (currentValue < sensor["Lowest" .. valueType] and currentValue ~= 0.00) then
       sensor["Lowest" .. valueType] = currentValue
   end
+
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
@@ -1594,13 +1533,7 @@ local function updatePowerSourceSensorValues(source)
       if source.VoltageSensor.LatestPercRem == 0 or source.VoltageSensor.LatestPercRem ~= 0 then
           source.VoltageSensor.LatestPercRem = source.VoltageSensor.CurPercRem
       end
-  --end
 
-  -- Perform additional operations if needed
-  -- sensorline1 = build_sensor_line(tableLine1StatSensors)
-  -- sensorline2 = build_sensor_line(tableLine2StatSensors)
-  -- debugPrint("SENSLINE: " .. sensorline1)
-  -- debugPrint("SENSLINE: " .. sensorline2)
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
@@ -1647,13 +1580,7 @@ for _, switchInfo in ipairs(thisModel.switchAnnounces) do
 
 -- SWITCH: sf STATE: 1024 pre State: -1024 downval: 2 midval: 0 upval: 3
 
-
   if previousSwitchState[switch] ~= state or previousSwitchState[switch] == nil then
-
-    --if previousSwitchState[switch] ~=  nil then
-    --  debugPrint(string.format("SWITCH: %s STATE: %s pre State: %s downval: %s midval: %s upval: %s",  switch, state, previousSwitchState[switch],switchInfo[downval],switchInfo[midval],switchInfo[upval] ) )
-  --
-    --  end
 
     if state < 0 and downval ~= 0 then
       queueSysSound(switchInfo[downval], 0, priorizeSwitchAnnouncements)
@@ -1669,17 +1596,7 @@ for _, switchInfo in ipairs(thisModel.switchAnnounces) do
     end
   end
 
-
-  --if ( state and not previousSwitchState[switch] ) or previousSwitchState[switch] == nil then
-  -- if state then
-  --   if not previousSwitchState[switch] or previousSwitchState[switch] == nil then
-  --     playFile(action..".wav", 5)
-  --   end
-  -- end
-
   previousSwitchState[switch] = state
-
-  
 
 end
 
@@ -1697,15 +1614,13 @@ initializeAndCheckAllSensorIds()
 
 switchAnnounce()
 
-
-  reset_if_needed() -- test if the reset switch is toggled, if so then reset all internal flags
+reset_if_needed() -- test if the reset switch is toggled, if so then reset all internal flags
   
-  doGeneralAnnouncements()
+doGeneralAnnouncements()
 
- if statusTele and allSensorsValid then -- if we have no telemetry .... don't waste time doing anything that requires telemetry
+if statusTele and allSensorsValid then -- if we have no telemetry .... don't waste time doing anything that requires telemetry
 
-
-  updateOtherSensorValues()
+updateOtherSensorValues()
 
   local allSourcesPassed = true
 
@@ -1736,16 +1651,9 @@ for _, source in ipairs(thisModel.powerSources) do
   end
 end
 
-
-
-
 preFlightChecksPassed = allSourcesPassed -- Update the main flag based on the local variable
 
-
 end -- end of if telemetry
-
-
-
 
 end
 
@@ -1917,7 +1825,6 @@ local function drawNewBatteryNew(xOrigin, yOrigin, source, wgt, batCol, txtCol, 
                  string.format("%d mAh used", source.MahSensor.value), myBatt.font + txtCol + BlinkWhenZero)
   end
 end
-
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
