@@ -31,4 +31,12 @@ EdgeTX/OpenTX Battery and Telemetry Monitoring LUA Widget which tries to rely as
 - If you need/want custom voice announcements (for instance modelname) submit a feature request or patch the CSV .. i will try to generate new voices as soon as i have time to
 
 ## How to contribute
-- **Design the LCD Widget for various sizes** ( i'm not very good at designing / see Screenshots ;-) ) 
+- **Design the LCD Widget for various sizes** ( i'm not very good at designing / see Screenshots ;-) )
+
+## How To's
+### no mah Sensor
+If you don't have a native mah Sensor but you do have a Current Sensor, you can add a custom Sensor like so:
+![image](https://github.com/derelict/TxBatTele/assets/2826671/7510e0a4-cda9-4f3e-937d-59755bf00a51)
+and use it here:
+![image](https://github.com/derelict/TxBatTele/assets/2826671/899175e5-2013-4740-a058-fd3edc4ff4bc)
+
