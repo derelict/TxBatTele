@@ -38,19 +38,6 @@ local SwitchAnnounceTable = {
 }
 
 ----------------------------------------------------------------------------------------------------------------------
--- Alert Haptics
-----------------------------------------------------------------------------------------------------------------------
-
-doHaptic = true -- todo
--- critHapt = nil -- todo
-
-----------------------------------------------------------------------------------------------------------------------
--- Alert Sounds
-----------------------------------------------------------------------------------------------------------------------
-doWarnSound = true -- todo
---critSound = nil -- todo
-
-----------------------------------------------------------------------------------------------------------------------
 -- Bottom Sensors
 ----------------------------------------------------------------------------------------------------------------------
 
@@ -62,17 +49,17 @@ doWarnSound = true -- todo
 -- - sensorname is the radio sensor name ... displayname can freely be choosen (but depending on number of sensors is more or less limited to 4 Chars maximum)
 
 local defaultAdlSensors = {
-  --- first bottom line
+  --- first line
   { sensorName = "RPM+"  , displayName = "RPM+" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
   { sensorName = "RPM-"  , displayName = "RPM-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = "< 1200" , condColor = RED },
   { sensorName = "RxBt+" , displayName = "BEC+" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "V"  , cond = ">9"     , condColor = RED },
   { sensorName = "RxBt-" , displayName = "BEC-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "V"  , cond = "<6"     , condColor = RED },
-  --- second line from the bottom         
+  --- second line   
   { sensorName = "RSSI+" , displayName = "RSI+" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
   { sensorName = "RSSI-" , displayName = "RSI-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
   { sensorName = "Fuel+" , displayName = "HLD " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
   { sensorName = "Fuel-" , displayName = "TRS " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
-  --- third line from the bottom (will not be shown on smaller widget sizes) 
+  --- third line
   { sensorName = "Tmp1+" , displayName = "TF+ " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">50"    , condColor = RED },
   { sensorName = "Tmp1-" , displayName = "TF- " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">50"    , condColor = RED },
   { sensorName = "Tmp2+" , displayName = "ET+ " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">50"    , condColor = RED },
@@ -80,17 +67,17 @@ local defaultAdlSensors = {
 }
 
 local sensg580 = { -- this is a real definition to my own model -- can be deleted together with the model below
-  --- first bottom line
+  --- first line
   { sensorName = "Erpm+" , displayName = "RPM+" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
   { sensorName = "Erpm-" , displayName = "RPM-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = "< 1500" , condColor = RED },
   { sensorName = "VBEC+" , displayName = "BEC+" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "V"  , cond = ">10"    , condColor = RED },
   { sensorName = "VBEC-" , displayName = "BEC-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "V"  , cond = "<7"     , condColor = RED },
-  --- second line from the bottom     
+  --- second line
   { sensorName = "FLss+" , displayName = "FLS " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ">1"     , condColor = RED },
   { sensorName = "FdeA+" , displayName = "FDE " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ">1"     , condColor = RED },
   { sensorName = "Hold+" , displayName = "HLD " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ">1"     , condColor = RED },
   { sensorName = "TRSS-" , displayName = "TRS " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
-  --- third line from the bottom (will not be shown on smaller widget sizes) 
+  --- third line
   { sensorName = "TFET+" , displayName = "TF+ " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED },
   { sensorName = "TFET-" , displayName = "TF- " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED },
   { sensorName = "RB1T+" , displayName = "ET+ " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED },
@@ -98,17 +85,17 @@ local sensg580 = { -- this is a real definition to my own model -- can be delete
 }
 
 local sensSimulator = { -- this is what i use for testing and development -- can be deleted together with the model below
-  --- first bottom line
+  --- first line
   { sensorName = "RPM+"  , displayName = "RPM+" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
   { sensorName = "RPM-"  , displayName = "RPM-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = "< 1500" , condColor = RED },
   { sensorName = "VFAS+" , displayName = "BAT+" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "V"  , cond = ">40"    , condColor = RED },
   { sensorName = "VFAS-" , displayName = "BAT-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "V"  , cond = "<7"     , condColor = RED },
-  --- second line from the bottom
+  --- second line
   { sensorName = "Curr"  , displayName = "CURR" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "A"  , cond = ""       , condColor = RED },
   { sensorName = "RSSI+" , displayName = "RSI+" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
   { sensorName = "RSSI-" , displayName = "RSI-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
   { sensorName = "RPM-"  , displayName = "RPM-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
-  --- third line from the bottom (will not be shown on smaller widget sizes)
+  --- third line
   { sensorName = "Tmp1+" , displayName = "TF+ " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED },
   { sensorName = "Tmp1-" , displayName = "TF- " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED },
   { sensorName = "Tmp2+" , displayName = "ET+ " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED },
@@ -234,6 +221,12 @@ local modelTable = {
       resetSwitch            = "TELE",
       AdlSensors             = defaultAdlSensors,
 
+      doScreenshot           = 0, -- Number has to be a Sticky LS (0=L01) Take a Screenshot after the end of an Activity (Flight)
+      doLogging              = 1, -- Number has to be a Sticky LS (0=L01) Turn Logging On/Off during Activity
+
+      doHaptic               = true,
+      doWarnTone             = true,
+
       switchAnnounces        = SwitchAnnounceTable,
       BattPackSelectorSwitch = nil, -- !!! NOT IMPLEMENTED YET !!!
 
@@ -272,6 +265,12 @@ local modelTable = {
     resetSwitch            = "TELE",
     AdlSensors             = sensg580,
 
+    doScreenshot           = 0, -- Number has to be a Sticky LS (0=L01) Take a Screenshot after the end of an Activity (Flight)
+    doLogging              = 1, -- Number has to be a Sticky LS (0=L01) Turn Logging On/Off during Activity
+
+    doHaptic               = true,
+    doWarnTone             = true,
+
     switchAnnounces        = SwitchAnnounceTable,
     BattPackSelectorSwitch = nil, -- !!! NOT IMPLEMENTED YET !!!
 
@@ -308,6 +307,14 @@ local modelTable = {
       rxReferenceVoltage     = 8.2,
       resetSwitch            = "TELE",
       AdlSensors             = sensSimulator,
+
+      doScreenshot           = 0, -- Number has to be a Sticky LS (0=L01) Take a Screenshot after the end of an Activity (Flight)
+      doLogging              = 1, -- Number has to be a Sticky LS (0=L01) Turn Logging On/Off during Activity
+
+      doHaptic               = true,
+      doWarnTone             = true,
+
+      activityIndicator      = "RPM", -- todo option to use arm switch or like RPM>0 (currently hardcoded)
 
       switchAnnounces        = SwitchAnnounceTable,
       BattPackSelectorSwitch = nil , -- !!! NOT IMPLEMENTED YET !!!
@@ -369,6 +376,12 @@ local BattPackSelectorSwitch = {
 
 local DEBUG_ENABLED = true
 local verbosity = 3 --todo verbosity levels
+
+-- State management for reset if needed and screenshot
+local resetInitiated = false
+local screenshotTriggered = false
+
+local loggingState = false
 
 idstatusTele = getSwitchIndex("TELE") -- Telemetry Status
 
@@ -529,7 +542,6 @@ local soundQueue = {}
 local currentState = "idle"
 local waitUntil = 0
 
-
 ---------------------------------------------------------------------------------------------------------------------------------------
 -- FUNCTIONS
 ---------------------------------------------------------------------------------------------------------------------------------------
@@ -587,6 +599,20 @@ end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
+-- Function to add numbers to the queue
+local function queueHaptic()
+  table.insert(soundQueue, {type = "haptic", value = 1 , duration = 1})
+end
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+-- Function to add numbers to the queue
+local function queueTone()
+  table.insert(soundQueue, {type = "tone", value = 1, duration = 0.5 })
+end
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
 local function processQueue()
 
   local now = getTime()
@@ -600,6 +626,15 @@ local function processQueue()
           playFile(item.value..".wav")
       elseif item.type == "number" then
           playNumber(item.value, item.unit, item.precision, 5)
+        
+        elseif item.type == "haptic" then
+
+          playHaptic(1,0, PLAY_NOW )
+        
+        elseif item.type == "tone" then
+             playTone(2550, 100, 10, 0 , 0, 5) -- todo
+             playTone(2550, 100, 10, 0 , 0, 5) -- todo
+             playTone(2550, 100, 10, 0 , 0, 5) -- todo
       end
 
 
@@ -980,16 +1015,19 @@ local function doAnnouncementsNew(source)
           end
 
           if announcement.severity ~= "normal" then
+
+            if thisModel.doHaptic then queueHaptic() end
+
+            if thisModel.doWarnTone then queueTone() end
+            --   playTone(2550, 100, 10, 0 , 0, 5) -- todo
+            --   playTone(2550, 100, 10, 0 , 0, 5) -- todo
+            --   playTone(2550, 100, 10, 0 , 0, 5) -- todo
+            -- end
+-- playTone(0,200,PLAY_NOW)
+
             queueSound(announcement.severity, 0)
 
-            if doHaptic then playHaptic(1,0, PLAY_NOW ) end
 
-            if doWarnSound then 
-              playTone(2550, 100, 10, 0 , 0, 5) -- todo
-              playTone(2550, 100, 10, 0 , 0, 5) -- todo
-              playTone(2550, 100, 10, 0 , 0, 5) -- todo
-            end
--- playTone(0,200,PLAY_NOW)
 
           end 
 
@@ -1020,7 +1058,7 @@ local function doAnnouncementsNew(source)
           end
 
           elseif announcement.item == "Battery" then
-              queueNumber(source.VoltageSensor.LatestPercRem, 13, 0, 0)
+              queueNumber(source.VoltageSensor.LatestPercRem, 13, 0, 2)
           end
       end
   else
@@ -1333,7 +1371,7 @@ for _, source in ipairs(thisModel.powerSources) do
 end
 
 
-
+thisModel.activityIndicatorValue = 0
 
 
 preFlightChecksPassed = false
@@ -1341,7 +1379,8 @@ preFlightChecksPassed = false
 isPreFlightStage = true
 
 
-
+resetInitiated = false
+screenshotTriggered = false
 
       FirstModelInit = true -- todo maybe there is a better place to put this ... maybe init ?
 
@@ -1349,6 +1388,7 @@ isPreFlightStage = true
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
+
 
 local function reset_if_needed()
   -- test if the reset switch is toggled, if so then reset all internal flags
@@ -1366,7 +1406,9 @@ local function reset_if_needed()
       return -- no need to do anything when telemetry is on and no reset is needed
     end
 
-    if not ResetSwitchState  and not isPreFlightStage then -- no telemetry for longer then delay
+
+
+    if not ResetSwitchState  and not isPreFlightStage and not resetInitiated then -- no telemetry for longer then delay
   
       if Timer("resetdelay", AutomaticResetOnResetSwitchToggle) then
     --AutomaticResetOnResetPrevState = ResetSwitchState
@@ -1377,26 +1419,56 @@ local function reset_if_needed()
 
     debugPrint("RESET: no telemetry for longer than 4 seconds... will reset at next telemetry on")
 
-    if maj >= 2 and minor >= 11 then
-      debugPrint("RESET: Taking Screenshot")
-    screenshot()
-    end
+   -- if maj >= 2 and minor >= 11 then
+   --   debugPrint("RESET: Taking Screenshot")
+   -- screenshot()
+   -- end
 
     -- AutomaticResetOnNextChange = true
 
+ 
+    resetInitiated = true
 
-
-      debugPrint("RESET: RESETTING")
+      --debugPrint("RESET: RESETTING")
   
-      TriggerTimers["resetdelay"] = 0
+      --TriggerTimers["resetdelay"] = 0
 
       queueSound("eoad", 0)
+
+      if thisModel.doScreenshot ~= nil and type(thisModel.doScreenshot) == "number" then
+        setStickySwitch(thisModel.doScreenshot, true)
+        --setStickySwitch(thisModel.doScreenshot, false)
+        screenshotTriggered = true
+                --Timer("waitForScreenshot")
+        queueSound("tss", 0)
+     end
+
       queueSound("rs", 0)
+
+
   
-      reset()
+      --reset()
 
 
 
+      end
+
+
+      --if not ResetSwitchState  and not isPreFlightStage then
+      --      else
+      --  reset()
+      --end
+
+    end
+
+    if not ResetSwitchState  and not isPreFlightStage and resetInitiated then
+
+      if screenshotTriggered and Timer("waitForScreenshot", 2) then
+        debugPrint("RESET: after Screenshot")
+        reset()
+      elseif not screenshotTriggered then
+        debugPrint("RESET: immediate reset")
+        reset()
       end
 
     end
@@ -1466,6 +1538,8 @@ if not modelAlreadyLoaded then --todo --- maybe move all of this stuff out of in
 
   BatRemPer = 0 -- todo remove
 
+  thisModel.activityIndicatorID = getFieldInfo(thisModel.activityIndicator).id
+  
 
   reset()
 
@@ -1647,6 +1721,31 @@ end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
+local function checkLogging()
+
+  local state = getValue(thisModel.activityIndicatorID)
+
+  debugPrint("CHKL: State: " .. state )
+
+  if state > 10 then
+    if not loggingState then 
+      setStickySwitch(thisModel.doLogging, true) 
+    loggingState = true
+    queueSound("tl", 0)
+    queueSound("on", 2)
+  end
+  else
+    if loggingState then 
+      setStickySwitch(thisModel.doLogging, false) 
+        loggingState = false
+        queueSound("tl", 0)
+        queueSound("off", 2)
+      end
+  end
+
+end
+---------------------------------------------------------------------------------------------------------------------------------------
+
 local function bg_func()
 
 processQueue()
@@ -1659,8 +1758,9 @@ initializeAndCheckAllSensorIds()
 
 switchAnnounce()
 
-  
 doGeneralAnnouncements()
+
+checkLogging()
 
 if statusTele and allSensorsValid then -- if we have no telemetry .... don't waste time doing anything that requires telemetry
 
@@ -1673,7 +1773,9 @@ for _, source in ipairs(thisModel.powerSources) do
   if source.VoltageSensor.valid then
 
     debugPrint("MNL: " .. source.displayName )
+
       updatePowerSourceSensorValues(source)
+    
       check_for_missing_cellsNew(source)
 
       -- Perform additional checks if cell number is fine
@@ -2065,7 +2167,8 @@ local function refreshZoneXLarge(wgt)
 
 
 
-  if preFlightChecksPassed or not ShowPreFlightStatus or not isPreFlightStage then
+  --if preFlightChecksPassed or not ShowPreFlightStatus or not isPreFlightStage or ( waitForScreenshot and not Timer("waitForScreenshot", 2) ) then
+    if preFlightChecksPassed or not ShowPreFlightStatus or not isPreFlightStage then
 
 
 
