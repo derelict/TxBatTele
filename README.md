@@ -1,5 +1,7 @@
 # TxBatTele :battery:
 
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/derelict/TxBatTele)](https://github.com/derelict/TxBatTele/releases/latest)
+[![GitHub all releases](https://img.shields.io/github/downloads/derelict/TxBatTele/total)](https://github.com/derelict/TxBatTele/releases)
 ![GitHub stars](https://img.shields.io/github/stars/derelict/TxBatTele?style=social)
 ![GitHub forks](https://img.shields.io/github/forks/derelict/TxBatTele?style=social)
 ![GitHub watchers](https://img.shields.io/github/watchers/derelict/TxBatTele?style=social)
@@ -8,6 +10,7 @@
 ![GitHub top language](https://img.shields.io/github/languages/top/derelict/TxBatTele)
 ![GitHub last commit](https://img.shields.io/github/last-commit/derelict/TxBatTele?color=red)
 ![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fderelict%2FTxBatTele&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)
+[![Discord](https://img.shields.io/discord/839849772864503828.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.com/channels/839849772864503828/842693696629899274)
 
 EdgeTX/OpenTX **Battery** and **Telemetry** Monitoring LUA Widget which tries to **rely as less as possible on radio settings** (Everything is defined in the Script). So no need for "manual" Logical Switches or Custom Functions.
 
