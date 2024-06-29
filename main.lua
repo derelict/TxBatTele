@@ -38,6 +38,19 @@ local SwitchAnnounceTable = {
 }
 
 ----------------------------------------------------------------------------------------------------------------------
+-- Alert Haptics
+----------------------------------------------------------------------------------------------------------------------
+
+doHaptic = true -- todo
+-- critHapt = nil -- todo
+
+----------------------------------------------------------------------------------------------------------------------
+-- Alert Sounds
+----------------------------------------------------------------------------------------------------------------------
+doWarnSound = true -- todo
+--critSound = nil -- todo
+
+----------------------------------------------------------------------------------------------------------------------
 -- Bottom Sensors
 ----------------------------------------------------------------------------------------------------------------------
 
@@ -370,6 +383,12 @@ local sensornamedefs = {
   "VoltageSensor", "CurrentSensor", "MahSensor"
 }
 
+pfStatus = {
+  text = "unknown",  -- This can be "ok", "warning", "error", or "unknown"
+  color = GREY      -- Default color for unknown status
+}
+
+FirstModelInit = false
 
 local modelAlreadyLoaded = false
 
@@ -384,19 +403,20 @@ local statusTable = {}
 
 -- to support future functions like taking screenshot and logging on/off
 local ver, radio, maj, minor, rev, osname = getVersion()
-if DEBUG_ENABLED then
 
-print("version: "..ver)
-if radio then print ("version radio: "..radio) end
-if maj then print ("version maj: "..maj) end
-if minor then print ("version minor: "..minor) end
-if rev then print ("version rev: "..rev) end
-if osname then print ("version osname: "..osname) end
+if DEBUG_ENABLED then
+print                ( "version: "        .. ver   )
+if radio  then print ( "version radio: "  .. radio ) end
+if maj    then print ( "version maj: "    .. maj   ) end
+if minor  then print ( "version minor: "  .. minor ) end
+if rev    then print ( "version rev: "    .. rev   ) end
+if osname then print ( "version osname: " .. osname) end
 end
 
 local AutomaticResetOnResetSwitchToggle = 4 -- 5 seconds for TELE Trigger .... maybe 1 second for switch trigger
 
-local AutomaticResetOnNextChange = true
+-- local AutomaticResetOnNextChange = true
+local isPreFlightStage = true
 
 local TriggerTimers = {}
 
@@ -959,36 +979,47 @@ local function doAnnouncementsNew(source)
               contextAnnounceDone = true
           end
 
+          if announcement.severity ~= "normal" then
+            queueSound(announcement.severity, 0)
+
+            if doHaptic then playHaptic(1,0, PLAY_NOW ) end
+
+            if doWarnSound then 
+              playTone(2550, 100, 10, 0 , 0, 5) -- todo
+              playTone(2550, 100, 10, 0 , 0, 5) -- todo
+              playTone(2550, 100, 10, 0 , 0, 5) -- todo
+            end
+-- playTone(0,200,PLAY_NOW)
+
+          end 
+
           -- Announce based on the item type and severity
           if announcement.item == "BatteryMissingCell" then
-              if announcement.severity == "critical" or announcement.severity == "warning" then
+
                   local reverseValue = math.abs(source.VoltageSensor.cellMissing)
 
                   if source.type.isNotABattery then
-                      queueSound(announcement.severity, 0)
                       queueSound("low", 0)
                       queueSound("voltage", 0)
                   else
-                      queueSound(announcement.severity, 0)
                       queueSound("missing", 0)
                       queueNumber(reverseValue, 0, 0, 0)
                       queueSound("of", 0)
                       queueNumber(source.CellCount, 0, 0, 0)
                       queueSound("cells", 0)
                   end
-              end
           elseif announcement.item == "CellDelta" then
-              if announcement.severity == "critical" or announcement.severity == "warning" then
-                  queueSound(announcement.severity, 0)
                   queueSound("icw", 0)
-              end
           elseif announcement.item == "BatteryNotFull" then
-              if announcement.severity == "critical" or announcement.severity == "warning" then
-                  queueSound(announcement.severity, 0)
+
+            if source.type.isNotABattery then
+              queueSound("low", 0)
+              queueSound("voltage", 0)
+          else
                   queueSound("notfull", 0)
-              end
+          end
+
           elseif announcement.item == "Battery" then
-              queueSound(announcement.severity, 0)
               queueNumber(source.VoltageSensor.LatestPercRem, 13, 0, 0)
           end
       end
@@ -1216,17 +1247,33 @@ local function checkAllSourceStatuspreFlight(source)
 
       -- Check for missing cells
       if source.VoltageSensor.cellMissing ~= 0 then
+        if source.type.isNotABattery then
+          pfStatus.text = source.displayName .. " " .. source.type.name .. " low Voltage"
+          pfStatus.color = RED
+          return false
+
+        else
           pfStatus.text = source.displayName .. " " .. source.type.name .. " check Cell count"
           pfStatus.color = RED          
           return false
+        end
       end
 
       -- Check if the latest percentage remaining is below the threshold
       if source.VoltageSensor.LatestPercRem < source.type.notFullWarningThreshold then
+
+        if source.type.isNotABattery then
+          pfStatus.text = source.displayName .. " " .. source.type.name .. " low Voltage"
+          pfStatus.color = RED
+          return false
+
+        else
           pfStatus.text = source.displayName .. " " .. source.type.name .. " not Full"
           pfStatus.color = RED
           return false
-      end
+        end
+
+        end
   end
 
   return true
@@ -1234,20 +1281,8 @@ end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
-local function init_func()
+local function reset()
 
-if not modelAlreadyLoaded then --todo --- maybe move all of this stuff out of init 
-
-  local currentModelName = model.getInfo().name
-
-  debugPrint ("TEST MODEL:" , currentModelName)
-
-  modelDetails = getModelDetails(currentModelName)
-
-  rxReferenceVoltage = modelDetails.rxReferenceVoltage
-
-  
-thisModel = modelDetails
 
 -- Iterate over each power source
 for _, source in ipairs(thisModel.powerSources) do
@@ -1285,7 +1320,7 @@ for _, source in ipairs(thisModel.powerSources) do
   end
 
   -- Adjust voltages for non-battery sources
-  if source.type.isNotABattery then
+  if source.type.isNotABattery and not modelAlreadyLoaded then
     source.type.lowVoltage = source.type.lowVoltage / 2
     source.type.highVoltage = source.type.highVoltage / 2
   end
@@ -1298,18 +1333,107 @@ for _, source in ipairs(thisModel.powerSources) do
 end
 
 
-pfStatus = {
-    text = "unknown",  -- This can be "ok", "warning", "error", or "unknown"
-    color = GREY      -- Default color for unknown status
-}
+
+
+
+preFlightChecksPassed = false
+-- AutomaticResetOnNextChange = true
+isPreFlightStage = true
+
+
+
+
+      FirstModelInit = true -- todo maybe there is a better place to put this ... maybe init ?
+
+
+end
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+local function reset_if_needed()
+  -- test if the reset switch is toggled, if so then reset all internal flags
+  -- if not ResetSwitchState  then -- Update switch position
+  -- if ResetSwitchState == nil or AutomaticResetOnResetPrevState ~= ResetSwitchState then -- Update switch position
+    --if AutomaticResetOnResetPrevState ~= ResetSwitchState then -- Update switch position
+
+    ResetSwitchState = getSwitchValue(thisModel.resetswitchid)
+
+    --debugPrint("RESET: Switch state :", ResetSwitchState)
+
+    -- if ResetSwitchState and not isPreFlightStage then
+      if ResetSwitchState  then
+        TriggerTimers["resetdelay"] = 0
+      return -- no need to do anything when telemetry is on and no reset is needed
+    end
+
+    if not ResetSwitchState  and not isPreFlightStage then -- no telemetry for longer then delay
+  
+      if Timer("resetdelay", AutomaticResetOnResetSwitchToggle) then
+    --AutomaticResetOnResetPrevState = ResetSwitchState
+
+    --TriggerTimers["resetdelay"] = getTime()
+
+    --debugPrint(string.format("RESET: State change Triggered ... Trigger State: %s at Count: %s",ResetSwitchState, AutomaticResetStateChangeCount))
+
+    debugPrint("RESET: no telemetry for longer than 4 seconds... will reset at next telemetry on")
+
+    if maj >= 2 and minor >= 11 then
+      debugPrint("RESET: Taking Screenshot")
+    screenshot()
+    end
+
+    -- AutomaticResetOnNextChange = true
+
+
+
+      debugPrint("RESET: RESETTING")
+  
+      TriggerTimers["resetdelay"] = 0
+
+      queueSound("eoad", 0)
+      queueSound("rs", 0)
+  
+      reset()
+
+
+
+      end
+
+    end
+
+  --      if ResetSwitchState and AutomaticResetOnNextChange then
+  --        --return
+--      
+  --        -- AutomaticResetOnResetPrevState = ResetSwitchState
+--      
+  --        debugPrint("RESET: RESETTING")
+--      
+  --        TriggerTimers["resetdelay"] = 0
+--      
+  --        reset()
+--      
+--      
+  --      end
+end
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+local function init_func()
+
+if not modelAlreadyLoaded then --todo --- maybe move all of this stuff out of init 
+
+  local currentModelName = model.getInfo().name
+
+  debugPrint ("TEST MODEL:" , currentModelName)
+
+  modelDetails = getModelDetails(currentModelName)
+
+  rxReferenceVoltage = modelDetails.rxReferenceVoltage
+  
+  thisModel = modelDetails
 
   switchIndexes = {}
   previousSwitchState = {}
-
-  detectedBattery = {}
-  detectedBatteryValid = {}
-
-  numberOfBatteries = 0
 
   queueSound(modelDetails.modelWav,2)
 
@@ -1320,19 +1444,12 @@ pfStatus = {
 
   allSensorsValid = false
 
-  
-  preFlightStatusTele = "unknown"
-  preFlightStatusBat = "unknown"
-
   statusTele = false
 
   debugPrint("INIVAL: " .. thisModel.resetSwitch)
 
   thisModel.resetswitchid = getSwitchIndex(thisModel.resetSwitch)
 
-  preFlightChecksPassed = false
-
-  numOfBatPassedCellCheck = 0
 
   for _, switchInfo in ipairs(thisModel.switchAnnounces) do --todo --- maybe with a table and index too ?
     local switch = switchInfo[1]
@@ -1349,90 +1466,16 @@ pfStatus = {
 
   BatRemPer = 0 -- todo remove
 
+
+  reset()
+
   modelAlreadyLoaded = true
 
-end
+
 
 end
 
----------------------------------------------------------------------------------------------------------------------------------------
-
-local function reset_if_needed()
-  -- test if the reset switch is toggled, if so then reset all internal flags
-  -- if not ResetSwitchState  then -- Update switch position
-  -- if ResetSwitchState == nil or AutomaticResetOnResetPrevState ~= ResetSwitchState then -- Update switch position
-    --if AutomaticResetOnResetPrevState ~= ResetSwitchState then -- Update switch position
-
-    ResetSwitchState = getSwitchValue(thisModel.resetswitchid)
-
-    --debugPrint("RESET: Switch state :", ResetSwitchState)
-
-    if ResetSwitchState and not AutomaticResetOnNextChange then
-      TriggerTimers["resetdelay"] = 0
-      return -- no need to do anything when telemetry is on and no reset is needed
-    end
-
-    if not ResetSwitchState  and not AutomaticResetOnNextChange then -- no telemetry for longer then delay
-  
-      if Timer("resetdelay", AutomaticResetOnResetSwitchToggle) then
-    --AutomaticResetOnResetPrevState = ResetSwitchState
-
-    --TriggerTimers["resetdelay"] = getTime()
-
-    --debugPrint(string.format("RESET: State change Triggered ... Trigger State: %s at Count: %s",ResetSwitchState, AutomaticResetStateChangeCount))
-
-    debugPrint("RESET: no telemetry for longer than 4 seconds... will reset at next telemetry on")
-
-    if maj >= 2 and minor >= 11 then
-      debugPrint("RESET: Taking Screenshot")
-    screenshot()
-    end
-
-    AutomaticResetOnNextChange = true
-      end
-
-    end
-
-  if ResetSwitchState  and AutomaticResetOnNextChange then
-    --return
-
-    -- AutomaticResetOnResetPrevState = ResetSwitchState
-
-    debugPrint("RESET: RESETTING")
-
-    TriggerTimers["resetdelay"] = 0
-
-    --if ResetDebounced and HasSecondsElapsed(2) and -1024 ~= getValue(SwReset) then -- reset switch
-      --debugPrint("RESET")
-      CheckBatNotFull = true
-      --StartTime = nil
-      PlayInconsistentCellWarning = true --todo
-      PlayFirstMissingCellWarning = true --todo
-      PlayMissingCellWarning = true --todo
-      PlayFirstInconsistentCellWarning = true --todo
-      InconsistentCellVoltageDetected = false
-
-      PlayRxBatFirstWarning = true
-      PlayRxBatWarning = false
-
-      VoltageHistory = {}
-      ResetDebounced = false
-
-      AutomaticResetOnResetPrevState = nil
-
-      AutomaticResetStateChangeCount = 0
-      AutomaticResetOnNextChange = false
-
-      MaxWatts = "-----"  -- todo ... do we want to display ---- ? makes sense if sensor not present
-      MaxAmps = "-----"  -- todo ... do we want to display ---- ? makes sense if sensor not present
-
-      -- CellsDetected = false
-
-      FirstModelInit = true -- todo maybe there is a better place to put this ... maybe init ?
-
-  end
 end
-
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1610,11 +1653,12 @@ processQueue()
 
 checkForTelemetry()
 
+reset_if_needed() -- test if the reset switch is toggled, if so then reset all internal flags
+
 initializeAndCheckAllSensorIds()
 
 switchAnnounce()
 
-reset_if_needed() -- test if the reset switch is toggled, if so then reset all internal flags
   
 doGeneralAnnouncements()
 
@@ -1652,6 +1696,8 @@ for _, source in ipairs(thisModel.powerSources) do
 end
 
 preFlightChecksPassed = allSourcesPassed -- Update the main flag based on the local variable
+
+if preFlightChecksPassed then isPreFlightStage = false end -- todo --- the right place to do this ?
 
 end -- end of if telemetry
 
@@ -2019,7 +2065,7 @@ local function refreshZoneXLarge(wgt)
 
 
 
-  if preFlightChecksPassed or not ShowPreFlightStatus then
+  if preFlightChecksPassed or not ShowPreFlightStatus or not isPreFlightStage then
 
 
 
@@ -2194,9 +2240,9 @@ valuePxlWidth, totalCharsperLine, sensorsPerLine, remainingChars, additionalChar
   -- Iterate over sensors table using ipairs
   for i, sensor in ipairs(sensors) do
 
-      if y > wgt.zone.h  then
-          break
-      end
+      -- if y > wgt.zone.h  then
+      --     break
+      -- end
 
       -- Calculate position based on sensor index and sensorsPerLine
       local currentLine = math.floor((i - 1) / sensorsPerLine)
@@ -2261,7 +2307,19 @@ valuePxlWidth, totalCharsperLine, sensorsPerLine, remainingChars, additionalChar
       -- Adjust y position for new line if necessary
       if colIndex == sensorsPerLine - 1 and i < totalSensors then
           y = y + fontSizes["s"].lineSpacing
-      end
+
+     end
+
+--      debugPrint("WDGHT: H: " .. wgt.zone.h .. " FS:" ..  fontSizes["s"].fontpxl .. " Y: " .. y )
+-- 
+-- 
+--      if y + fontSizes["s"].fontpxl >= wgt.zone.h  then
+--      --  if y  >= wgt.zone.h  then
+--          break
+--   end
+
+
+
   end
 
   print("SNLN - Total Sensors:", totalSensors)  -- Print total sensors processed
@@ -2288,10 +2346,10 @@ end
     end
 
   drawText("C:", offsetX, y, "m", COLOR_THEME_FOCUS)
-  drawText(val1, offsetX + fontSizes["m"].colSpacing * 2, y, "m", GREEN)
+  drawText(val1, offsetX + fontSizes["m"].colSpacing * 1 + 5 , y, "m", GREEN)
   offsetX = offsetX + fontSizes["m"].colSpacing * 6
   drawText(val2label, offsetX, y, "m", COLOR_THEME_FOCUS)
-  drawText(val2, offsetX + fontSizes["m"].colSpacing * 2, y, "m", RED)
+  drawText(val2, offsetX + fontSizes["m"].colSpacing * 1 + 5 , y, "m", RED)
 
   end
 

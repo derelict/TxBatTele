@@ -39,4 +39,9 @@ low,low.wav
 high,high.wav
 voltage,voltage.wav
 percent,percent.wav
-
+End of Activity detected.,eoad.wav
+Reseting Status.,rs.wav
+Taking Screenshot.,tss.wav
+off,off.wav
+on,on.wav
+Turning Logging,tl.wav
