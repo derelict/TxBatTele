@@ -30,7 +30,8 @@ It's supposed to be **"A jack of all trades"** kind of thing (at least for most 
 - **This is currently in alpha/"works for me" state ... use/try at your own Risk**
 - Based on [mahRe2](https://github.com/fdm225/mahRe2). So full Credits to them!
 - This is my first attempt in LUA Scripting. So please be gentle ;-)
-- If you need/want custom voice announcements (for instance modelname) submit a feature request or patch the CSV .. i will try to generate new voices as soon as i have time to
+- If you need/want custom voice announcements (for instance modelname) submit a feature request or patch the CSV .. i will try to generate new voices as soon as i have time to. Same applies for new Languages and/or voices (although that would require more work on my side and may take a little longer to implement ;-) )
+- **Important:** We are dealing (actually relying on) with **Voltages** and "real" discharge Curves. So make sure your **Sensors are reporting the correct Values** (Check with a **Voltagemeter**) and adjust the Sensor **Offset** accordingly until it reports the real measured Value !
 
 ## How to contribute
 - **Design the LCD Widget for various sizes** ( i'm not very good at designing / see Screenshots ;-) )
