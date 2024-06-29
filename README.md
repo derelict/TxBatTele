@@ -37,6 +37,8 @@ EdgeTX/OpenTX Battery and Telemetry Monitoring LUA Widget which tries to rely as
 ### no mah Sensor
 If you don't have a native mah Sensor but you do have a Current Sensor, you can add a custom Sensor like so:
 ![image](https://github.com/derelict/TxBatTele/assets/2826671/7510e0a4-cda9-4f3e-937d-59755bf00a51)
+
 and use it here:
+
 ![image](https://github.com/derelict/TxBatTele/assets/2826671/899175e5-2013-4740-a058-fd3edc4ff4bc)
 
