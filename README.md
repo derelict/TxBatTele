@@ -9,7 +9,7 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/derelict/TxBatTele?color=red)
 ![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fderelict%2FTxBatTele&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)
 
-EdgeTX/OpenTX Battery and Telemetry Monitoring LUA Widget which tries to rely as less as possible on radio settings (Everything is defined in the Script). So no need for "manual" Logical Switches or Custom Functions.
+EdgeTX/OpenTX **Battery** and **Telemetry** Monitoring LUA Widget which tries to **rely as less as possible on radio settings** (Everything is defined in the Script). So no need for "manual" Logical Switches or Custom Functions.
 
 It's supposed to be **"A jack of all trades"** kind of thing (at least for most "standard" Monitoring and Alerting needs) but with a main focus on Battery Monitoring.
 
