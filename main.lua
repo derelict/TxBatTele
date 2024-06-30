@@ -221,8 +221,16 @@ local modelTable = {
       resetSwitch            = "TELE",
       AdlSensors             = defaultAdlSensors,
 
-      doScreenshot           = 0, -- Number has to be a Sticky LS (0=L01) Take a Screenshot after the end of an Activity (Flight)
-      doLogging              = 1, -- Number has to be a Sticky LS (0=L01) Turn Logging On/Off during Activity
+      doScreenshot           = true, -- Take a Screenshot after a reset (see resetSwitch above)
+
+      screenshotLS           = 0, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function Screenshot
+      loggingLS              = 1, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs
+
+      -- Switches have to be lowercase ... Sensors are Case Sensitive ... Condition for a 3 position switch -1024, 0 and 1024
+      -- See Example(s) below. ActivityTrigger (normally your Arm Switch) will currently only be used to dismiss the preflight status screen
+      activityTrigger = { source = "RPM", condition = ">50" },
+      --loggingTrigger =  { source = "sd",  condition = "=0" },
+      loggingTrigger =  { source = "RPM",  condition = ">50" },
 
       doHaptic               = true,
       doWarnTone             = true,
@@ -265,8 +273,16 @@ local modelTable = {
     resetSwitch            = "TELE",
     AdlSensors             = sensg580,
 
-    doScreenshot           = 0, -- Number has to be a Sticky LS (0=L01) Take a Screenshot after the end of an Activity (Flight)
-    doLogging              = 1, -- Number has to be a Sticky LS (0=L01) Turn Logging On/Off during Activity
+    doScreenshot           = true, -- Take a Screenshot after a reset (see resetSwitch above)
+
+    screenshotLS           = 0, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function Screenshot
+    loggingLS              = 1, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs
+
+    -- Switches have to be lowercase ... Sensors are Case Sensitive ... Condition for a 3 position switch -1024, 0 and 1024
+    -- See Example(s) below. ActivityTrigger (normally your Arm Switch) will currently only be used to dismiss the preflight status screen
+    activityTrigger = { source = "RPM", condition = ">50" },
+    --loggingTrigger =  { source = "sd",  condition = "=0" },
+    loggingTrigger =  { source = "RPM",  condition = ">50" },
 
     doHaptic               = true,
     doWarnTone             = true,
@@ -308,13 +324,19 @@ local modelTable = {
       resetSwitch            = "TELE",
       AdlSensors             = sensSimulator,
 
-      doScreenshot           = 0, -- Number has to be a Sticky LS (0=L01) Take a Screenshot after the end of an Activity (Flight)
-      doLogging              = 1, -- Number has to be a Sticky LS (0=L01) Turn Logging On/Off during Activity
+      doScreenshot           = true, -- Take a Screenshot after a reset (see resetSwitch above)
+
+      screenshotLS           = 0, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function Screenshot
+      loggingLS              = 1, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs
+
+      -- Switches have to be lowercase ... Sensors are Case Sensitive ... Condition for a 3 position switch -1024, 0 and 1024
+      -- See Example(s) below. ActivityTrigger (normally your Arm Switch) will currently only be used to dismiss the preflight status screen
+      activityTrigger = { source = "RPM", condition = ">50" },
+      --loggingTrigger =  { source = "sd",  condition = "=0" },
+      loggingTrigger =  { source = "RPM",  condition = ">50" },
 
       doHaptic               = true,
       doWarnTone             = true,
-
-      activityIndicator      = "RPM", -- todo option to use arm switch or like RPM>0 (currently hardcoded)
 
       switchAnnounces        = SwitchAnnounceTable,
       BattPackSelectorSwitch = nil , -- !!! NOT IMPLEMENTED YET !!!
@@ -382,6 +404,7 @@ local resetInitiated = false
 local screenshotTriggered = false
 
 local loggingState = false
+local activityState = false
 
 idstatusTele = getSwitchIndex("TELE") -- Telemetry Status
 
@@ -545,6 +568,23 @@ local waitUntil = 0
 ---------------------------------------------------------------------------------------------------------------------------------------
 -- FUNCTIONS
 ---------------------------------------------------------------------------------------------------------------------------------------
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+  -- Helper function to evaluate conditions
+  local function evaluateCondition(value, condition)
+    local operator, threshold = string.match(condition, "([><=])%s*(%d+%.?%d*)")
+    threshold = tonumber(threshold)
+    if operator == ">" then
+        return value > threshold
+    elseif operator == "<" then
+        return value < threshold
+    elseif operator == "=" then
+        return value == threshold
+    else
+        return false
+    end
+end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1270,6 +1310,10 @@ local function checkAllSourceStatuspreFlight(source)
   if not preFlightChecksPassed and allSensorsValid then
       -- Check if the VoltageSensor current percentage remaining is valid
 
+      if activityState then -- if we are "active" (flying, disarmed, whatever) we accept and dismiss all the warnings (but NOT if sensors are not valid ... see above)
+        return true
+      end
+
       if source.VoltageSensor.CurPercRem == "--" then
           pfStatus.text = source.displayName .. " " .. source.type.name .. " waiting for Percent update"
           pfStatus.color = GREEN          
@@ -1371,7 +1415,12 @@ for _, source in ipairs(thisModel.powerSources) do
 end
 
 
-thisModel.activityIndicatorValue = 0
+thisModel.activityTrigger.Value = 0
+thisModel.loggingTrigger.Value = 0
+
+--thisModel.activityTriggerID = getFieldInfo(thisModel.activityTrigger).id
+--thisModel.loggingTriggerID = getFieldInfo(thisModel.loggingTrigger).id
+
 
 
 preFlightChecksPassed = false
@@ -1435,8 +1484,8 @@ local function reset_if_needed()
 
       queueSound("eoad", 0)
 
-      if thisModel.doScreenshot ~= nil and type(thisModel.doScreenshot) == "number" then
-        setStickySwitch(thisModel.doScreenshot, true)
+      if thisModel.doScreenshot ~= nil and thisModel.doScreenshot then
+        setStickySwitch(thisModel.screenshotLS, true)
         --setStickySwitch(thisModel.doScreenshot, false)
         screenshotTriggered = true
                 --Timer("waitForScreenshot")
@@ -1538,8 +1587,11 @@ if not modelAlreadyLoaded then --todo --- maybe move all of this stuff out of in
 
   BatRemPer = 0 -- todo remove
 
-  thisModel.activityIndicatorID = getFieldInfo(thisModel.activityIndicator).id
+  thisModel.activityTrigger.id = getFieldInfo(thisModel.activityTrigger.source).id
+  thisModel.loggingTrigger.id = getFieldInfo(thisModel.loggingTrigger.source).id
   
+  -- debugPrint("AID: name: " .. getFieldInfo(thisModel.activityIndicator).name)
+  -- debugPrint("AID: desc: " .. getFieldInfo(thisModel.activityIndicator).desc)
 
   reset()
 
@@ -1721,26 +1773,54 @@ end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
-local function checkLogging()
+local function checkLoggingAndActivity()
 
-  local state = getValue(thisModel.activityIndicatorID)
+--   AID: name: RPM
+-- AID: desc: 
+-- AID: name: se
+-- AID: desc: Switch E
 
-  debugPrint("CHKL: State: " .. state )
 
-  if state > 10 then
+thisModel.activityTrigger.value = getValue(thisModel.activityTrigger.id)
+thisModel.loggingTrigger.value = getValue(thisModel.loggingTrigger.id)
+
+debugPrint("CHKL: activityTriggerValue: " .. thisModel.activityTrigger.value )
+debugPrint("CHKL: loggingTriggerValue: " .. thisModel.loggingTrigger.value )
+
+local evalActivity = evaluateCondition(thisModel.activityTrigger.value, thisModel.activityTrigger.condition)
+local evalLogging = evaluateCondition(thisModel.loggingTrigger.value, thisModel.loggingTrigger.condition)
+
+
+
+  if evalLogging then
     if not loggingState then 
-      setStickySwitch(thisModel.doLogging, true) 
+      setStickySwitch(thisModel.loggingLS, true) 
     loggingState = true
     queueSound("tl", 0)
     queueSound("on", 2)
+    debugPrint("CHKL: Logging : ON " )
+
   end
   else
     if loggingState then 
-      setStickySwitch(thisModel.doLogging, false) 
+      setStickySwitch(thisModel.loggingLS, false) 
         loggingState = false
         queueSound("tl", 0)
         queueSound("off", 2)
+        debugPrint("CHKL: Logging : OFF " )
+
       end
+  end
+
+
+  if evalActivity then
+    if not activityState then 
+      activityState = true
+    end
+  else
+    if activityState then 
+      activityState = false
+    end
   end
 
 end
@@ -1760,7 +1840,7 @@ switchAnnounce()
 
 doGeneralAnnouncements()
 
-checkLogging()
+checkLoggingAndActivity()
 
 if statusTele and allSensorsValid then -- if we have no telemetry .... don't waste time doing anything that requires telemetry
 
@@ -2177,6 +2257,10 @@ local headerSpacing = 0
 local topSpacing = 0
 
 
+if screenshotTriggered then -- Add Modelname to the Screenshot before it is taken -- todo can be improved
+  lcd.drawText(wgt.zone.w / 2, y, thisModel.modelName , SMLSIZE + WHITE)
+end
+
 
 local fontSizes = {
   l  = { FONT = MIDSIZE, fontpxl = 24, lineSpacing = 4, colSpacing = 17 },
@@ -2191,6 +2275,12 @@ end
 if wgt.zone.h > 185 then
   headerSpacing = 0
 end
+
+if wgt.zone.h > 226 then
+  headerSpacing = 10
+  topSpacing = 5
+end
+
 
 if wgt.zone.h >= 272 then
   fontSizes = {
@@ -2219,16 +2309,16 @@ local function drawText(text, x, y, fontsize, color)
   return y
 end
 
-local function drawSensorLine(label1, label1col, value1, value1col, label2, label2col, value2, value2col, y)
-  local offsetX = x + 2
-  drawText(label1, offsetX, y, "m", label1col)
-  drawText(value1, offsetX + fontSizes["m"].colSpacing * 2, y, "m", value1col)
-  offsetX = offsetX + fontSizes["m"].colSpacing * 6
-  drawText(label2, offsetX, y, "m", label2col)
-  drawText(value2, offsetX + fontSizes["m"].colSpacing * 2, y, "m", value2col)
-  y = y + fontSizes["m"].fontpxl + fontSizes["m"].lineSpacing
-  return y
-end
+-- local function drawSensorLine(label1, label1col, value1, value1col, label2, label2col, value2, value2col, y)
+--   local offsetX = x + 2
+--   drawText(label1, offsetX, y, "m", label1col)
+--   drawText(value1, offsetX + fontSizes["m"].colSpacing * 2, y, "m", value1col)
+--   offsetX = offsetX + fontSizes["m"].colSpacing * 6
+--   drawText(label2, offsetX, y, "m", label2col)
+--   drawText(value2, offsetX + fontSizes["m"].colSpacing * 2, y, "m", value2col)
+--   y = y + fontSizes["m"].fontpxl + fontSizes["m"].lineSpacing
+--   return y
+-- end
 
 
 
@@ -2294,20 +2384,7 @@ valuePxlWidth, totalCharsperLine, sensorsPerLine, remainingChars, additionalChar
 -- SCCOL - valuePxlWidth: 72 totalCharsperLine: 47, sensorsPerLine: 4, remainingChars: 3, additionalCharsPerSensor: 1, charsPerCell: 12, suffixCharPosition: 11, prefixCharPosition: 4, charsRemaining: 0, addCharsDisplay: 0, addCharsValue: 0 width: 426 colspacing: 9
 
 
-  -- Helper function to evaluate conditions
-  local function evaluateCondition(value, condition)
-      local operator, threshold = string.match(condition, "([><=])%s*(%d+%.?%d*)")
-      threshold = tonumber(threshold)
-      if operator == ">" then
-          return value > threshold
-      elseif operator == "<" then
-          return value < threshold
-      elseif operator == "=" then
-          return value == threshold
-      else
-          return false
-      end
-  end
+
 
   -- Helper function to calculate text width with special character adjustments
   local function calculateTextWidth(text, fontSize)
@@ -2518,6 +2595,21 @@ drawBottomSensorLine(thisModel.AdlSensors, y)
       m = { FONT = 0,       fontpxl = 16, lineSpacing = 3, colSpacing = 16 },
       s = { FONT = SMLSIZE, fontpxl = 12, lineSpacing = 2, colSpacing = 8 }
   }
+
+
+  if wgt.zone.h > 168 then
+    headerSpacing = 16
+  end
+  
+  if wgt.zone.h > 185 then
+    headerSpacing = 0
+  end
+
+  if wgt.zone.h > 226 then
+    headerSpacing = 10
+    topSpacing = 5
+  end
+
 
   if wgt.zone.h >= 272 then
     fontSizes = {
