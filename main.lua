@@ -1374,7 +1374,11 @@ for _, source in ipairs(thisModel.powerSources) do
 
   -- Initialize sensor properties
   for _, property in ipairs(properties) do
-    if property == "cellMissing" then
+    if property == "CurVolt" then
+      source.VoltageSensor[property] = "--.--"
+    elseif property == "CurPercRem" then
+      source.VoltageSensor[property] = "--"    
+    elseif property == "cellMissing" then
       source.VoltageSensor[property] = 10
     elseif property == "cellInconsistent" then
       source.VoltageSensor[property] = false
