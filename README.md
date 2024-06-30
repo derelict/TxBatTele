@@ -1,5 +1,3 @@
-# TxBatTele :battery:
-
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/derelict/TxBatTele)](https://github.com/derelict/TxBatTele/releases/latest)
 [![GitHub all releases](https://img.shields.io/github/downloads/derelict/TxBatTele/total)](https://github.com/derelict/TxBatTele/releases)
 ![GitHub repo size](https://img.shields.io/github/repo-size/derelict/TxBatTele)
@@ -12,6 +10,7 @@
 ![GitHub forks](https://img.shields.io/github/forks/derelict/TxBatTele?style=social)
 ![GitHub watchers](https://img.shields.io/github/watchers/derelict/TxBatTele?style=social)
 
+# TxBatTele :battery:
 EdgeTX/OpenTX **Battery** and **Telemetry** Monitoring LUA Widget which tries to **rely as less as possible on radio settings** (Everything is defined in the Script). So no need for "manual" Logical Switches or Custom Functions.
 
 It's supposed to be **"A jack of all trades"** kind of thing (at least for most "standard" needs) but with a main focus on Battery Monitoring.
