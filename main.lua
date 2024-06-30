@@ -231,12 +231,18 @@ local modelTable = {
 
       -- Switches have to be lowercase ... Sensors are Case Sensitive ... Condition for a 3 position switch -1024, 0 and 1024
       -- See Example(s) below. ActivityTrigger (normally your Arm Switch) will currently only be used to dismiss the preflight status screen
-      --activityTrigger = { source = "RPM", condition = ">50" },
-      activityTrigger = { source = "sf", condition = "1024" },
+      activityTrigger = { source = "RPM", condition = ">50" },
       --loggingTrigger =  { source = "sd",  condition = "=0" },
       loggingTrigger =  { source = "RPM",  condition = ">50" },
-
       flightDetection = { source = "RPM",  condition = ">1000" },
+
+      flightCountGV          = 1,
+      flighttimeHoursGV      = 2,
+      flighttimeMinutesGV    = 3,
+
+      gvFm                   = 0,
+
+      activeFlightDetTime    = 5, -- todo ... choose a better name for this ... as it is currently only used for buffer pack "ignore" after this seconds of flight
 
       doHaptic               = true,
       doWarnTone             = true,
@@ -271,7 +277,7 @@ local modelTable = {
 
   },
   {
-    modelNameMatch         = "580t",
+    modelNameMatch         = "580t", -- this is currently my REAL testing model
     modelName              = "SAB RAW 580",
     modelImage             = "580.png",
     modelWav               = "sr580",
@@ -287,12 +293,20 @@ local modelTable = {
     loggingLS              = 1, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs
     resetTeleLS            = 2, -- Number has to be a Sticky LS (0=L01) LS has to be used for Reset - Telemetry
 
-    -- Switches have to be lowercase ... Sensors are Case Sensitive ... Condition for a 3 position switch -1024, 0 and 1024
-    -- See Example(s) below. ActivityTrigger (normally your Arm Switch) will currently only be used to dismiss the preflight status screen
-    activityTrigger = { source = "se", condition = "=0" },
-    --loggingTrigger =  { source = "sd",  condition = "=0" },
-    loggingTrigger =  { source = "se",  condition = "=0" },
-    flightDetection = { source = "RPM",  condition = ">1000" },
+      -- Switches have to be lowercase ... Sensors are Case Sensitive ... Condition for a 3 position switch -1024, 0 and 1024
+      -- See Example(s) below. ActivityTrigger (normally your Arm Switch) will currently only be used to dismiss the preflight status screen
+      activityTrigger = { source = "RPM", condition = ">50" },
+      --loggingTrigger =  { source = "sd",  condition = "=0" },
+      loggingTrigger =  { source = "RPM",  condition = ">50" },
+      flightDetection = { source = "RPM",  condition = ">1000" },
+
+      flightCountGV          = 1,
+      flighttimeHoursGV      = 2,
+      flighttimeMinutesGV    = 3,
+
+      gvFm                   = 0,
+
+      activeFlightDetTime    = 5, -- todo ... choose a better name for this ... as it is currently only used for buffer pack "ignore" after this seconds of flight
 
     doHaptic               = true,
     doWarnTone             = true,
@@ -326,7 +340,7 @@ local modelTable = {
     }    
 },  
   {
-      modelNameMatch         = "heli",
+      modelNameMatch         = "heli", -- this is the simulator for dev/tests actually 
       modelName              = "SAB Goblin 630",
       modelImage             = "goblin.png",
       modelWav               = "sg630",
@@ -355,7 +369,7 @@ local modelTable = {
 
       gvFm                   = 0,
 
-      activeFlightDetTime    = 5, 
+      activeFlightDetTime    = 5, -- todo ... choose a better name for this ... as it is currently only used for buffer pack "ignore" after this seconds of flight
 
       doHaptic               = true,
       doWarnTone             = true,
@@ -594,9 +608,47 @@ local soundQueue = {}
 local currentState = "idle"
 local waitUntil = 0
 
+local timer = {
+  startTime = 0,
+  accumulatedTime = 0,
+  running = false
+}
+
+
 ---------------------------------------------------------------------------------------------------------------------------------------
 -- FUNCTIONS
 ---------------------------------------------------------------------------------------------------------------------------------------
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+local function timerControl(action, offset)
+  local currentTime = getTime()
+  offset = offset or 0
+
+  if action == "start" and not timer.running then
+      timer.startTime = currentTime - offset
+      timer.running = true
+      print("TMRCTRL: Timer Started. Start Time: " .. timer.startTime)
+  elseif action == "stop" and timer.running then
+      timer.accumulatedTime = timer.accumulatedTime + (currentTime - timer.startTime)
+      timer.running = false
+      print("TMRCTRL: Timer Stopped. Accumulated Time: " .. timer.accumulatedTime / 100 )
+  elseif action == "reset" then
+      timer.startTime = 0
+      timer.accumulatedTime = 0
+      timer.running = false
+      print("TMRCTRL: Timer Reset.")
+  elseif action == "get" then
+      local elapsedTime
+      if timer.running then
+          elapsedTime = (timer.accumulatedTime + (currentTime - timer.startTime)) / 100
+      else
+          elapsedTime = timer.accumulatedTime / 100
+      end
+      print("TMRCTRL: Elapsed Time: " .. elapsedTime)
+      return elapsedTime
+  end
+end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1485,7 +1537,7 @@ for _, source in ipairs(thisModel.powerSources) do
 
 end
 
-if activeFlightState  then
+--if activeFlightState  then
 
 
   -- local endtime = getTime()
@@ -1495,6 +1547,9 @@ if activeFlightState  then
   -- -- thisModel.flightstarttime
 -- 
   -- local minutesToAdd = math.floor(delta / 60)
+
+  if prevFlightTime ~= 0 then 
+
   local newtotalMinutes = thisModel.flighttimettotalminutes + prevFlightTime
 
   -- prevFlightTime = minutesToAdd
@@ -1516,8 +1571,9 @@ if activeFlightState  then
    model.setGlobalVariable(thisModel.flighttimeMinutesGV - 1, thisModel.gvFm , minutes)
   end
 
-
-  end
+  timerControl("reset")
+--  end
+end
 
 thisModel.activityTrigger.Value = 0
 thisModel.loggingTrigger.Value = 0
@@ -1556,7 +1612,7 @@ screenshotTriggered = false
       thisModel.flighttimettotalminutes = ( thisModel.flighttimeHours  * 60 ) + thisModel.flighttimeMinutes
       end
 
-      thisModel.flightstarttime = 0
+      -- thisModel.flightstarttime = 0
     
       thisModel.activeFlightDetTimeSet = thisModel.activeFlightDetTime or 30
 
@@ -1620,11 +1676,29 @@ local function reset_if_needed()
 
       queueSound("rs", 0)
 
-      if activeFlightState  then
+--      --     timerControl("get" )
+--
+--      if activeFlightState  then
+--
+--        local endtime = getTime()
+--        local delta = ( endtime - thisModel.flightstarttime ) / 100
+--        delta = delta + thisModel.activeFlightDetTimeSet
+--      
+--        -- thisModel.flightstarttime
+--      
+--        local minutesToAdd = math.floor(delta / 60)
+--        --local newtotalMinutes = thisModel.flighttimettotalminutes + minutesToAdd
+--      
+--        prevFlightTime = minutesToAdd
+--      end
 
-        local endtime = getTime()
-        local delta = ( endtime - thisModel.flightstarttime ) / 100
-        delta = delta + thisModel.activeFlightDetTimeSet
+      --     timerControl("get" )
+
+      --if activeFlightState  then
+
+        --local endtime = getTime()
+        local delta = timerControl("get")
+        --delta = delta + thisModel.activeFlightDetTimeSet
       
         -- thisModel.flightstarttime
       
@@ -1632,7 +1706,7 @@ local function reset_if_needed()
         --local newtotalMinutes = thisModel.flighttimettotalminutes + minutesToAdd
       
         prevFlightTime = minutesToAdd
-      end
+      --end      
 
       --reset()
 
@@ -1825,8 +1899,9 @@ local function updatePowerSourceSensorValues(source)
   -- But in this case ... we do not want the radio yelling at us, because well ... we are landed
   -- And for this case ... if after flight (on the ground) we simply ignore and do not update
   -- the sensor anymore.
-  -- how to read below if ;-) : if not battery and we have been flying and are currently NOT flying then ignore
-  if source.type.isNotABattery and activeFlightState and not flightState then
+  -- how to read below if ;-) : if not battery and we have been flying for longer than activeFlightDetTimeSet and are currently NOT flying then ignore
+  if source.type.isNotABattery and timerControl("get") >= thisModel.activeFlightDetTimeSet and not flightState then
+    debugPrint("Special Case Buffer Return after flight")
    return
   end
 
@@ -2003,16 +2078,37 @@ local evalFlight = evaluateCondition(thisModel.flightDetection.value, thisModel.
     end
   end
 
-  if not activeFlightState then -- todo -- track time better when landed and flown again without changing battery (tele loss)
-  if flightState and activityState and statusTele and Timer("activeflightstate", thisModel.activeFlightDetTimeSet ) then
+--   if not activeFlightState then -- todo -- track time better when landed and flown again without changing battery (tele loss)
+--     
+--   if flightState and activityState and statusTele and Timer("activeflightstate", thisModel.activeFlightDetTimeSet ) then
+--     activeFlightState = true
+--     debugPrint("CHKLL: activeflightstate : ON " )
+--     queueSound("afd", 2)
+--     thisModel.flightstarttime = getTime()
+--     timerControl("start", thisModel.activeFlightDetTimeSet )
+-- 
+--   elseif not flightState or not activityState or not statusTele then
+--     TriggerTimers["activeflightstate"] = 0 --reset timer
+--     timerControl("stop" )
+--   end
+-- end
+
+--if not activeFlightState then -- todo -- track time better when landed and flown again without changing battery (tele loss)
+    
+  if flightState and activityState and statusTele and not activeFlightState then
     activeFlightState = true
     debugPrint("CHKLL: activeflightstate : ON " )
     queueSound("afd", 2)
-    thisModel.flightstarttime = getTime()
-  elseif not flightState or not activityState or not statusTele then
-    TriggerTimers["activeflightstate"] = 0 --reset timer
+    --thisModel.flightstarttime = getTime()
+    timerControl("start", thisModel.activeFlightDetTimeSet )
+
+  elseif ( not flightState or not activityState or not statusTele ) and activeFlightState then
+    --TriggerTimers["activeflightstate"] = 0 --reset timer
+    debugPrint("CHKLL: activeflightstate : OFF " )
+    timerControl("stop" )
+    activeFlightState = false
   end
-end
+--end
 
 
 end
