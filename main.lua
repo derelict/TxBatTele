@@ -355,6 +355,8 @@ local modelTable = {
 
       gvFm                   = 0,
 
+      activeFlightDetTime    = 5, 
+
       doHaptic               = true,
       doWarnTone             = true,
 
@@ -428,6 +430,8 @@ local loggingState = false
 local activityState = false
 local flightState = false
 local activeFlightState = false
+
+local prevFlightTime = 0
 
 idstatusTele = getSwitchIndex("TELE") -- Telemetry Status
 
@@ -1461,9 +1465,7 @@ for _, source in ipairs(thisModel.powerSources) do
     source.type.dischargeCurve = calculateLinearDischargeCurve(source.type.lowVoltage, source.type.highVoltage)
   end
 
-  if activeFlightState and thisModel.flightCountGV ~= nil then
-  model.setGlobalVariable(thisModel.flightCountGV - 1, thisModel.gvFm , thisModel.flightcount + 1)
-  end
+
 
   source.type.cellVoltageRanges = {}
   local maxcells = 14
@@ -1483,6 +1485,39 @@ for _, source in ipairs(thisModel.powerSources) do
 
 end
 
+if activeFlightState  then
+
+
+  local endtime = getTime()
+  local delta = ( endtime - thisModel.flightstarttime ) / 100
+  delta = delta + thisModel.activeFlightDetTimeSet
+
+  -- thisModel.flightstarttime
+
+  local minutesToAdd = math.floor(delta / 60)
+  local newtotalMinutes = thisModel.flighttimettotalminutes + minutesToAdd
+
+  prevFlightTime = minutesToAdd
+
+  local hours = math.floor(newtotalMinutes / 60)
+  local minutes = newtotalMinutes % 60
+
+  local prehours = math.floor(thisModel.flighttimettotalminutes / 60)
+  local preminutes = thisModel.flighttimettotalminutes % 60
+
+  debugPrint("CHKLL: NEW FLIGHT TIME: Delta Seconds : " .. delta .. " previous minutes: " .. thisModel.flighttimettotalminutes .. " hours: " .. prehours .. " Minutes: " .. preminutes .. " new Minutes : " .. newtotalMinutes .. " Diff Minutes : " .. newtotalMinutes - thisModel.flighttimettotalminutes .. " hours: " .. hours .. " Minutes: ".. minutes)
+
+  if thisModel.flightCountGV ~= nil then
+    model.setGlobalVariable(thisModel.flightCountGV - 1, thisModel.gvFm , thisModel.flightcount + 1)
+  end
+
+  if thisModel.flighttimeHoursGV ~= nil or thisModel.flighttimeMinutesGV ~= nil then
+   model.setGlobalVariable(thisModel.flighttimeHoursGV - 1, thisModel.gvFm , hours)
+   model.setGlobalVariable(thisModel.flighttimeMinutesGV - 1, thisModel.gvFm , minutes)
+  end
+
+
+  end
 
 thisModel.activityTrigger.Value = 0
 thisModel.loggingTrigger.Value = 0
@@ -1508,6 +1543,22 @@ screenshotTriggered = false
 
       FirstModelInit = true -- todo maybe there is a better place to put this ... maybe init ?
 
+      if thisModel.flightCountGV ~= nil then
+
+      thisModel.flightcount = model.getGlobalVariable(thisModel.flightCountGV - 1, thisModel.gvFm)
+      end
+
+      if thisModel.flighttimeHoursGV ~= nil or thisModel.flighttimeMinutesGV ~= nil then
+
+      thisModel.flighttimeHours = model.getGlobalVariable(thisModel.flighttimeHoursGV - 1, thisModel.gvFm)
+      thisModel.flighttimeMinutes = model.getGlobalVariable(thisModel.flighttimeMinutesGV - 1, thisModel.gvFm)
+    
+      thisModel.flighttimettotalminutes = ( thisModel.flighttimeHours  * 60 ) + thisModel.flighttimeMinutes
+      end
+
+      thisModel.flightstarttime = 0
+    
+      thisModel.activeFlightDetTimeSet = thisModel.activeFlightDetTime or 30
 
 end
 
@@ -1648,10 +1699,6 @@ if not modelAlreadyLoaded then --todo --- maybe move all of this stuff out of in
 
   if thisModel.gvFm == nil then thisModel.gvFm = 0 end
 
-  thisModel.flightcount = model.getGlobalVariable(thisModel.flightCountGV - 1, thisModel.gvFm)
-
-  thisModel.flighttimeHours = model.getGlobalVariable(thisModel.flighttimeHoursGV - 1, thisModel.gvFm)
-  thisModel.flighttimeMinutes = model.getGlobalVariable(thisModel.flighttimeMinutesGV - 1, thisModel.gvFm)
 
   for _, switchInfo in ipairs(thisModel.switchAnnounces) do --todo --- maybe with a table and index too ?
     local switch = switchInfo[1]
@@ -1945,10 +1992,11 @@ local evalFlight = evaluateCondition(thisModel.flightDetection.value, thisModel.
   end
 
   if not activeFlightState then
-  if flightState and activityState and statusTele and Timer("activeflightstate", 30) then
+  if flightState and activityState and statusTele and Timer("activeflightstate", thisModel.activeFlightDetTimeSet ) then
     activeFlightState = true
-    debugPrint("CHKL: activeflightstate : ON " )
+    debugPrint("CHKLL: activeflightstate : ON " )
     queueSound("afd", 2)
+    thisModel.flightstarttime = getTime()
   elseif not flightState or not activityState or not statusTele then
     TriggerTimers["activeflightstate"] = 0 --reset timer
   end
@@ -2835,6 +2883,10 @@ end
   y = drawKeyValLine("Flight Time", thisModel.flighttimeHours .. " h " .. thisModel.flighttimeMinutes .. " m " , COLOR_THEME_FOCUS, GREEN, y)
   end
 
+  if prevFlightTime ~= 0 then
+    y = drawKeyValLine("Previous Flight", prevFlightTime .. " m " , COLOR_THEME_FOCUS, GREEN, y)
+
+  end
 
 
 end
