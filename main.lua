@@ -231,9 +231,12 @@ local modelTable = {
 
       -- Switches have to be lowercase ... Sensors are Case Sensitive ... Condition for a 3 position switch -1024, 0 and 1024
       -- See Example(s) below. ActivityTrigger (normally your Arm Switch) will currently only be used to dismiss the preflight status screen
-      activityTrigger = { source = "RPM", condition = ">50" },
+      --activityTrigger = { source = "RPM", condition = ">50" },
+      activityTrigger = { source = "sf", condition = "1024" },
       --loggingTrigger =  { source = "sd",  condition = "=0" },
       loggingTrigger =  { source = "RPM",  condition = ">50" },
+
+      flightDetection = { source = "RPM",  condition = ">1000" },
 
       doHaptic               = true,
       doWarnTone             = true,
@@ -289,6 +292,7 @@ local modelTable = {
     activityTrigger = { source = "se", condition = "=0" },
     --loggingTrigger =  { source = "sd",  condition = "=0" },
     loggingTrigger =  { source = "se",  condition = "=0" },
+    flightDetection = { source = "RPM",  condition = ">1000" },
 
     doHaptic               = true,
     doWarnTone             = true,
@@ -343,6 +347,13 @@ local modelTable = {
       activityTrigger = { source = "RPM", condition = ">50" },
       --loggingTrigger =  { source = "sd",  condition = "=0" },
       loggingTrigger =  { source = "RPM",  condition = ">50" },
+      flightDetection = { source = "RPM",  condition = ">1000" },
+
+      flightCountGV          = 1,
+      flighttimeHoursGV      = 2,
+      flighttimeMinutesGV    = 3,
+
+      gvFm                   = 0,
 
       doHaptic               = true,
       doWarnTone             = true,
@@ -415,6 +426,8 @@ local screenshotTriggered = false
 
 local loggingState = false
 local activityState = false
+local flightState = false
+local activeFlightState = false
 
 idstatusTele = getSwitchIndex("TELE") -- Telemetry Status
 
@@ -1448,6 +1461,9 @@ for _, source in ipairs(thisModel.powerSources) do
     source.type.dischargeCurve = calculateLinearDischargeCurve(source.type.lowVoltage, source.type.highVoltage)
   end
 
+  if activeFlightState and thisModel.flightCountGV ~= nil then
+  model.setGlobalVariable(thisModel.flightCountGV - 1, thisModel.gvFm , thisModel.flightcount + 1)
+  end
 
   source.type.cellVoltageRanges = {}
   local maxcells = 14
@@ -1470,6 +1486,7 @@ end
 
 thisModel.activityTrigger.Value = 0
 thisModel.loggingTrigger.Value = 0
+thisModel.flightDetection.Value = 0
 
 --thisModel.activityTriggerID = getFieldInfo(thisModel.activityTrigger).id
 --thisModel.loggingTriggerID = getFieldInfo(thisModel.loggingTrigger).id
@@ -1477,6 +1494,8 @@ thisModel.loggingTrigger.Value = 0
 setStickySwitch(thisModel.resetTeleLS, true)
 
 telegrace = thisModel.telemetrysettlement
+
+activeFlightState = false
 
 
 preFlightChecksPassed = false
@@ -1627,6 +1646,12 @@ if not modelAlreadyLoaded then --todo --- maybe move all of this stuff out of in
 
   thisModel.resetswitchid = getSwitchIndex(thisModel.resetSwitch)
 
+  if thisModel.gvFm == nil then thisModel.gvFm = 0 end
+
+  thisModel.flightcount = model.getGlobalVariable(thisModel.flightCountGV - 1, thisModel.gvFm)
+
+  thisModel.flighttimeHours = model.getGlobalVariable(thisModel.flighttimeHoursGV - 1, thisModel.gvFm)
+  thisModel.flighttimeMinutes = model.getGlobalVariable(thisModel.flighttimeMinutesGV - 1, thisModel.gvFm)
 
   for _, switchInfo in ipairs(thisModel.switchAnnounces) do --todo --- maybe with a table and index too ?
     local switch = switchInfo[1]
@@ -1645,6 +1670,7 @@ if not modelAlreadyLoaded then --todo --- maybe move all of this stuff out of in
 
   thisModel.activityTrigger.id = getFieldInfo(thisModel.activityTrigger.source).id
   thisModel.loggingTrigger.id = getFieldInfo(thisModel.loggingTrigger.source).id
+  thisModel.flightDetection.id = getFieldInfo(thisModel.flightDetection.source).id
   
   -- debugPrint("AID: name: " .. getFieldInfo(thisModel.activityIndicator).name)
   -- debugPrint("AID: desc: " .. getFieldInfo(thisModel.activityIndicator).desc)
@@ -1731,6 +1757,19 @@ end
 
 local function updatePowerSourceSensorValues(source)
   debugPrint("UPDSEN: " .. source.displayName)
+
+  -- Buffer Pack (or is not battery) is a special case:
+  -- During flight .. we would like to get all the alerts as soon and as much as possible
+  -- because this would be an emergency situation.
+  -- However after Flight, when you unplug the Battery, The Buffer Pack will start doing its job 
+  -- and supply "Backup" Voltage to the Receiver just like it would during flight.
+  -- But in this case ... we do not want the radio yelling at us, because well ... we are landed
+  -- And for this case ... if after flight (on the ground) we simply ignore and do not update
+  -- the sensor anymore.
+  -- how to read below if ;-) : if not battery and we have been flying and are currently NOT flying then ignore
+  if source.type.isNotABattery and activeFlightState and not flightState then
+   return
+  end
 
   -- Update sensor values
   updateSensorValue(source.VoltageSensor)
@@ -1845,12 +1884,14 @@ local function checkLoggingAndActivity()
 
 thisModel.activityTrigger.value = getValue(thisModel.activityTrigger.id)
 thisModel.loggingTrigger.value = getValue(thisModel.loggingTrigger.id)
+thisModel.flightDetection.value = getValue(thisModel.flightDetection.id)
 
 debugPrint("CHKL: activityTriggerValue: " .. thisModel.activityTrigger.value )
 debugPrint("CHKL: loggingTriggerValue: " .. thisModel.loggingTrigger.value )
 
 local evalActivity = evaluateCondition(thisModel.activityTrigger.value, thisModel.activityTrigger.condition)
 local evalLogging = evaluateCondition(thisModel.loggingTrigger.value, thisModel.loggingTrigger.condition)
+local evalFlight = evaluateCondition(thisModel.flightDetection.value, thisModel.flightDetection.condition)
 
 
 
@@ -1878,12 +1919,41 @@ local evalLogging = evaluateCondition(thisModel.loggingTrigger.value, thisModel.
   if evalActivity then
     if not activityState then 
       activityState = true
+      debugPrint("CHKL: Activity : ON " )
+
     end
   else
     if activityState then 
       activityState = false
+      debugPrint("CHKL: Activity : OFF " )
+
     end
   end
+
+  if evalFlight then
+    if not flightState then 
+      flightState = true
+      debugPrint("CHKL: Flight : ON " )
+
+    end
+  else
+    if flightState then 
+      flightState = false
+      debugPrint("CHKL: Flight : OFF " )
+
+    end
+  end
+
+  if not activeFlightState then
+  if flightState and activityState and statusTele and Timer("activeflightstate", 30) then
+    activeFlightState = true
+    debugPrint("CHKL: activeflightstate : ON " )
+    queueSound("afd", 2)
+  elseif not flightState or not activityState or not statusTele then
+    TriggerTimers["activeflightstate"] = 0 --reset timer
+  end
+end
+
 
 end
 ---------------------------------------------------------------------------------------------------------------------------------------
@@ -2751,8 +2821,19 @@ end
   y = drawText("Status:", x, y, "m", COLOR_THEME_SECONDARY2)
   drawText(pfStatus.text, x, y, "s", pfStatus.color)
 
+  y = ( wgt.zone.h / 8 ) * 6
+  x = wgt.zone.w / 2
+
+  if thisModel.flightCountGV ~= nil and thisModel.flightcount ~= 0 then
+
+  y = drawKeyValLine("Total Flights", thisModel.flightcount, COLOR_THEME_FOCUS, GREEN, y)
+  end
 
 
+  if thisModel.flighttimeHoursGV ~= nil and thisModel.flighttimeMinutesGV ~= nil  then
+
+  y = drawKeyValLine("Flight Time", thisModel.flighttimeHours .. " h " .. thisModel.flighttimeMinutes .. " m " , COLOR_THEME_FOCUS, GREEN, y)
+  end
 
 
 

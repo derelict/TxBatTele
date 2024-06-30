@@ -45,3 +45,8 @@ Taking Screenshot.,tss.wav
 off,off.wav
 on,on.wav
 Turning Logging,tl.wav
+Active,active.wav
+flight,flight.wav
+End of,endof.wav
+End of flight detected.,eofd.wav
+Active flight detected.,afd.wav
