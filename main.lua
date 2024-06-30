@@ -1488,16 +1488,16 @@ end
 if activeFlightState  then
 
 
-  local endtime = getTime()
-  local delta = ( endtime - thisModel.flightstarttime ) / 100
-  delta = delta + thisModel.activeFlightDetTimeSet
+  -- local endtime = getTime()
+  -- local delta = ( endtime - thisModel.flightstarttime ) / 100
+  -- delta = delta + thisModel.activeFlightDetTimeSet
+-- 
+  -- -- thisModel.flightstarttime
+-- 
+  -- local minutesToAdd = math.floor(delta / 60)
+  local newtotalMinutes = thisModel.flighttimettotalminutes + prevFlightTime
 
-  -- thisModel.flightstarttime
-
-  local minutesToAdd = math.floor(delta / 60)
-  local newtotalMinutes = thisModel.flighttimettotalminutes + minutesToAdd
-
-  prevFlightTime = minutesToAdd
+  -- prevFlightTime = minutesToAdd
 
   local hours = math.floor(newtotalMinutes / 60)
   local minutes = newtotalMinutes % 60
@@ -1505,7 +1505,7 @@ if activeFlightState  then
   local prehours = math.floor(thisModel.flighttimettotalminutes / 60)
   local preminutes = thisModel.flighttimettotalminutes % 60
 
-  debugPrint("CHKLL: NEW FLIGHT TIME: Delta Seconds : " .. delta .. " previous minutes: " .. thisModel.flighttimettotalminutes .. " hours: " .. prehours .. " Minutes: " .. preminutes .. " new Minutes : " .. newtotalMinutes .. " Diff Minutes : " .. newtotalMinutes - thisModel.flighttimettotalminutes .. " hours: " .. hours .. " Minutes: ".. minutes)
+  debugPrint("CHKLL: NEW FLIGHT TIME: previous minutes: " .. thisModel.flighttimettotalminutes .. " hours: " .. prehours .. " Minutes: " .. preminutes .. " new Minutes : " .. newtotalMinutes .. " Diff Minutes : " .. newtotalMinutes - thisModel.flighttimettotalminutes .. " hours: " .. hours .. " Minutes: ".. minutes)
 
   if thisModel.flightCountGV ~= nil then
     model.setGlobalVariable(thisModel.flightCountGV - 1, thisModel.gvFm , thisModel.flightcount + 1)
@@ -1620,8 +1620,20 @@ local function reset_if_needed()
 
       queueSound("rs", 0)
 
+      if activeFlightState  then
 
-  
+        local endtime = getTime()
+        local delta = ( endtime - thisModel.flightstarttime ) / 100
+        delta = delta + thisModel.activeFlightDetTimeSet
+      
+        -- thisModel.flightstarttime
+      
+        local minutesToAdd = math.floor(delta / 60)
+        --local newtotalMinutes = thisModel.flighttimettotalminutes + minutesToAdd
+      
+        prevFlightTime = minutesToAdd
+      end
+
       --reset()
 
 
@@ -1991,7 +2003,7 @@ local evalFlight = evaluateCondition(thisModel.flightDetection.value, thisModel.
     end
   end
 
-  if not activeFlightState then
+  if not activeFlightState then -- todo -- track time better when landed and flown again without changing battery (tele loss)
   if flightState and activityState and statusTele and Timer("activeflightstate", thisModel.activeFlightDetTimeSet ) then
     activeFlightState = true
     debugPrint("CHKLL: activeflightstate : ON " )
@@ -2438,7 +2450,8 @@ local topSpacing = 0
 
 
 if screenshotTriggered then -- Add Modelname to the Screenshot before it is taken -- todo can be improved
-  lcd.drawText(wgt.zone.w / 2, y, thisModel.modelName , SMLSIZE + WHITE)
+  lcd.drawText(col1, line1, thisModel.modelName , SMLSIZE + WHITE)
+  lcd.drawText(col5, line1, "Active Flight Time: " .. prevFlightTime .. " m" , SMLSIZE + WHITE)
 end
 
 
@@ -2819,10 +2832,10 @@ drawBottomSensorLine(thisModel.AdlSensors, y)
     local optvalcol = optvalcol or WHITE
     local offsetX = x + 2
     drawText(key, offsetX, y, "s", keycol)
-    drawText(":", offsetX + fontSizes["s"].colSpacing * 10, y, "s", WHITE)
-    drawText(value, offsetX + fontSizes["s"].colSpacing * 11, y, "s", valcol)
+    drawText(":", offsetX + fontSizes["s"].colSpacing * 11, y, "s", WHITE)
+    drawText(value, offsetX + fontSizes["s"].colSpacing * 12, y, "s", valcol)
     if optval ~= "" then
-    drawText(optval, offsetX + fontSizes["s"].colSpacing * 13, y, "s", optvalcol)
+    drawText(optval, offsetX + fontSizes["s"].colSpacing * 14, y, "s", optvalcol)
     end
     y = y + fontSizes["s"].fontpxl + fontSizes["s"].lineSpacing
     return y
