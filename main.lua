@@ -176,7 +176,7 @@ local sensSimulator = { -- this is what i use for testing and development -- can
         notFullWarningThreshold     = 99,     -- Not full warning threshold in percentage
         announceNotFullCriticalMode = 10, -- change, disable or integer intervall
         announceNotFullWarningMode  = 10, -- change, disable or integer intervall
-        announceNormalMode          = 20, -- change, disable or integer intervall
+        announceNormalMode          = "disable", -- change, disable or integer intervall
         announceWarningMode         = "change", -- change, disable or integer intervall
         announceCriticalMode        = "change", -- change, disable or integer intervall      highVoltage              = nil,    -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
         highVoltage                 = nil,   -- if nil will use model rxReferenceVoltage
@@ -196,7 +196,7 @@ local sensSimulator = { -- this is what i use for testing and development -- can
         notFullWarningThreshold     = 99,     -- Not full warning threshold in percentage
         announceNotFullCriticalMode = 10, -- change, disable or integer intervall
         announceNotFullWarningMode  = 10, -- change, disable or integer intervall
-        announceNormalMode          = 20, -- change, disable or integer intervall
+        announceNormalMode          = "disable", -- change, disable or integer intervall
         announceWarningMode         = "change", -- change, disable or integer intervall
         announceCriticalMode        = "change", -- change, disable or integer intervall      highVoltage              = nil,    -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
         highVoltage                 = nil,   -- if nil will use model rxReferenceVoltage
@@ -220,6 +220,8 @@ local modelTable = {
       rxReferenceVoltage     = 8.2,
       resetSwitch            = "TELE",
       AdlSensors             = defaultAdlSensors,
+
+      telemetrysettlement    = 5, -- how long to let telemetry and sensors to settle before taking values for real
 
       doScreenshot           = true, -- Take a Screenshot after a reset (see resetSwitch above)
 
@@ -270,9 +272,11 @@ local modelTable = {
     modelName              = "SAB RAW 580",
     modelImage             = "580.png",
     modelWav               = "sr580",
-    rxReferenceVoltage     = 7.85,
+    rxReferenceVoltage     = 7.96,
     resetSwitch            = "TELE",
     AdlSensors             = sensg580,
+
+    telemetrysettlement    = 8, -- how long to let telemetry and sensors to settle before taking values for real
 
     doScreenshot           = true, -- Take a Screenshot after a reset (see resetSwitch above)
 
@@ -282,9 +286,9 @@ local modelTable = {
 
     -- Switches have to be lowercase ... Sensors are Case Sensitive ... Condition for a 3 position switch -1024, 0 and 1024
     -- See Example(s) below. ActivityTrigger (normally your Arm Switch) will currently only be used to dismiss the preflight status screen
-    activityTrigger = { source = "RPM", condition = ">50" },
+    activityTrigger = { source = "se", condition = "=0" },
     --loggingTrigger =  { source = "sd",  condition = "=0" },
-    loggingTrigger =  { source = "RPM",  condition = ">50" },
+    loggingTrigger =  { source = "se",  condition = "=0" },
 
     doHaptic               = true,
     doWarnTone             = true,
@@ -322,9 +326,11 @@ local modelTable = {
       modelName              = "SAB Goblin 630",
       modelImage             = "goblin.png",
       modelWav               = "sg630",
-      rxReferenceVoltage     = 8.2,
+      rxReferenceVoltage     = 8.19,
       resetSwitch            = "TELE",
       AdlSensors             = sensSimulator,
+
+      telemetrysettlement    = 5, -- how long to let telemetry and sensors to settle before taking values for real
 
       doScreenshot           = true, -- Take a Screenshot after a reset (see resetSwitch above)
 
@@ -348,11 +354,12 @@ local modelTable = {
 
         {
           displayName = "Main", -- single words have to be present as wav or voice announce wont work
-          VoltageSensor = { sensorName = "Cels" },
+          --VoltageSensor = { sensorName = "Cels" },
+          VoltageSensor = { sensorName = "VFAS" },
           CurrentSensor = { sensorName = "Curr" },
           MahSensor =     { sensorName = "mah" },
           type = powerSources.lipo,
-          CellCount = 8,
+          CellCount = 12,
           capacities = { 500, 1000, 1500, 2000, 2500, 3000 } -- not used as of now
         },
   
@@ -410,6 +417,8 @@ local loggingState = false
 local activityState = false
 
 idstatusTele = getSwitchIndex("TELE") -- Telemetry Status
+
+local telegrace = 0
 
 local properties = {
   "CurVolt", "LatestVolt", "LowestVolt", "HighestVolt",
@@ -1182,6 +1191,19 @@ local function check_cell_delta_voltageNew(source)
   end
 end
 
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+ -- Function to estimate the number of cells efficiently
+ local function estimateNumberOfCells(source)
+  for cells, range in pairs(source.type.cellVoltageRanges) do
+      if source.VoltageSensor.value >= range.minVoltage and source.VoltageSensor.value <= range.maxVoltage then
+          return cells
+      end
+  end
+  return 0 -- In case no valid cell count is found
+end
+
 ---------------------------------------------------------------------------------------------------------------------------------------
 
 local function check_for_missing_cellsNew(source)
@@ -1198,7 +1220,12 @@ local function check_for_missing_cellsNew(source)
 
       -- Handle case where VoltageSensor value is a number (e.g., VFAS sensor)
       elseif type(source.VoltageSensor.value) == "number" then
-          source.VoltageSensor.CellsDetectedCurrent = math.floor(source.VoltageSensor.value / source.type.lowVoltage)
+          
+        
+        -- source.VoltageSensor.CellsDetectedCurrent = math.floor(source.VoltageSensor.value / source.type.lowVoltage)
+
+        source.VoltageSensor.CellsDetectedCurrent = estimateNumberOfCells(source)
+
           if source.VoltageSensor.CellsDetectedCurrent ~= source.CellCount then
               missingCellDetected = true
           end
@@ -1364,6 +1391,7 @@ local function checkAllSourceStatuspreFlight(source)
   return true
 end
 
+
 ---------------------------------------------------------------------------------------------------------------------------------------
 
 local function reset()
@@ -1419,6 +1447,24 @@ for _, source in ipairs(thisModel.powerSources) do
     debugPrint("NO DISCHARGE CURVE FOR " .. (source.displayName or "UNKNOWN SOURCE"))
     source.type.dischargeCurve = calculateLinearDischargeCurve(source.type.lowVoltage, source.type.highVoltage)
   end
+
+
+  source.type.cellVoltageRanges = {}
+  local maxcells = 14
+
+  for cells = 1, maxcells do
+    source.type.cellVoltageRanges[cells] = {
+          minVoltage = cells * source.type.lowVoltage,
+          maxVoltage = ( cells * source.type.highVoltage ) + 0.3
+      }
+
+      debugPrint("CVRG: Source: " .. source.type.name .. " cell: " .. cells .. " min: " .. cells * source.type.lowVoltage .. " max: " .. ( cells * source.type.highVoltage ) + 0.3 )
+  end
+
+
+
+
+
 end
 
 
@@ -1430,7 +1476,7 @@ thisModel.loggingTrigger.Value = 0
 
 setStickySwitch(thisModel.resetTeleLS, true)
 
-
+telegrace = thisModel.telemetrysettlement
 
 
 preFlightChecksPassed = false
@@ -1619,10 +1665,7 @@ local function checkForTelemetry()
 
   local currentStatusTele = getSwitchValue(idstatusTele)
 
-  if not statusTele and currentStatusTele and not Timer("telegrace", 2) then
-    debugPrint("TELEDELAY:")
-    return
-  end
+
 
   -- thisModel.VoltageSensor.main.
   if not currentStatusTele then
@@ -1638,8 +1681,17 @@ local function checkForTelemetry()
     pfStatus.text = "Waiting for Telemetry"
     pfStatus.color = RED
   else
+
+    if not statusTele and currentStatusTele and not Timer("telegrace", telegrace ) then
+      pfStatus.text = "Waiting for Telemetry to settle"
+      pfStatus.color = GREEN
+      return
+    end
+
+
     pfStatus.text = "Telemetry OK"
     pfStatus.color = GREEN
+    telegrace = 0 -- will be set to model telemetrysettlement on reset (battery changed/new flight)
 
     end
 
