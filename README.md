@@ -16,6 +16,8 @@ EdgeTX/OpenTX **Battery** and **Telemetry** Monitoring LUA Widget which tries to
 
 It's supposed to be **"A jack of all trades"** kind of thing (at least for most "standard" Monitoring and Alerting needs) but with a main focus on Battery Monitoring.
 
+You can also reach out to me on the EdgeTX LUA Discord Channel (see above)
+
 ## Key Features of TxBatTele ⭐
 - **Receiver** and/or **Main Battery** Monitoring: Monitor your Main **and/or** Receiver Battery. Support for different Battery Types (lipo and buffer currently, can be extended for additional battery types easily)
 - **Current Sensor**: Monitor Current Consumption if a Sensor is available
