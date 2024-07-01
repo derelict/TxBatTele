@@ -24,8 +24,10 @@ You can also reach out to me on the EdgeTX LUA Discord Channel (see above)
 - **Switch State Announcements**: Voice Announcements for any Switch Position (like Armed, Disarmed, Flightmode, and so on)
 - **Status Pages**: Show pre, post and in flight Statuspage (widget)
 - **Pre-Flight Checks**: Check for missing/inconsistent Cells, Battery not full conditions before flight
-- **Voice Announcements**: Get periodic or on changes Voice Announcements for any Condition including haptic Feedback if needed (highly customizable)
-- **Logging**: Take Screenshot of the Statuspage after flight or turn on logging if/as needed based on Conditions (like Battery at 30%) ( not yet possible ... but maybe >= EdgeTX 2.11 ... see pending Feature Request: https://github.com/EdgeTX/edgetx/issues/5191 and pending pull request: https://github.com/EdgeTX/edgetx/pull/5181 )
+- **Model Statistics**: Show Total Flight Count, Total Flight Time and previous/last Flight Time
+- **Voice Announcements**: Get periodic or on changes Voice Announcements for any Condition (highly customizable)
+- **Haptic Feedback**: Get Haptic Feedback on Alerts (on critical and warning Events)
+- **Logging**: Take a Screenshot of the Statuspage after flight or turn on logging if/as needed based on Conditions (like Battery at 30%) ( not yet possible ... but maybe >= EdgeTX 2.11 ... see pending Feature Request: https://github.com/EdgeTX/edgetx/issues/5191 and pending pull request: https://github.com/EdgeTX/edgetx/pull/5181 ) for a Workaround see below
 
 ## Video :tv:
 [<img src="screenshots/demovid.gif">](https://youtu.be/zkkMqSeXS8w)
