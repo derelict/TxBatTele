@@ -86,3 +86,37 @@ Make sure to reference the correct **logical switch**. Then in the LUA Model Def
 
 and again ... make sure to reference the correct **logical switch** by its index number. 0=L01, 1=L02 and so on.
 
+### How to make telemetry reset working
+If you like to reset all the Sensors after flight/changing the Battery, you'll have to make some small radio setttings in order to make this work:
+
+Create a **Logical Switch** like so:
+
+![image](https://github.com/derelict/TxBatTele/assets/2826671/a2a31326-0b14-4480-a6eb-a8ef026e34f0)
+
+and then a **Special Function** for the reset Telemetry:
+
+![image](https://github.com/derelict/TxBatTele/assets/2826671/19948a7a-a93e-48f0-a97b-d4bc5b4eac8f)
+
+Make sure to reference the correct **logical switch**. Then in the LUA Model Definition:
+
+![image](https://github.com/derelict/TxBatTele/assets/2826671/8a5f7d59-f647-490c-86a3-2eec8118a83d)
+
+and again ... make sure to reference the correct **logical switch** by its index number. 0=L01, 1=L02 and so on.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
