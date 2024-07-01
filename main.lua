@@ -236,11 +236,11 @@ local modelTable = {
       loggingTrigger =  { source = "RPM",  condition = ">50" },
       flightDetection = { source = "RPM",  condition = ">1000" },
 
-      flightCountGV          = 1,
-      flighttimeHoursGV      = 2,
-      flighttimeMinutesGV    = 3,
+      flightCountGV          = 1, -- Global Variable (Number as displayed, like GV1) to store the value, make sure it is not used for something else. Set to nil to disable. Please Note: only a flight time longer as one (1) minute will make this count !
+      flighttimeHoursGV      = 2, -- Global Variable (Number as displayed, like GV2) to store the value, make sure it is not used for something else. Set to nil to disable. Please Note: only a flight time longer as one (1) minute will make this count !
+      flighttimeMinutesGV    = 3, -- Global Variable (Number as displayed, like GV3) to store the value, make sure it is not used for something else. Set to nil to disable. Please Note: only a flight time longer as one (1) minute will make this count !
 
-      gvFm                   = 0,
+      gvFm                   = 0, -- flightmode for storing Global Variables above, change as needed if GV's are occupied above
 
       activeFlightDetTime    = 5, -- todo ... choose a better name for this ... as it is currently only used for buffer pack "ignore" after this seconds of flight
 
@@ -300,11 +300,11 @@ local modelTable = {
       loggingTrigger =  { source = "RPM",  condition = ">50" },
       flightDetection = { source = "RPM",  condition = ">1000" },
 
-      flightCountGV          = 1,
-      flighttimeHoursGV      = 2,
-      flighttimeMinutesGV    = 3,
+      flightCountGV          = 1, -- Global Variable (Number as displayed, like GV1) to store the value, make sure it is not used for something else. Set to nil to disable. Please Note: only a flight time longer as one (1) minute will make this count !
+      flighttimeHoursGV      = 2, -- Global Variable (Number as displayed, like GV2) to store the value, make sure it is not used for something else. Set to nil to disable. Please Note: only a flight time longer as one (1) minute will make this count !
+      flighttimeMinutesGV    = 3, -- Global Variable (Number as displayed, like GV3) to store the value, make sure it is not used for something else. Set to nil to disable. Please Note: only a flight time longer as one (1) minute will make this count !
 
-      gvFm                   = 0,
+      gvFm                   = 0, -- flightmode for storing Global Variables above, change as needed if GV's are occupied above
 
       activeFlightDetTime    = 5, -- todo ... choose a better name for this ... as it is currently only used for buffer pack "ignore" after this seconds of flight
 
@@ -363,11 +363,11 @@ local modelTable = {
       loggingTrigger =  { source = "RPM",  condition = ">50" },
       flightDetection = { source = "RPM",  condition = ">1000" },
 
-      flightCountGV          = 1,
-      flighttimeHoursGV      = 2,
-      flighttimeMinutesGV    = 3,
+      flightCountGV          = 1, -- Global Variable (Number as displayed, like GV1) to store the value, make sure it is not used for something else. Set to nil to disable. Please Note: only a flight time longer as one (1) minute will make this count !
+      flighttimeHoursGV      = 2, -- Global Variable (Number as displayed, like GV2) to store the value, make sure it is not used for something else. Set to nil to disable. Please Note: only a flight time longer as one (1) minute will make this count !
+      flighttimeMinutesGV    = 3, -- Global Variable (Number as displayed, like GV3) to store the value, make sure it is not used for something else. Set to nil to disable. Please Note: only a flight time longer as one (1) minute will make this count !
 
-      gvFm                   = 0,
+      gvFm                   = 0, -- flightmode for storing Global Variables above, change as needed if GV's are occupied above
 
       activeFlightDetTime    = 5, -- todo ... choose a better name for this ... as it is currently only used for buffer pack "ignore" after this seconds of flight
 
