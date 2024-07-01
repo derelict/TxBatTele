@@ -52,23 +52,6 @@ and use it here:
 
 ![image](https://github.com/derelict/TxBatTele/assets/2826671/899175e5-2013-4740-a058-fd3edc4ff4bc)
 
-### How to make automatic logging working
-There is a pending Feature request open, to directly implement this in LUA. But for the time being you'll have to make some small Radio Settings in order to use this Feature:
-
-Create a **Logical Switch** like so:
-
-![image](https://github.com/derelict/TxBatTele/assets/2826671/b6b1c3cd-5002-4b37-a6c9-de3d3fd41b73)
-
-and then a **Special Function** for the actual logging:
-
-![image](https://github.com/derelict/TxBatTele/assets/2826671/a6bc40c3-0486-4716-b21f-451a296fca34)
-
-Make sure to reference the correct **logical switch**. Then in the LUA Model Definition:
-
-![image](https://github.com/derelict/TxBatTele/assets/2826671/9e94d1ed-b566-4ed2-bf47-f1744532c5d8)
-
-and again ... make sure to reference the correct **logical switch** by its index number. 0=L01, 1=L02 and so on.
-
 ### How to make automatic screenshots working
 There is a pending Pull request open, to directly implement this in LUA. But for the time being you'll have to make some small Radio Settings in order to use this Feature:
 
@@ -83,6 +66,23 @@ and then a **Special Function** for the actual screenshot taking:
 Make sure to reference the correct **logical switch**. Then in the LUA Model Definition:
 
 ![image](https://github.com/derelict/TxBatTele/assets/2826671/3582b5b4-ddea-4129-b208-fc20a4f7bc61)
+
+and again ... make sure to reference the correct **logical switch** by its index number. 0=L01, 1=L02 and so on.
+
+### How to make automatic logging working
+There is a pending Feature request open, to directly implement this in LUA. But for the time being you'll have to make some small Radio Settings in order to use this Feature:
+
+Create a **Logical Switch** like so:
+
+![image](https://github.com/derelict/TxBatTele/assets/2826671/b6b1c3cd-5002-4b37-a6c9-de3d3fd41b73)
+
+and then a **Special Function** for the actual logging:
+
+![image](https://github.com/derelict/TxBatTele/assets/2826671/a6bc40c3-0486-4716-b21f-451a296fca34)
+
+Make sure to reference the correct **logical switch**. Then in the LUA Model Definition:
+
+![image](https://github.com/derelict/TxBatTele/assets/2826671/9e94d1ed-b566-4ed2-bf47-f1744532c5d8)
 
 and again ... make sure to reference the correct **logical switch** by its index number. 0=L01, 1=L02 and so on.
 
