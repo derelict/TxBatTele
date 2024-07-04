@@ -1,5 +1,5 @@
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/derelict/TxBatTele)](https://github.com/derelict/TxBatTele/releases/latest)
-[![GitHub all releases](https://img.shields.io/github/downloads/derelict/TxBatTele/total)](https://github.com/derelict/TxBatTele/releases)
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/derelict/TxBatTele/total)
 ![GitHub repo size](https://img.shields.io/github/repo-size/derelict/TxBatTele)
 ![GitHub language count](https://img.shields.io/github/languages/count/derelict/TxBatTele)
 ![GitHub top language](https://img.shields.io/github/languages/top/derelict/TxBatTele)
