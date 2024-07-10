@@ -150,15 +150,32 @@ local sensSimulator = { -- this is what i use for testing and development -- can
         typeName                    = "LiPo",
         name                        = "Battery", -- will be used as suffix to the source name (see below), has to be present as wav or voice announce wont work
         graceperiod                 = 4,      -- grace period for fluctuations 
+        
         criticalThreshold           = 15,     -- Critical threshold in percentage
         warningThreshold            = 20,     -- Warning threshold in percentage
+
         notFullCriticalThreshold    = 96,     -- Not full critical threshold in percentage
         notFullWarningThreshold     = 98,     -- Not full warning threshold in percentage
+
         announceNotFullCriticalMode = 10, -- change, disable or integer intervall
         announceNotFullWarningMode  = 10, -- change, disable or integer intervall
+
         announceNormalMode          = 20, -- change, disable or integer intervall
         announceWarningMode         = "change", -- change, disable or integer intervall
         announceCriticalMode        = "change", -- change, disable or integer intervall
+        
+        notFullAlertModes = { 
+          normal   = { mode = "disable"                                } ,  -- do NOT announce anything under normal conditions
+          warning  = { mode = 10        , threshold = 98               } ,  -- announce on intervals, threshold for warning, steps = amount of change required for announcement
+          critical = { mode = 10        , threshold = 96               } ,  -- announce on intervals, threshold for critical, steps = amount of change required for announcement
+        },
+                
+        alertModes = {
+          normal   = { mode = "change"                   , steps = 10  } ,  -- announce on changes, steps = amount of change required for announcement during normal condition
+          warning  = { mode = "change"  , threshold = 20 , steps = 5   } ,  -- announce on changes, threshold for warning, steps = amount of change required for announcement
+          critical = { mode = "change"  , threshold = 15 , steps = 2.5 } ,  -- announce on changes, threshold for critical, steps = amount of change required for announcement
+        }, 
+
         highVoltage                 = 4.20,   -- High voltage
         lowVoltage                  = 3.27,   -- Low voltage
         cellDeltaVoltage            = 0.1,    -- Cell delta voltage
@@ -170,15 +187,31 @@ local sensSimulator = { -- this is what i use for testing and development -- can
         typeName                    = "Buffer Pack",
         name                        = "Buffer", -- will be used as suffix to the source name (see below), has to be present as wav or voice announce wont work
         graceperiod                 = 4,      -- grace period for fluctuations 
+
         criticalThreshold           = 96,     -- Critical threshold in percentage
         warningThreshold            = 97,     -- Warning threshold in percentage
+
         notFullCriticalThreshold    = 98,     -- Not full critical threshold in percentage
         notFullWarningThreshold     = 99,     -- Not full warning threshold in percentage
         announceNotFullCriticalMode = 10, -- change, disable or integer intervall
         announceNotFullWarningMode  = 10, -- change, disable or integer intervall
+
         announceNormalMode          = "disable", -- change, disable or integer intervall
         announceWarningMode         = "change", -- change, disable or integer intervall
         announceCriticalMode        = "change", -- change, disable or integer intervall      highVoltage              = nil,    -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
+        
+        notFullAlertModes = { 
+          normal   = { mode = "disable"                                } ,  -- do NOT announce anything under normal conditions
+          warning  = { mode = 10        , threshold = 99               } ,  -- announce on intervals, threshold for warning, steps = amount of change required for announcement
+          critical = { mode = 10        , threshold = 98               } ,  -- announce on intervals, threshold for critical, steps = amount of change required for announcement
+        },
+
+        alertModes = {
+          normal   = { mode = "disable"                                } ,  -- announce on changes, steps = amount of change required for announcement during normal condition
+          warning  = { mode = "change"  , threshold = 97 , steps = 5   } ,  -- announce on changes, threshold for warning, steps = amount of change required for announcement
+          critical = { mode = "change"  , threshold = 87 , steps = 2.5 } ,  -- announce on changes, threshold for critical, steps = amount of change required for announcement
+        },
+       
         highVoltage                 = nil,   -- if nil will use model rxReferenceVoltage
         lowVoltage                  = 6,      -- Low voltage -- where your buffer pack shuts off completely ... all hope is lost after this ;-) .. please note... in the case of buffer packs ... we will device this value by 2 in order to get a theoretical 2s per cell value for the alerts and percentage left -- todo
         cellDeltaVoltage            = nil,     -- Cell delta voltage -- irrelevant for buffer or bec
@@ -196,9 +229,23 @@ local sensSimulator = { -- this is what i use for testing and development -- can
         notFullWarningThreshold     = 99,     -- Not full warning threshold in percentage
         announceNotFullCriticalMode = 10, -- change, disable or integer intervall
         announceNotFullWarningMode  = 10, -- change, disable or integer intervall
+
         announceNormalMode          = "disable", -- change, disable or integer intervall
         announceWarningMode         = "change", -- change, disable or integer intervall
         announceCriticalMode        = "change", -- change, disable or integer intervall      highVoltage              = nil,    -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
+        
+        notFullAlertModes = { 
+          normal   = { mode = "disable"                                } ,  -- do NOT announce anything under normal conditions
+          warning  = { mode = 10        , threshold = 99               } ,  -- announce on intervals, threshold for warning, steps = amount of change required for announcement
+          critical = { mode = 10        , threshold = 98               } ,  -- announce on intervals, threshold for critical, steps = amount of change required for announcement
+        },
+
+        alertModes = {
+          normal   = { mode = "disable"                                } ,  -- announce on changes, steps = amount of change required for announcement during normal condition
+          warning  = { mode = "change"  , threshold = 97 , steps = 5   } ,  -- announce on changes, threshold for warning, steps = amount of change required for announcement
+          critical = { mode = "change"  , threshold = 87 , steps = 2.5 } ,  -- announce on changes, threshold for critical, steps = amount of change required for announcement
+        },
+
         highVoltage                 = nil,   -- if nil will use model rxReferenceVoltage
         lowVoltage                  = 5,      -- Low voltage -- there is not such a thing as "lowvoltage" if only using a bec ... if you loose your bec you will recognize it before we can announce anything ... so lets set this to anything below what is "normal" ... like 5
         cellDeltaVoltage            = nil,     -- Cell delta voltage -- irrelevant for buffer or bec
@@ -225,9 +272,9 @@ local modelTable = {
 
       doScreenshot           = true, -- Take a Screenshot after a reset (see resetSwitch above)
 
-      screenshotLS           = 0, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function Screenshot
-      loggingLS              = 1, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs
-      resetTeleLS            = 2, -- Number has to be a Sticky LS (0=L01) LS has to be used for Reset - Telemetry
+      screenshotLS           = 0, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function Screenshot. See github page on how to implement this.
+      loggingLS              = 1, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs. See github page on how to implement this.
+      resetTeleLS            = 2, -- Number has to be a Sticky LS (0=L01) LS has to be used for Reset - Telemetry. See github page on how to implement this.
 
       -- Switches have to be lowercase ... Sensors are Case Sensitive ... Condition for a 3 position switch -1024, 0 and 1024
       -- See Example(s) below. ActivityTrigger (normally your Arm Switch) will currently only be used to dismiss the preflight status screen
@@ -289,9 +336,9 @@ local modelTable = {
 
     doScreenshot           = true, -- Take a Screenshot after a reset (see resetSwitch above)
 
-    screenshotLS           = 0, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function Screenshot
-    loggingLS              = 1, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs
-    resetTeleLS            = 2, -- Number has to be a Sticky LS (0=L01) LS has to be used for Reset - Telemetry
+    screenshotLS           = 0, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function Screenshot. See github page on how to implement this.
+    loggingLS              = 1, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs. See github page on how to implement this.
+    resetTeleLS            = 2, -- Number has to be a Sticky LS (0=L01) LS has to be used for Reset - Telemetry. See github page on how to implement this.
 
       -- Switches have to be lowercase ... Sensors are Case Sensitive ... Condition for a 3 position switch -1024, 0 and 1024
       -- See Example(s) below. ActivityTrigger (normally your Arm Switch) will currently only be used to dismiss the preflight status screen
@@ -352,9 +399,9 @@ local modelTable = {
 
       doScreenshot           = true, -- Take a Screenshot after a reset (see resetSwitch above)
 
-      screenshotLS           = 0, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function Screenshot
-      loggingLS              = 1, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs
-      resetTeleLS            = 2, -- Number has to be a Sticky LS (0=L01) LS has to be used for Reset - Telemetry
+      screenshotLS           = 0, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function Screenshot. See github page on how to implement this.
+      loggingLS              = 1, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs. See github page on how to implement this.
+      resetTeleLS            = 2, -- Number has to be a Sticky LS (0=L01) LS has to be used for Reset - Telemetry. See github page on how to implement this.
 
       -- Switches have to be lowercase ... Sensors are Case Sensitive ... Condition for a 3 position switch -1024, 0 and 1024
       -- See Example(s) below. ActivityTrigger (normally your Arm Switch) will currently only be used to dismiss the preflight status screen
