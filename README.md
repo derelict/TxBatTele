@@ -1,5 +1,5 @@
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/derelict/TxBatTele)](https://github.com/derelict/TxBatTele/releases/latest)
-[![GitHub all releases](https://img.shields.io/github/downloads/derelict/TxBatTele/total)](https://github.com/derelict/TxBatTele/releases)
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/derelict/TxBatTele/total)
 ![GitHub repo size](https://img.shields.io/github/repo-size/derelict/TxBatTele)
 ![GitHub language count](https://img.shields.io/github/languages/count/derelict/TxBatTele)
 ![GitHub top language](https://img.shields.io/github/languages/top/derelict/TxBatTele)
@@ -24,8 +24,10 @@ You can also reach out to me on the EdgeTX LUA Discord Channel (see above)
 - **Switch State Announcements**: Voice Announcements for any Switch Position (like Armed, Disarmed, Flightmode, and so on)
 - **Status Pages**: Show pre, post and in flight Statuspage (widget)
 - **Pre-Flight Checks**: Check for missing/inconsistent Cells, Battery not full conditions before flight
-- **Voice Announcements**: Get periodic or on changes Voice Announcements for any Condition including haptic Feedback if needed (highly customizable)
-- **Logging**: Take Screenshot of the Statuspage after flight or turn on logging if/as needed based on Conditions (like Battery at 30%) ( not yet possible ... but maybe >= EdgeTX 2.11 ... see pending Feature Request: https://github.com/EdgeTX/edgetx/issues/5191 and pending pull request: https://github.com/EdgeTX/edgetx/pull/5181 )
+- **Model Statistics**: Show Total Flight Count, Total Flight Time and previous/last Flight Time
+- **Voice Announcements**: Get periodic or on changes Voice Announcements for any Condition (highly customizable)
+- **Haptic Feedback**: Get Haptic Feedback on Alerts (on critical and warning Events)
+- **Logging**: Take a Screenshot of the Statuspage after flight or turn on logging if/as needed based on Conditions (like Battery at 30%) ( not yet possible ... but maybe >= EdgeTX 2.11 ... see pending Feature Request: https://github.com/EdgeTX/edgetx/issues/5191 and pending pull request: https://github.com/EdgeTX/edgetx/pull/5181 ) for a Workaround see below
 
 ## Video :tv:
 [<img src="screenshots/demovid.gif">](https://youtu.be/zkkMqSeXS8w)
@@ -50,6 +52,23 @@ and use it here:
 
 ![image](https://github.com/derelict/TxBatTele/assets/2826671/899175e5-2013-4740-a058-fd3edc4ff4bc)
 
+### How to make automatic screenshots working
+There is a pending Pull request open, to directly implement this in LUA. But for the time being you'll have to make some small Radio Settings in order to use this Feature:
+
+Create a **Logical Switch** like so:
+
+![image](https://github.com/derelict/TxBatTele/assets/2826671/fe1071b8-fe24-4f0e-98a9-3b7b9d034f02)
+
+and then a **Special Function** for the actual screenshot taking:
+
+![image](https://github.com/derelict/TxBatTele/assets/2826671/93556a3a-2cc2-4581-849e-09326ece0aa0)
+
+Make sure to reference the correct **logical switch**. Then in the LUA Model Definition:
+
+![image](https://github.com/derelict/TxBatTele/assets/2826671/3582b5b4-ddea-4129-b208-fc20a4f7bc61)
+
+and again ... make sure to reference the correct **logical switch** by its index number. 0=L01, 1=L02 and so on.
+
 ### How to make automatic logging working
 There is a pending Feature request open, to directly implement this in LUA. But for the time being you'll have to make some small Radio Settings in order to use this Feature:
 
@@ -67,20 +86,37 @@ Make sure to reference the correct **logical switch**. Then in the LUA Model Def
 
 and again ... make sure to reference the correct **logical switch** by its index number. 0=L01, 1=L02 and so on.
 
-### How to make automatic screenshots working
-There is a pending Pull request open, to directly implement this in LUA. But for the time being you'll have to make some small Radio Settings in order to use this Feature:
+### How to make telemetry reset working
+If you like to reset all the Sensors after flight/changing the Battery, you'll have to make some small radio setttings in order to make this work:
 
 Create a **Logical Switch** like so:
 
-![image](https://github.com/derelict/TxBatTele/assets/2826671/fe1071b8-fe24-4f0e-98a9-3b7b9d034f02)
+![image](https://github.com/derelict/TxBatTele/assets/2826671/a2a31326-0b14-4480-a6eb-a8ef026e34f0)
 
-and then a **Special Function** for the actual screenshot taking:
+and then a **Special Function** for the reset Telemetry:
 
-![image](https://github.com/derelict/TxBatTele/assets/2826671/93556a3a-2cc2-4581-849e-09326ece0aa0)
+![image](https://github.com/derelict/TxBatTele/assets/2826671/19948a7a-a93e-48f0-a97b-d4bc5b4eac8f)
 
 Make sure to reference the correct **logical switch**. Then in the LUA Model Definition:
 
-![image](https://github.com/derelict/TxBatTele/assets/2826671/3582b5b4-ddea-4129-b208-fc20a4f7bc61)
+![image](https://github.com/derelict/TxBatTele/assets/2826671/8a5f7d59-f647-490c-86a3-2eec8118a83d)
 
 and again ... make sure to reference the correct **logical switch** by its index number. 0=L01, 1=L02 and so on.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
