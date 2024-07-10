@@ -147,6 +147,8 @@ local sensSimulator = { -- this is what i use for testing and development -- can
             {3.69, 10}, {3.67, 7.5}, {3.61, 5}, {3.49, 2.5},
             {3.27, 0}
         },
+
+
         typeName                    = "LiPo",
         name                        = "Battery", -- will be used as suffix to the source name (see below), has to be present as wav or voice announce wont work
         graceperiod                 = 4,      -- grace period for fluctuations 
@@ -1039,18 +1041,28 @@ local context = source and source.displayName or "global"
   else
       config = source.type
       if item == "Battery" then
-          critTH = config.criticalThreshold
-          warnTH = config.warningThreshold
-          critMD = config.announceCriticalMode
-          warnMD = config.announceWarningMode
-          normMD = config.announceNormalMode
+          warnTH = config.alertModes.warning.threshold or 80
+          critTH = config.alertModes.critical.threshold or 70
+
+          normST = config.alertModes.normal.steps or 5
+          warnST = config.alertModes.warning.steps or 5
+          critST = config.alertModes.critical.steps or 5
+          
+          normMD = config.alertModes.normal.mode or "change"
+          warnMD = config.alertModes.warning.mode or "change"
+          critMD = config.alertModes.critical.mode or "change"
           graceP = 0 -- handled in findpercremaining
       elseif item == "BatteryNotFull" then
-          critTH = config.notFullCriticalThreshold
-          warnTH = config.notFullWarningThreshold
-          critMD = config.announceNotFullCriticalMode
-          warnMD = config.announceNotFullWarningMode
-          normMD = "disable"
+          warnTH = config.notFullAlertModes.warning.threshold or 80
+          critTH = config.notFullAlertModes.critical.threshold or 70
+
+          normST = config.notFullAlertModes.normal.steps or 0
+          warnST = config.notFullAlertModes.warning.steps or 0
+          critST = config.notFullAlertModes.critical.steps or 0
+
+          normMD = config.notFullAlertModes.normal.mode or "change"
+          warnMD = config.notFullAlertModes.warning.mode or "change"
+          critMD = config.notFullAlertModes.critical.mode or "change"
           graceP = 0 -- handled in findpercremaining
       end
   end
@@ -1070,18 +1082,18 @@ local context = source and source.displayName or "global"
   item, tostring(currentStatus), context, tostring(critTH), tostring(warnTH), tostring(critMD), tostring(warnMD), tostring(normMD), tostring(graceP)))
 
   -- Determine severity and mode
-  local severity, mode = "normal", normMD
+  local severity, mode, steps = "normal", normMD, normST
   if type(currentStatus) == "number" then
       if currentStatus <= critTH then
-          severity, mode = "critical", critMD
+          severity, mode, steps = "critical", critMD, critST
       elseif currentStatus <= warnTH then
-          severity, mode = "warning", warnMD
+          severity, mode, steps = "warning", warnMD, warnST
       end
   elseif type(currentStatus) == "boolean" then
       if currentStatus == warnTH then
-          severity, mode = "warning", warnMD
+          severity, mode, steps = "warning", warnMD, warnST
       elseif currentStatus == critTH then
-          severity, mode = "critical", critMD
+          severity, mode, steps = "critical", critMD, critST
       end
   end
 
@@ -1097,7 +1109,10 @@ local context = source and source.displayName or "global"
   local announceNow = false
 
   if mode == "change" then
-      if itemStatus.lastStatus ~= currentStatus then
+      --if itemStatus.lastStatus ~= currentStatus then
+      local percentageChange = itemStatus.lastStatus and math.abs(currentStatus - itemStatus.lastStatus) or 0
+      if itemStatus.lastStatus ~= currentStatus and percentageChange >= steps then
+
           if itemStatus.changeStartTime == 0 then
               -- Start the grace period
               itemStatus.changeStartTime = currentTime
@@ -2228,8 +2243,8 @@ local function getPercentColor(cpercent, battery)
   -- - Graduated color between red and yellow if below the warning threshold
   -- - Green if above the warning threshold
   
-  local warn = battery.warningThreshold
-  local crit = battery.criticalThreshold
+  local warn = battery.alertModes.warning.threshold
+  local crit = battery.alertModes.critical.threshold
 
   if cpercent == "--" then return lcd.RGB(0xff, 0, 0) end
 
