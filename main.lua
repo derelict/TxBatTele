@@ -153,18 +153,18 @@ local sensSimulator = { -- this is what i use for testing and development -- can
         name                        = "Battery", -- will be used as suffix to the source name (see below), has to be present as wav or voice announce wont work
         graceperiod                 = 4,      -- grace period for fluctuations 
         
-        criticalThreshold           = 15,     -- Critical threshold in percentage
-        warningThreshold            = 20,     -- Warning threshold in percentage
-
-        notFullCriticalThreshold    = 96,     -- Not full critical threshold in percentage
-        notFullWarningThreshold     = 98,     -- Not full warning threshold in percentage
-
-        announceNotFullCriticalMode = 10, -- change, disable or integer intervall
-        announceNotFullWarningMode  = 10, -- change, disable or integer intervall
-
-        announceNormalMode          = 20, -- change, disable or integer intervall
-        announceWarningMode         = "change", -- change, disable or integer intervall
-        announceCriticalMode        = "change", -- change, disable or integer intervall
+        -- criticalThreshold           = 15,     -- Critical threshold in percentage
+        -- warningThreshold            = 20,     -- Warning threshold in percentage
+-- 
+        -- notFullCriticalThreshold    = 96,     -- Not full critical threshold in percentage
+        -- notFullWarningThreshold     = 98,     -- Not full warning threshold in percentage
+-- 
+        -- announceNotFullCriticalMode = 10, -- change, disable or integer intervall
+        -- announceNotFullWarningMode  = 10, -- change, disable or integer intervall
+-- 
+        -- announceNormalMode          = 20, -- change, disable or integer intervall
+        -- announceWarningMode         = "change", -- change, disable or integer intervall
+        -- announceCriticalMode        = "change", -- change, disable or integer intervall
         
         notFullAlertModes = { 
           normal   = { mode = "disable"                                } ,  -- do NOT announce anything under normal conditions
@@ -190,17 +190,17 @@ local sensSimulator = { -- this is what i use for testing and development -- can
         name                        = "Buffer", -- will be used as suffix to the source name (see below), has to be present as wav or voice announce wont work
         graceperiod                 = 4,      -- grace period for fluctuations 
 
-        criticalThreshold           = 96,     -- Critical threshold in percentage
-        warningThreshold            = 97,     -- Warning threshold in percentage
-
-        notFullCriticalThreshold    = 98,     -- Not full critical threshold in percentage
-        notFullWarningThreshold     = 99,     -- Not full warning threshold in percentage
-        announceNotFullCriticalMode = 10, -- change, disable or integer intervall
-        announceNotFullWarningMode  = 10, -- change, disable or integer intervall
-
-        announceNormalMode          = "disable", -- change, disable or integer intervall
-        announceWarningMode         = "change", -- change, disable or integer intervall
-        announceCriticalMode        = "change", -- change, disable or integer intervall      highVoltage              = nil,    -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
+        --criticalThreshold           = 96,     -- Critical threshold in percentage
+        --warningThreshold            = 97,     -- Warning threshold in percentage
+--
+        --notFullCriticalThreshold    = 98,     -- Not full critical threshold in percentage
+        --notFullWarningThreshold     = 99,     -- Not full warning threshold in percentage
+        --announceNotFullCriticalMode = 10, -- change, disable or integer intervall
+        --announceNotFullWarningMode  = 10, -- change, disable or integer intervall
+--
+        --announceNormalMode          = "disable", -- change, disable or integer intervall
+        --announceWarningMode         = "change", -- change, disable or integer intervall
+        --announceCriticalMode        = "change", -- change, disable or integer intervall      highVoltage              = nil,    -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
         
         notFullAlertModes = { 
           normal   = { mode = "disable"                                } ,  -- do NOT announce anything under normal conditions
@@ -225,16 +225,16 @@ local sensSimulator = { -- this is what i use for testing and development -- can
         typeName                    = "BEC only",
         name                        = "Power", -- will be used as suffix to the source name (see below), has to be present as wav or voice announce wont work
         graceperiod                 = 4,      -- grace period for fluctuations 
-        criticalThreshold           = 96,     -- Critical threshold in percentage
-        warningThreshold            = 97,     -- Warning threshold in percentage
-        notFullCriticalThreshold    = 98,     -- Not full critical threshold in percentage
-        notFullWarningThreshold     = 99,     -- Not full warning threshold in percentage
-        announceNotFullCriticalMode = 10, -- change, disable or integer intervall
-        announceNotFullWarningMode  = 10, -- change, disable or integer intervall
+        -- criticalThreshold           = 96,     -- Critical threshold in percentage
+        -- warningThreshold            = 97,     -- Warning threshold in percentage
+        -- notFullCriticalThreshold    = 98,     -- Not full critical threshold in percentage
+        -- notFullWarningThreshold     = 99,     -- Not full warning threshold in percentage
+        -- announceNotFullCriticalMode = 10, -- change, disable or integer intervall
+        -- announceNotFullWarningMode  = 10, -- change, disable or integer intervall
 
-        announceNormalMode          = "disable", -- change, disable or integer intervall
-        announceWarningMode         = "change", -- change, disable or integer intervall
-        announceCriticalMode        = "change", -- change, disable or integer intervall      highVoltage              = nil,    -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
+        --announceNormalMode          = "disable", -- change, disable or integer intervall
+        --announceWarningMode         = "change", -- change, disable or integer intervall
+        --announceCriticalMode        = "change", -- change, disable or integer intervall      highVoltage              = nil,    -- High voltage -- will be set to rxReferenceVoltage from the model once it's loaded ... you can override it here ... but it's better to "calculate"/set it to the rxReferenceVoltage -- todo
         
         notFullAlertModes = { 
           normal   = { mode = "disable"                                } ,  -- do NOT announce anything under normal conditions
@@ -1382,19 +1382,22 @@ end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
-local function initializeSensorId(sensor)
+local function initializeSensorId(sensor, fieldname)
+
+  fieldname = fieldname or "sensorName"
+
   if not sensor.valid or sensor.valid == nil then
-      local fieldInfo = getFieldInfo(sensor.sensorName)
+      local fieldInfo = getFieldInfo(sensor[fieldname])
       if fieldInfo then
           sensor.sensorId = fieldInfo.id
           sensor.valid = true
-          debugPrint("UPDSEN: INIT: " .. sensor.sensorName .. " ID: " .. fieldInfo.id)
+          debugPrint("UPDSEN: INIT: " .. sensor[fieldname] .. " ID: " .. fieldInfo.id)
           -- Sensor became valid, do nothing with invalid list
       else
-          print("Field info not found for sensor: " .. sensor.sensorName)
+          print("Field info not found for sensor: " .. sensor[fieldname])
           sensor.valid = false
-          --local normalizedName = sensor.sensorName:gsub("[%+%-%s]", "")
-          local normalizedName = string.gsub(sensor.sensorName, "[+%-%s]", "")
+          --local normalizedName = sensor[fieldname]:gsub("[%+%-%s]", "")
+          local normalizedName = string.gsub(sensor[fieldname], "[+%-%s]", "")
           if not string.find(invalidSensorList, normalizedName) then
             if invalidSensorList ~= "" then
                 invalidSensorList = invalidSensorList .. ","
@@ -1445,6 +1448,10 @@ end
  for sensorKey, sensor in pairs(thisModel.AdlSensors) do
   initializeSensorId(sensor)
 end
+
+initializeSensorId(thisModel.activityTrigger ,"source")
+initializeSensorId(thisModel.loggingTrigger ,"source")
+initializeSensorId(thisModel.flightDetection ,"source")
 
 
 end
@@ -1513,7 +1520,7 @@ local function checkAllSourceStatuspreFlight(source)
       end
 
       -- Check if the latest percentage remaining is below the threshold
-      if source.VoltageSensor.LatestPercRem < source.type.notFullWarningThreshold then
+      if source.VoltageSensor.LatestPercRem < source.type.notFullAlertModes.warning.threshold then
 
         if source.type.isNotABattery then
           pfStatus.text = source.displayName .. " " .. source.type.name .. " low Voltage"
@@ -1873,9 +1880,9 @@ if not modelAlreadyLoaded then --todo --- maybe move all of this stuff out of in
 
   BatRemPer = 0 -- todo remove
 
-  thisModel.activityTrigger.id = getFieldInfo(thisModel.activityTrigger.source).id
-  thisModel.loggingTrigger.id = getFieldInfo(thisModel.loggingTrigger.source).id
-  thisModel.flightDetection.id = getFieldInfo(thisModel.flightDetection.source).id
+-- thisModel.activityTrigger.id = getFieldInfo(thisModel.activityTrigger.source).id
+-- thisModel.loggingTrigger.id = getFieldInfo(thisModel.loggingTrigger.source).id
+-- thisModel.flightDetection.id = getFieldInfo(thisModel.flightDetection.source).id
   
   -- debugPrint("AID: name: " .. getFieldInfo(thisModel.activityIndicator).name)
   -- debugPrint("AID: desc: " .. getFieldInfo(thisModel.activityIndicator).desc)
@@ -1911,6 +1918,7 @@ local function checkForTelemetry()
 
     pfStatus.text = "Waiting for Telemetry"
     pfStatus.color = RED
+    
   else
 
     if not statusTele and currentStatusTele and not Timer("telegrace", telegrace ) then
@@ -1938,6 +1946,11 @@ local function updateOtherSensorValues(source)
   for sensorKey, sensor in pairs(thisModel.AdlSensors) do
     updateSensorValue(sensor)
   end
+
+  --updateSensorValue(thisModel.activityTrigger)
+  --updateSensorValue(thisModel.loggingTrigger)
+  --updateSensorValue(thisModel.flightDetection)
+
 
 end
 ---------------------------------------------------------------------------------------------------------------------------------------
@@ -2087,10 +2100,14 @@ local function checkLoggingAndActivity()
 -- AID: name: se
 -- AID: desc: Switch E
 
+updateSensorValue(thisModel.activityTrigger)
+updateSensorValue(thisModel.loggingTrigger)
+updateSensorValue(thisModel.flightDetection)
 
-thisModel.activityTrigger.value = getValue(thisModel.activityTrigger.id)
-thisModel.loggingTrigger.value = getValue(thisModel.loggingTrigger.id)
-thisModel.flightDetection.value = getValue(thisModel.flightDetection.id)
+
+-- thisModel.activityTrigger.value = getValue(thisModel.activityTrigger.sensorId)
+-- thisModel.loggingTrigger.value =  getValue(thisModel.loggingTrigger.sensorId)
+-- thisModel.flightDetection.value = getValue(thisModel.flightDetection.sensorId)
 
 debugPrint("CHKL: activityTriggerValue: " .. thisModel.activityTrigger.value )
 debugPrint("CHKL: loggingTriggerValue: " .. thisModel.loggingTrigger.value )
@@ -2200,9 +2217,11 @@ switchAnnounce()
 
 doGeneralAnnouncements()
 
-checkLoggingAndActivity()
+-- checkLoggingAndActivity()
 
 if statusTele and allSensorsValid then -- if we have no telemetry .... don't waste time doing anything that requires telemetry
+
+  checkLoggingAndActivity()
 
 updateOtherSensorValues()
 
@@ -2239,7 +2258,10 @@ end
 
 preFlightChecksPassed = allSourcesPassed -- Update the main flag based on the local variable
 
-if preFlightChecksPassed then isPreFlightStage = false end -- todo --- the right place to do this ?
+if preFlightChecksPassed and isPreFlightStage then 
+  isPreFlightStage = false 
+  queueSound("rtf", 1)
+end -- todo --- the right place to do this ?
 
 end -- end of if telemetry
 
@@ -3013,7 +3035,9 @@ drawBottomSensorLine(thisModel.AdlSensors, y)
 
 
   drawText(thisModel.modelName, wgt.zone.w / 2, y, "l", COLOR_THEME_SECONDARY2)
-  lcd.drawBitmap(thisModel.bmpSizedModelImage, wgt.zone.w / 2, y + fontSizes["l"].fontpxl + fontSizes["l"].lineSpacing, 50)
+  if thisModel.bmpSizedModelImage ~= nil then
+    lcd.drawBitmap(thisModel.bmpSizedModelImage, wgt.zone.w / 2, y + fontSizes["l"].fontpxl + fontSizes["l"].lineSpacing, 50)
+  end
 
   y = topSpacing
 
