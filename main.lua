@@ -916,6 +916,44 @@ end
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
+local function getLowestCellVoltage( source  ) 
+  -- For voltage sensors that return a table of sensors, add up the cell 
+  -- voltages to get a total cell voltage.
+  -- Otherwise, just return the value
+  -- cellResult = getValue( voltageSensorIn )
+
+  local lowestVoltage = 1000
+
+  if (type(source.VoltageSensor.value) == "table") then
+    
+    for i, v in ipairs(source.VoltageSensor.value) do
+
+      --debugPrint(string.format("getLowestcellvoltage: cell: %s volts: %s", i, cellSum))
+
+    if v < lowestVoltage then lowestVoltage = v end
+
+
+    end
+    return lowestVoltage
+  else 
+
+    return source.VoltageSensor.value / source.CellCount
+
+  --debugPrint(string.format("getcellvoltage: cellsum: %s", cellSum))
+
+  end
+  -- if prevVolt < 1 or cellSum > 1 then
+  -- else
+  --   return prevVolt
+  -- end
+
+  --return cellSum
+end
+
+
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
 local function getAmp(sensor)
   if sensor ~= "" then
     --amps = getValue( sensor.id )
@@ -2447,7 +2485,10 @@ local function drawNewBatteryNew(xOrigin, yOrigin, source, wgt, batCol, txtCol, 
                           batCol)
 
   -- Draw battery percentage text
-  lcd.drawText(wgt.zone.x + myBatt.x + 20, wgt.zone.y + myBatt.y + 5, string.format("%d%%", percentage), LEFT + myBatt.font + batCol)
+  lcd.drawText(wgt.zone.x + myBatt.x + 10, wgt.zone.y + myBatt.y + 5, string.format("%d%% / %.2fV", percentage, getLowestCellVoltage( source  )), LEFT + myBatt.font + batCol)
+
+  ---- Draw lowest Cell Voltage text
+  --lcd.drawText(wgt.zone.x + myBatt.x + 70, wgt.zone.y + myBatt.y + 5, string.format("%d", getLowestCellVoltage( source  )), LEFT + myBatt.font + batCol)
 
   -- Draw additional information if available
   if source.MahSensor.value ~= nil and source.MahSensor.value ~= 0 then
