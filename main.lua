@@ -1163,6 +1163,26 @@ end
 
 local function doAnnouncementsNew(source)
   -- Clear announcements table at the start of each call
+
+
+  -- Buffer Pack (or is not battery) is a special case:
+  -- During flight .. we would like to get all the alerts as soon and as much as possible
+  -- because this would be an emergency situation.
+  -- However after Flight, when you unplug the Battery, The Buffer Pack will start doing its job 
+  -- and supply "Backup" Voltage to the Receiver just like it would during flight.
+  -- But in this case ... we do not want the radio yelling at us, because well ... we are landed
+  -- And for this case ... if after flight (on the ground) we simply ignore and do not update
+  -- the sensor anymore.
+  -- -- how to read below if ;-) : if not battery and we have been flying for longer than activeFlightDetTimeSet and are currently NOT flying and we are NOT in preflight stage (after reset) then ignore
+  -- how to read below if ;-) : if not battery and are currently NOT flying and we are NOT in preflight stage (after reset) then ignore
+  --if source.type.isNotABattery and timerControl("get") >= thisModel.activeFlightDetTimeSet and not flightState and not isPreFlightStage then
+    if source.type.isNotABattery and not flightState and not isPreFlightStage then
+      debugPrint("Special Case Buffer Return after flight")
+   return
+  end
+
+-- isPreFlightStage
+
   announcements = {}
 
   if statusTele and allSensorsValid then
@@ -1918,7 +1938,7 @@ local function checkForTelemetry()
 
     pfStatus.text = "Waiting for Telemetry"
     pfStatus.color = RED
-    
+
   else
 
     if not statusTele and currentStatusTele and not Timer("telegrace", telegrace ) then
@@ -1976,19 +1996,19 @@ end
 local function updatePowerSourceSensorValues(source)
   debugPrint("UPDSEN: " .. source.displayName)
 
-  -- Buffer Pack (or is not battery) is a special case:
-  -- During flight .. we would like to get all the alerts as soon and as much as possible
-  -- because this would be an emergency situation.
-  -- However after Flight, when you unplug the Battery, The Buffer Pack will start doing its job 
-  -- and supply "Backup" Voltage to the Receiver just like it would during flight.
-  -- But in this case ... we do not want the radio yelling at us, because well ... we are landed
-  -- And for this case ... if after flight (on the ground) we simply ignore and do not update
-  -- the sensor anymore.
-  -- how to read below if ;-) : if not battery and we have been flying for longer than activeFlightDetTimeSet and are currently NOT flying then ignore
-  if source.type.isNotABattery and timerControl("get") >= thisModel.activeFlightDetTimeSet and not flightState then
-    debugPrint("Special Case Buffer Return after flight")
-   return
-  end
+--  -- Buffer Pack (or is not battery) is a special case:
+--  -- During flight .. we would like to get all the alerts as soon and as much as possible
+--  -- because this would be an emergency situation.
+--  -- However after Flight, when you unplug the Battery, The Buffer Pack will start doing its job 
+--  -- and supply "Backup" Voltage to the Receiver just like it would during flight.
+--  -- But in this case ... we do not want the radio yelling at us, because well ... we are landed
+--  -- And for this case ... if after flight (on the ground) we simply ignore and do not update
+--  -- the sensor anymore.
+--  -- how to read below if ;-) : if not battery and we have been flying for longer than activeFlightDetTimeSet and are currently NOT flying then ignore
+--  if source.type.isNotABattery and timerControl("get") >= thisModel.activeFlightDetTimeSet and not flightState then
+--    debugPrint("Special Case Buffer Return after flight")
+--   return
+--  end
 
   -- Update sensor values
   updateSensorValue(source.VoltageSensor)
