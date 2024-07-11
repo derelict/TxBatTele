@@ -1072,7 +1072,8 @@ local context = source and source.displayName or "global"
 
   -- Initialize statusTable entry for the item if it doesn't exist
   if not statusTable[itemNameWithContext] then
-      statusTable[itemNameWithContext] = { lastStatus = nil, lastAnnounceTime = 0, changeStartTime = 0, context = context }
+      --statusTable[itemNameWithContext] = { lastStatus = nil, lastAnnounceTime = 0, changeStartTime = 0, context = context }
+      statusTable[itemNameWithContext] = { lastStatus = currentStatus, lastAnnounceTime = 0, changeStartTime = 0, context = context }
   end
 
   local itemStatus = statusTable[itemNameWithContext]
@@ -1110,8 +1111,15 @@ local context = source and source.displayName or "global"
 
   if mode == "change" then
       --if itemStatus.lastStatus ~= currentStatus then
-      local percentageChange = itemStatus.lastStatus and math.abs(currentStatus - itemStatus.lastStatus) or 0
-      if itemStatus.lastStatus ~= currentStatus and percentageChange >= steps then
+
+
+
+      --local percentageChange = itemStatus.lastStatus and math.abs(currentStatus - itemStatus.lastStatus) or 0
+      
+      debugPrint(string.format("STCHSTP: Item: %s, Current Status: %s, Last Status: %s, Severity Level: %s, Mode: %s, Context: %s, Steps: %s", item, currentStatus, itemStatus.lastStatus, severity, mode, context, steps))
+
+      --if itemStatus.lastStatus ~= currentStatus and percentageChange >= steps then
+        if itemStatus.lastStatus ~= currentStatus and currentStatus % steps == 0 then
 
           if itemStatus.changeStartTime == 0 then
               -- Start the grace period
@@ -1351,6 +1359,8 @@ local function check_for_missing_cellsNew(source)
 
       -- Handle case where VoltageSensor value is a number (e.g., VFAS sensor)
       elseif type(source.VoltageSensor.value) == "number" then
+
+        if not isPreFlightStage then return source.CellCount end -- as the battery discharges, we can't reliably detect missing cells ... therefore we only do it in preflight stage
           
         
         -- source.VoltageSensor.CellsDetectedCurrent = math.floor(source.VoltageSensor.value / source.type.lowVoltage)
