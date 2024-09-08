@@ -102,6 +102,41 @@ local sensSimulator = { -- this is what i use for testing and development -- can
   { sensorName = "Tmp2-" , displayName = "ET- " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED }
 }
 
+local senhwspek = { -- this is a real definition to my own model -- can be deleted together with the model below
+  --- first line
+  { sensorName = "Erpm+" , displayName = "RPM+" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
+  { sensorName = "Erpm-" , displayName = "RPM-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = "< 1500" , condColor = RED },
+  { sensorName = "VBEC+" , displayName = "BEC+" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "V"  , cond = ">10"    , condColor = RED },
+  { sensorName = "VBEC-" , displayName = "BEC-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "V"  , cond = "<7"     , condColor = RED },
+  --- second line
+  { sensorName = "FLss+" , displayName = "FLS " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ">1"     , condColor = RED },
+  { sensorName = "FdeA+" , displayName = "FDE " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ">1"     , condColor = RED },
+  { sensorName = "Hold+" , displayName = "HLD " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ">1"     , condColor = RED },
+  { sensorName = "TRSS-" , displayName = "TRS " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
+  --- third line
+  { sensorName = "TFET+" , displayName = "TF+ " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED },
+  { sensorName = "TFET-" , displayName = "TF- " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED },
+  { sensorName = "RB1T+" , displayName = "ET+ " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED },
+  { sensorName = "RB1T-" , displayName = "ET- " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED }
+}
+
+local senhwelrs = { -- this is a real definition to my own model -- can be deleted together with the model below
+  --- first line
+  { sensorName = "hspd+" , displayName = "RPM+" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
+  { sensorName = "hspd-" , displayName = "RPM-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = "< 1500" , condColor = RED },
+  { sensorName = "bec+" , displayName = "BEC+" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "V"  , cond = ">10"    , condColor = RED },
+  { sensorName = "bec-" , displayName = "BEC-" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "V"  , cond = "<7"     , condColor = RED },
+  --- second line
+  { sensorName = "1RSS-" , displayName = "1RS " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ">1"     , condColor = RED },
+  { sensorName = "2RSS-" , displayName = "2RS " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ">1"     , condColor = RED },
+  { sensorName = "RQly-" , displayName = "RQL " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ">1"     , condColor = RED },
+  { sensorName = "RSNR-" , displayName = "SNR " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = ""   , cond = ""       , condColor = RED },
+  --- third line
+  { sensorName = "esct+" , displayName = "ESC+ " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED },
+  { sensorName = "esct-" , displayName = "ESC- " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED },
+  { sensorName = "hspd" , displayName = "RPM" , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "" , cond = ">45"    , condColor = GREEN },
+  --{ sensorName = "RB1T-" , displayName = "ET- " , prefix = "[" , suffix = "]" , displayNameColor = COLOR_THEME_SECONDARY2, prefixColor = BLUE, valueColor = GREEN , suffixColor = BLUE, unit = "°C" , cond = ">45"    , condColor = RED }
+}
 
 ----------------------------------------------------------------------------------------------------------------------
 -- Battery / Powersource Definition
@@ -148,6 +183,19 @@ local sensSimulator = { -- this is what i use for testing and development -- can
             {3.27, 0}
         },
 
+        dischargeCurveHighLoad = {
+          {4.10, 100}, {4.07, 97.5}, {4.05, 95}, {4.03, 92.5},
+          {4.00, 90}, {3.99, 87.5}, {3.97, 85}, {3.94, 82.5},
+          {3.91, 80}, {3.89, 77.5}, {3.87, 75}, {3.86, 72.5},
+          {3.84, 70}, {3.82, 67.5}, {3.80, 65}, {3.78, 62.5},
+          {3.76, 60}, {3.75, 57.5}, {3.74, 55}, {3.73, 52.5},
+          {3.72, 50}, {3.71, 47.5}, {3.70, 45}, {3.69, 42.5},
+          {3.68, 40}, {3.67, 37.5}, {3.66, 35}, {3.65, 32.5},
+          {3.64, 30}, {3.63, 27.5}, {3.62, 25}, {3.61, 22.5},
+          {3.60, 20}, {3.59, 17.5}, {3.58, 15}, {3.57, 12.5},
+          {3.56, 10}, {3.54, 7.5}, {3.48, 5}, {3.36, 2.5},
+          {3.15, 0}
+      },
 
         typeName                    = "LiPo",
         name                        = "Battery", -- will be used as suffix to the source name (see below), has to be present as wav or voice announce wont work
@@ -168,8 +216,8 @@ local sensSimulator = { -- this is what i use for testing and development -- can
         
         notFullAlertModes = { 
           normal   = { mode = "disable"                                } ,  -- do NOT announce anything under normal conditions
-          warning  = { mode = 10        , threshold = 98               } ,  -- announce on intervals, threshold for warning, steps = amount of change required for announcement
-          critical = { mode = 10        , threshold = 96               } ,  -- announce on intervals, threshold for critical, steps = amount of change required for announcement
+          warning  = { mode = 10        , threshold = 94               } ,  -- announce on intervals, threshold for warning, steps = amount of change required for announcement
+          critical = { mode = 10        , threshold = 92               } ,  -- announce on intervals, threshold for critical, steps = amount of change required for announcement
         },
                 
         alertModes = {
@@ -186,6 +234,7 @@ local sensSimulator = { -- this is what i use for testing and development -- can
   
     buffer = {  -- Buffer Pack (condensator)
         dischargeCurve              = nil,    -- This will be dynamically calculated based on voltage range
+        dischargeCurveHighLoad      = nil,
         typeName                    = "Buffer Pack",
         name                        = "Buffer", -- will be used as suffix to the source name (see below), has to be present as wav or voice announce wont work
         graceperiod                 = 4,      -- grace period for fluctuations 
@@ -222,6 +271,7 @@ local sensSimulator = { -- this is what i use for testing and development -- can
   
     beconly = {  -- BEC only Definition
         dischargeCurve              = nil,    -- This will be dynamically calculated based on voltage range
+        dischargeCurveHighLoad      = nil,
         typeName                    = "BEC only",
         name                        = "Power", -- will be used as suffix to the source name (see below), has to be present as wav or voice announce wont work
         graceperiod                 = 4,      -- grace period for fluctuations 
@@ -284,6 +334,8 @@ local modelTable = {
       --loggingTrigger =  { source = "sd",  condition = "=0" },
       loggingTrigger =  { source = "RPM",  condition = ">50" },
       flightDetection = { source = "RPM",  condition = ">1000" },
+      resetTrigger = { source = "TELE",  condition = "=0" },
+
 
       flightCountGV          = 1, -- Global Variable (Number as displayed, like GV1) to store the value, make sure it is not used for something else. Set to nil to disable. Please Note: only a flight time longer as one (1) minute will make this count !
       flighttimeHoursGV      = 2, -- Global Variable (Number as displayed, like GV2) to store the value, make sure it is not used for something else. Set to nil to disable. Please Note: only a flight time longer as one (1) minute will make this count !
@@ -348,6 +400,8 @@ local modelTable = {
       --loggingTrigger =  { source = "sd",  condition = "=0" },
       loggingTrigger =  { source = "RPM",  condition = ">50" },
       flightDetection = { source = "RPM",  condition = ">1000" },
+      resetTrigger = { source = "TELE",  condition = "=0" },
+
 
       flightCountGV          = 1, -- Global Variable (Number as displayed, like GV1) to store the value, make sure it is not used for something else. Set to nil to disable. Please Note: only a flight time longer as one (1) minute will make this count !
       flighttimeHoursGV      = 2, -- Global Variable (Number as displayed, like GV2) to store the value, make sure it is not used for something else. Set to nil to disable. Please Note: only a flight time longer as one (1) minute will make this count !
@@ -411,6 +465,8 @@ local modelTable = {
       --loggingTrigger =  { source = "sd",  condition = "=0" },
       loggingTrigger =  { source = "RPM",  condition = ">50" },
       flightDetection = { source = "RPM",  condition = ">1000" },
+      --resetTrigger = { source = "TELE"  },
+      resetTrigger = { source = "VFAS",  condition = "<1" },
 
       flightCountGV          = 1, -- Global Variable (Number as displayed, like GV1) to store the value, make sure it is not used for something else. Set to nil to disable. Please Note: only a flight time longer as one (1) minute will make this count !
       flighttimeHoursGV      = 2, -- Global Variable (Number as displayed, like GV2) to store the value, make sure it is not used for something else. Set to nil to disable. Please Note: only a flight time longer as one (1) minute will make this count !
@@ -425,6 +481,8 @@ local modelTable = {
 
       switchAnnounces        = SwitchAnnounceTable,
       BattPackSelectorSwitch = nil , -- !!! NOT IMPLEMENTED YET !!!
+
+      battCapacity = 4500,
 
       powerSources           = {
 
@@ -452,7 +510,145 @@ local modelTable = {
   
       }
 
-  }
+  },
+
+  {
+    modelNameMatch         = "goblin", -- this is the simulator for dev/tests actually 
+    modelName              = "SAB Goblin 630",
+    modelImage             = "goblin.png",
+    modelWav               = "sg630",
+    rxReferenceVoltage     = 8.01,
+    resetSwitch            = "TELE",
+    AdlSensors             = senhwelrs,
+
+    telemetrysettlement    = 10, -- how long to let telemetry and sensors to settle before taking values for real
+
+    doScreenshot           = true, -- Take a Screenshot after a reset (see resetSwitch above)
+
+    screenshotLS           = 0, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function Screenshot. See github page on how to implement this.
+    loggingLS              = 1, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs. See github page on how to implement this.
+    resetTeleLS            = 2, -- Number has to be a Sticky LS (0=L01) LS has to be used for Reset - Telemetry. See github page on how to implement this.
+
+    -- Switches have to be lowercase ... Sensors are Case Sensitive ... Condition for a 3 position switch -1024, 0 and 1024
+    -- See Example(s) below. ActivityTrigger (normally your Arm Switch) will currently only be used to dismiss the preflight status screen
+    activityTrigger = { source = "hspd", condition = ">50" },
+    --loggingTrigger =  { source = "sd",  condition = "=0" },
+    loggingTrigger =  { source = "hspd",  condition = ">50" },
+    flightDetection = { source = "hspd",  condition = ">1000" },
+    resetTrigger = { source = "TELE",  condition = "=0" },
+
+
+    flightCountGV          = 1, -- Global Variable (Number as displayed, like GV1) to store the value, make sure it is not used for something else. Set to nil to disable. Please Note: only a flight time longer as one (1) minute will make this count !
+    flighttimeHoursGV      = 2, -- Global Variable (Number as displayed, like GV2) to store the value, make sure it is not used for something else. Set to nil to disable. Please Note: only a flight time longer as one (1) minute will make this count !
+    flighttimeMinutesGV    = 3, -- Global Variable (Number as displayed, like GV3) to store the value, make sure it is not used for something else. Set to nil to disable. Please Note: only a flight time longer as one (1) minute will make this count !
+
+    gvFm                   = 0, -- flightmode for storing Global Variables above, change as needed if GV's are occupied above
+
+    activeFlightDetTime    = 5, -- todo ... choose a better name for this ... as it is currently only used for buffer pack "ignore" after this seconds of flight
+
+    doHaptic               = true,
+    doWarnTone             = true,
+
+    switchAnnounces        = SwitchAnnounceTable,
+    BattPackSelectorSwitch = nil , -- !!! NOT IMPLEMENTED YET !!!
+
+    powerSources           = {
+
+      {
+        displayName = "Main", -- single words have to be present as wav or voice announce wont work
+        --VoltageSensor = { sensorName = "Cels" },
+        VoltageSensor = { sensorName = "RxBt" },
+        CurrentSensor = { sensorName = "Curr" },
+        MahSensor =     { sensorName = "Capa" },
+        type = powerSources.lipo,
+        CellCount = 12,
+        capacities = { 500, 1000, 1500, 2000, 2500, 3000 } -- not used as of now
+      },
+
+
+      {
+        displayName = "Receiver", -- single words have to be present as wav or voice announce wont work
+        VoltageSensor = { sensorName = "bec" },
+        CurrentSensor = { sensorName = "" },
+        MahSensor =     { sensorName = "" },
+        type = powerSources.buffer,
+        CellCount = 2,
+        capacities = { 500, 1000, 1500, 2000, 2500, 3000 } -- not used as of now
+      }
+
+    }
+
+},  
+  -- 8.14 8.15
+  {
+    modelNameMatch         = "tb60", -- this is the simulator for dev/tests actually 
+    modelName              = "TB60",
+    modelImage             = "trex600.png",
+    modelWav               = "t600",
+    rxReferenceVoltage     = 8.14,
+    resetSwitch            = "TELE",
+    AdlSensors             = senhwspek,
+
+    telemetrysettlement    = 10, -- how long to let telemetry and sensors to settle before taking values for real
+
+    doScreenshot           = true, -- Take a Screenshot after a reset (see resetSwitch above)
+
+    screenshotLS           = 0, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function Screenshot. See github page on how to implement this.
+    loggingLS              = 1, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs. See github page on how to implement this.
+    resetTeleLS            = 2, -- Number has to be a Sticky LS (0=L01) LS has to be used for Reset - Telemetry. See github page on how to implement this.
+
+    -- Switches have to be lowercase ... Sensors are Case Sensitive ... Condition for a 3 position switch -1024, 0 and 1024
+    -- See Example(s) below. ActivityTrigger (normally your Arm Switch) will currently only be used to dismiss the preflight status screen
+    activityTrigger = { source = "Erpm", condition = ">50" },
+    --loggingTrigger =  { source = "sd",  condition = "=0" },
+    loggingTrigger =  { source = "Erpm",  condition = ">50" },
+    flightDetection = { source = "Erpm",  condition = ">1000" },
+    resetTrigger = { source = "TELE",  condition = "=0" },
+
+
+    flightCountGV          = 1, -- Global Variable (Number as displayed, like GV1) to store the value, make sure it is not used for something else. Set to nil to disable. Please Note: only a flight time longer as one (1) minute will make this count !
+    flighttimeHoursGV      = 2, -- Global Variable (Number as displayed, like GV2) to store the value, make sure it is not used for something else. Set to nil to disable. Please Note: only a flight time longer as one (1) minute will make this count !
+    flighttimeMinutesGV    = 3, -- Global Variable (Number as displayed, like GV3) to store the value, make sure it is not used for something else. Set to nil to disable. Please Note: only a flight time longer as one (1) minute will make this count !
+
+    gvFm                   = 0, -- flightmode for storing Global Variables above, change as needed if GV's are occupied above
+
+    activeFlightDetTime    = 5, -- todo ... choose a better name for this ... as it is currently only used for buffer pack "ignore" after this seconds of flight
+
+    doHaptic               = true,
+    doWarnTone             = true,
+
+    switchAnnounces        = SwitchAnnounceTable,
+    BattPackSelectorSwitch = nil , -- !!! NOT IMPLEMENTED YET !!!
+
+    powerSources           = {
+
+      {
+        displayName = "Main", -- single words have to be present as wav or voice announce wont work
+        --VoltageSensor = { sensorName = "Cels" },
+        VoltageSensor = { sensorName = "RB1V" },
+        CurrentSensor = { sensorName = "RB1A" },
+        MahSensor =     { sensorName = "RB1C" },
+        type = powerSources.lipo,
+        CellCount = 12,
+        capacities = { 500, 1000, 1500, 2000, 2500, 3000 } -- not used as of now
+      },
+
+
+      {
+        displayName = "Receiver", -- single words have to be present as wav or voice announce wont work
+        VoltageSensor = { sensorName = "RB2V" },
+        CurrentSensor = { sensorName = "" },
+        MahSensor =     { sensorName = "" },
+        type = powerSources.buffer,
+        CellCount = 2,
+        capacities = { 500, 1000, 1500, 2000, 2500, 3000 } -- not used as of now
+      }
+
+    }
+
+}
+
+
 }
 
 ----------------------------------------------------------------------------------------------------------------------
@@ -493,10 +689,11 @@ local loggingState = false
 local activityState = false
 local flightState = false
 local activeFlightState = false
+local resetState = false
 
 local prevFlightTime = 0
 
-idstatusTele = getSwitchIndex("TELE") -- Telemetry Status
+idstatusTele = getSwitchIndex("TELE") -- Telemetry Status -- ID: 244
 
 local telegrace = 0
 
@@ -1016,7 +1213,14 @@ end
 ---------------------------------------------------------------------------------------------------------------------------------------
 
 local function findPercentRemNew(source)
+
   local cellVoltage = source.VoltageSensor.LatestVolt / source.CellCount
+
+  local dischargeCurve = source.type.dischargeCurve
+
+  if flightState then 
+     dischargeCurve = source.type.dischargeCurveHighLoad
+  end
 
   debugPrint("findPercentRem Cell Voltage: ", cellVoltage)
 
@@ -1025,8 +1229,12 @@ local function findPercentRemNew(source)
   elseif cellVoltage < source.type.lowVoltage then
       return 0
   else
+
+
+   
+
       -- Method of finding percent in array provided by on4mh (Mike)
-      for i, v in ipairs(source.type.dischargeCurve) do
+      for i, v in ipairs(dischargeCurve) do
           debugPrint(string.format("findPercentRem Check Voltage: %s", v[1]))
           if cellVoltage >= v[1] then
               local newPercent = v[2]
@@ -1452,7 +1660,7 @@ local function initializeSensorId(sensor, fieldname)
           debugPrint("UPDSEN: INIT: " .. sensor[fieldname] .. " ID: " .. fieldInfo.id)
           -- Sensor became valid, do nothing with invalid list
       else
-          print("Field info not found for sensor: " .. sensor[fieldname])
+          print("UPDSEN: INIT: Field info not found for sensor: " .. sensor[fieldname])
           sensor.valid = false
           --local normalizedName = sensor[fieldname]:gsub("[%+%-%s]", "")
           local normalizedName = string.gsub(sensor[fieldname], "[+%-%s]", "")
@@ -1474,7 +1682,7 @@ local function updateSensorValue(sensor)
   
   if sensor.sensorId then
     sensor.value = getValue(sensor.sensorId)
-    debugPrint("UPDSEN: VAL: " .. tostring(sensor.value) .. " ID: " .. sensor.sensorId)
+    debugPrint("UPDSEN: VAL: " .. tostring(sensor.value) .. " ID: " .. sensor.sensorId  )
   end
 end
 
@@ -1482,6 +1690,11 @@ end
 
 -- Initialize sensor IDs for all sensor groups
 local function initializeAndCheckAllSensorIds()
+
+  if not statusTele then -- dont waste time if we have no telemetry
+    return
+  end
+
 
   if not allSensorsValid then
 
@@ -1510,6 +1723,10 @@ end
 initializeSensorId(thisModel.activityTrigger ,"source")
 initializeSensorId(thisModel.loggingTrigger ,"source")
 initializeSensorId(thisModel.flightDetection ,"source")
+
+if thisModel.resetTrigger.source ~= "TELE" then
+  initializeSensorId(thisModel.resetTrigger ,"source")
+end
 
 
 end
@@ -1655,6 +1872,9 @@ for _, source in ipairs(thisModel.powerSources) do
   end
 
 
+  if source.type.dischargeCurveHighLoad == nil then
+    source.type.dischargeCurveHighLoad = source.type.dischargeCurve
+  end
 
   source.type.cellVoltageRanges = {}
   local maxcells = 14
@@ -1715,6 +1935,7 @@ end
 thisModel.activityTrigger.Value = 0
 thisModel.loggingTrigger.Value = 0
 thisModel.flightDetection.Value = 0
+thisModel.resetTrigger.Value = 0
 
 --thisModel.activityTriggerID = getFieldInfo(thisModel.activityTrigger).id
 --thisModel.loggingTriggerID = getFieldInfo(thisModel.loggingTrigger).id
@@ -1764,19 +1985,21 @@ local function reset_if_needed()
   -- if ResetSwitchState == nil or AutomaticResetOnResetPrevState ~= ResetSwitchState then -- Update switch position
     --if AutomaticResetOnResetPrevState ~= ResetSwitchState then -- Update switch position
 
-    ResetSwitchState = getSwitchValue(thisModel.resetswitchid)
+    --ResetSwitchState = getSwitchValue(thisModel.resetswitchid)
 
     --debugPrint("RESET: Switch state :", ResetSwitchState)
 
     -- if ResetSwitchState and not isPreFlightStage then
-      if ResetSwitchState  then
+    --if ResetSwitchState  then
+      if not resetState  then
         TriggerTimers["resetdelay"] = 0
-      return -- no need to do anything when telemetry is on and no reset is needed
+      return -- no need to do anything when no reset is requested
     end
 
 
 
-    if not ResetSwitchState  and not isPreFlightStage and not resetInitiated then -- no telemetry for longer then delay
+    --if not ResetSwitchState  and not isPreFlightStage and not resetInitiated then -- no telemetry for longer then delay
+      if resetState  and not isPreFlightStage and not resetInitiated then -- no telemetry for longer then delay
   
       if Timer("resetdelay", AutomaticResetOnResetSwitchToggle) then
     --AutomaticResetOnResetPrevState = ResetSwitchState
@@ -1961,8 +2184,6 @@ local function checkForTelemetry()
 
   local currentStatusTele = getSwitchValue(idstatusTele)
 
-
-
   -- thisModel.VoltageSensor.main.
   if not currentStatusTele then
 
@@ -1995,6 +2216,23 @@ local function checkForTelemetry()
   TriggerTimers["telegrace"] = 0
 
   statusTele = currentStatusTele
+
+  if thisModel.resetTrigger.source == "TELE" then
+
+    if not currentStatusTele then
+      if not resetState then
+        resetState = true
+        debugPrint("CHKL: resetState : ON " )
+  
+      end
+    else
+      if resetState then
+        resetState = false
+        debugPrint("CHKL: resetState : OFF " )
+      end
+    end
+
+  end
 
 end
 ---------------------------------------------------------------------------------------------------------------------------------------
@@ -2052,6 +2290,14 @@ local function updatePowerSourceSensorValues(source)
   updateSensorValue(source.VoltageSensor)
   updateSensorValue(source.CurrentSensor)
   updateSensorValue(source.MahSensor)
+
+  if source.VoltageSensor.value < 1 then -- do not update voltage value if value is below 1 (this is to keep latest value when battery is removed while telemetry is still on)
+    source.VoltageSensor.value = source.VoltageSensor.LatestVolt
+  end
+
+  --if source.CurrentSensor.value < 1 then
+  --  source.CurrentSensor.value = source.CurrentSensor.LatestAmp
+  --end
 
   -- Update current values for display
   source.VoltageSensor.CurVolt = math.floor(getCellVoltage(source.VoltageSensor.value) * 100) / 100
@@ -2161,7 +2407,11 @@ local function checkLoggingAndActivity()
 updateSensorValue(thisModel.activityTrigger)
 updateSensorValue(thisModel.loggingTrigger)
 updateSensorValue(thisModel.flightDetection)
+if thisModel.resetTrigger.source ~= "TELE" then
+  updateSensorValue(thisModel.resetTrigger)
+  debugPrint("CHKL: resetTriggerValue: " .. thisModel.resetTrigger.value )
 
+end
 
 -- thisModel.activityTrigger.value = getValue(thisModel.activityTrigger.sensorId)
 -- thisModel.loggingTrigger.value =  getValue(thisModel.loggingTrigger.sensorId)
@@ -2174,6 +2424,11 @@ local evalActivity = evaluateCondition(thisModel.activityTrigger.value, thisMode
 local evalLogging = evaluateCondition(thisModel.loggingTrigger.value, thisModel.loggingTrigger.condition)
 local evalFlight = evaluateCondition(thisModel.flightDetection.value, thisModel.flightDetection.condition)
 
+local evalReset = false
+
+if thisModel.resetTrigger.source ~= "TELE" then
+  evalReset = evaluateCondition(thisModel.resetTrigger.value, thisModel.resetTrigger.condition)
+end
 
 
   if evalLogging then
@@ -2216,6 +2471,7 @@ local evalFlight = evaluateCondition(thisModel.flightDetection.value, thisModel.
       flightState = true
       debugPrint("CHKL: Flight : ON " )
 
+
     end
   else
     if flightState then 
@@ -2224,6 +2480,23 @@ local evalFlight = evaluateCondition(thisModel.flightDetection.value, thisModel.
 
     end
   end
+
+  if thisModel.resetTrigger.source ~= "TELE" then
+
+  if evalReset then
+    if not resetState then
+      resetState = true
+      debugPrint("CHKL: resetState : ON " )
+
+    end
+  else
+    if resetState then
+      resetState = false
+      debugPrint("CHKL: resetState : OFF " )
+    end
+  end
+
+end
 
 --   if not activeFlightState then -- todo -- track time better when landed and flown again without changing battery (tele loss)
 --     
@@ -2254,6 +2527,8 @@ local evalFlight = evaluateCondition(thisModel.flightDetection.value, thisModel.
     debugPrint("CHKLL: activeflightstate : OFF " )
     timerControl("stop" )
     activeFlightState = false
+    queueSound("eofd", 2)
+
   end
 --end
 
@@ -2275,6 +2550,10 @@ switchAnnounce()
 
 doGeneralAnnouncements()
 
+-- if thisModel.resetTrigger.value then
+--   debugPrint("TELEDB: " .. thisModel.resetTrigger.value )
+-- end
+
 -- checkLoggingAndActivity()
 
 if statusTele and allSensorsValid then -- if we have no telemetry .... don't waste time doing anything that requires telemetry
@@ -2282,6 +2561,8 @@ if statusTele and allSensorsValid then -- if we have no telemetry .... don't was
   checkLoggingAndActivity()
 
 updateOtherSensorValues()
+
+
 
   local allSourcesPassed = true
 
