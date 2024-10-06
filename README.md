@@ -53,6 +53,9 @@ and use it here:
 ![image](https://github.com/derelict/TxBatTele/assets/2826671/899175e5-2013-4740-a058-fd3edc4ff4bc)
 
 ### How to make automatic screenshots working
+
+**The latest Version of the widget can do this automatically for you and is enabled by default. See the Script**
+
 There is a pending Pull request open, to directly implement this in LUA. But for the time being you'll have to make some small Radio Settings in order to use this Feature:
 
 Create a **Logical Switch** like so:
@@ -70,6 +73,9 @@ Make sure to reference the correct **logical switch**. Then in the LUA Model Def
 and again ... make sure to reference the correct **logical switch** by its index number. 0=L01, 1=L02 and so on.
 
 ### How to make automatic logging working
+
+**The latest Version of the widget can do this automatically for you and is enabled by default. See the Script**
+
 There is a pending Feature request open, to directly implement this in LUA. But for the time being you'll have to make some small Radio Settings in order to use this Feature:
 
 Create a **Logical Switch** like so:
@@ -87,6 +93,9 @@ Make sure to reference the correct **logical switch**. Then in the LUA Model Def
 and again ... make sure to reference the correct **logical switch** by its index number. 0=L01, 1=L02 and so on.
 
 ### How to make telemetry reset working
+
+**The latest Version of the widget can do this automatically for you and is enabled by default. See the Script**
+
 If you like to reset all the Sensors after flight/changing the Battery, you'll have to make some small radio setttings in order to make this work:
 
 Create a **Logical Switch** like so:
