@@ -183,19 +183,34 @@ local senhwelrs = { -- this is a real definition to my own model -- can be delet
             {3.27, 0}
         },
 
-        dischargeCurveHighLoad = {
-          {4.10, 100}, {4.07, 97.5}, {4.05, 95}, {4.03, 92.5},
-          {4.00, 90}, {3.99, 87.5}, {3.97, 85}, {3.94, 82.5},
-          {3.91, 80}, {3.89, 77.5}, {3.87, 75}, {3.86, 72.5},
-          {3.84, 70}, {3.82, 67.5}, {3.80, 65}, {3.78, 62.5},
-          {3.76, 60}, {3.75, 57.5}, {3.74, 55}, {3.73, 52.5},
-          {3.72, 50}, {3.71, 47.5}, {3.70, 45}, {3.69, 42.5},
-          {3.68, 40}, {3.67, 37.5}, {3.66, 35}, {3.65, 32.5},
-          {3.64, 30}, {3.63, 27.5}, {3.62, 25}, {3.61, 22.5},
-          {3.60, 20}, {3.59, 17.5}, {3.58, 15}, {3.57, 12.5},
-          {3.56, 10}, {3.54, 7.5}, {3.48, 5}, {3.36, 2.5},
-          {3.15, 0}
-      },
+  --    dischargeCurveHighLoad = {
+  --      {4.10, 100}, {4.07, 97.5}, {4.05, 95}, {4.03, 92.5},
+  --      {4.00, 90}, {3.99, 87.5}, {3.97, 85}, {3.94, 82.5},
+  --      {3.91, 80}, {3.89, 77.5}, {3.87, 75}, {3.86, 72.5},
+  --      {3.84, 70}, {3.82, 67.5}, {3.80, 65}, {3.78, 62.5},
+  --      {3.76, 60}, {3.75, 57.5}, {3.74, 55}, {3.73, 52.5},
+  --      {3.72, 50}, {3.71, 47.5}, {3.70, 45}, {3.69, 42.5},
+  --      {3.68, 40}, {3.67, 37.5}, {3.66, 35}, {3.65, 32.5},
+  --      {3.64, 30}, {3.63, 27.5}, {3.62, 25}, {3.61, 22.5},
+  --      {3.60, 20}, {3.59, 17.5}, {3.58, 15}, {3.57, 12.5},
+  --      {3.56, 10}, {3.54, 7.5}, {3.48, 5}, {3.36, 2.5},
+  --      {3.15, 0}
+  --  },
+
+      
+      dischargeCurveHighLoad = {
+        {4.08, 100}, {4.05, 97.5}, {4.03, 95}, {4.01, 92.5},
+        {3.99, 90}, {3.97, 87.5}, {3.95, 85}, {3.92, 82.5},
+        {3.90, 80}, {3.88, 77.5}, {3.86, 75}, {3.85, 72.5},
+        {3.83, 70}, {3.81, 67.5}, {3.79, 65}, {3.77, 62.5},
+        {3.75, 60}, {3.74, 57.5}, {3.73, 55}, {3.72, 52.5},
+        {3.71, 50}, {3.70, 47.5}, {3.69, 45}, {3.68, 42.5},
+        {3.67, 40}, {3.66, 37.5}, {3.64, 35}, {3.63, 32.5},
+        {3.62, 30}, {3.61, 27.5}, {3.60, 25}, {3.59, 22.5},
+        {3.58, 20}, {3.57, 17.5}, {3.56, 15}, {3.55, 12.5},
+        {3.54, 10}, {3.52, 7.5}, {3.48, 5}, {3.36, 2.5},
+        {3.15, 0}
+    },
 
         typeName                    = "LiPo",
         name                        = "Battery", -- will be used as suffix to the source name (see below), has to be present as wav or voice announce wont work
@@ -324,9 +339,9 @@ local modelTable = {
 
       doScreenshot           = true, -- Take a Screenshot after a reset (see resetSwitch above)
 
-      screenshotLS           = 0, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function Screenshot. See github page on how to implement this.
-      loggingLS              = 1, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs. See github page on how to implement this.
-      resetTeleLS            = 2, -- Number has to be a Sticky LS (0=L01) LS has to be used for Reset - Telemetry. See github page on how to implement this.
+      screenshotLS           = "create", -- use "create" in order for the script to create everything for you ... creation will start at LS/SF 65 counting down as needed ... if Number, it has to be a Sticky LS (0=L01) LS has to be used for Special Function Screenshot. See github page on how to implement this.
+      loggingLS              = "create", -- use "create" in order for the script to create everything for you ... creation will start at LS/SF 65 counting down as needed ... if Number, it has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs. See github page on how to implement this.
+      resetTeleLS            = "create", -- use "create" in order for the script to create everything for you ... creation will start at LS/SF 65 counting down as needed ... if Number, it has to be a Sticky LS (0=L01) LS has to be used for Reset - Telemetry. See github page on how to implement this.
 
       -- Switches have to be lowercase ... Sensors are Case Sensitive ... Condition for a 3 position switch -1024, 0 and 1024
       -- See Example(s) below. ActivityTrigger (normally your Arm Switch) will currently only be used to dismiss the preflight status screen
@@ -390,9 +405,9 @@ local modelTable = {
 
     doScreenshot           = true, -- Take a Screenshot after a reset (see resetSwitch above)
 
-    screenshotLS           = 0, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function Screenshot. See github page on how to implement this.
-    loggingLS              = 1, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs. See github page on how to implement this.
-    resetTeleLS            = 2, -- Number has to be a Sticky LS (0=L01) LS has to be used for Reset - Telemetry. See github page on how to implement this.
+    screenshotLS           = "create", -- use "create" in order for the script to create everything for you ... creation will start at LS/SF 65 counting down as needed ... if Number, it has to be a Sticky LS (0=L01) LS has to be used for Special Function Screenshot. See github page on how to implement this.
+    loggingLS              = "create", -- use "create" in order for the script to create everything for you ... creation will start at LS/SF 65 counting down as needed ... if Number, it has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs. See github page on how to implement this.
+    resetTeleLS            = "create", -- use "create" in order for the script to create everything for you ... creation will start at LS/SF 65 counting down as needed ... if Number, it has to be a Sticky LS (0=L01) LS has to be used for Reset - Telemetry. See github page on how to implement this.
 
       -- Switches have to be lowercase ... Sensors are Case Sensitive ... Condition for a 3 position switch -1024, 0 and 1024
       -- See Example(s) below. ActivityTrigger (normally your Arm Switch) will currently only be used to dismiss the preflight status screen
@@ -455,9 +470,9 @@ local modelTable = {
 
       doScreenshot           = true, -- Take a Screenshot after a reset (see resetSwitch above)
 
-      screenshotLS           = 0, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function Screenshot. See github page on how to implement this.
-      loggingLS              = 1, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs. See github page on how to implement this.
-      resetTeleLS            = 2, -- Number has to be a Sticky LS (0=L01) LS has to be used for Reset - Telemetry. See github page on how to implement this.
+      screenshotLS           = "create", -- use "create" in order for the script to create everything for you ... creation will start at LS/SF 65 counting down as needed ... if Number, it has to be a Sticky LS (0=L01) LS has to be used for Special Function Screenshot. See github page on how to implement this.
+      loggingLS              = "create", -- use "create" in order for the script to create everything for you ... creation will start at LS/SF 65 counting down as needed ... if Number, it has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs. See github page on how to implement this.
+      resetTeleLS            = "create", -- use "create" in order for the script to create everything for you ... creation will start at LS/SF 65 counting down as needed ... if Number, it has to be a Sticky LS (0=L01) LS has to be used for Reset - Telemetry. See github page on how to implement this.
 
       -- Switches have to be lowercase ... Sensors are Case Sensitive ... Condition for a 3 position switch -1024, 0 and 1024
       -- See Example(s) below. ActivityTrigger (normally your Arm Switch) will currently only be used to dismiss the preflight status screen
@@ -525,9 +540,9 @@ local modelTable = {
 
     doScreenshot           = true, -- Take a Screenshot after a reset (see resetSwitch above)
 
-    screenshotLS           = 0, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function Screenshot. See github page on how to implement this.
-    loggingLS              = 1, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs. See github page on how to implement this.
-    resetTeleLS            = 2, -- Number has to be a Sticky LS (0=L01) LS has to be used for Reset - Telemetry. See github page on how to implement this.
+    screenshotLS           = "create", -- use "create" in order for the script to create everything for you ... creation will start at LS/SF 65 counting down as needed ... if Number, it has to be a Sticky LS (0=L01) LS has to be used for Special Function Screenshot. See github page on how to implement this.
+    loggingLS              = "create", -- use "create" in order for the script to create everything for you ... creation will start at LS/SF 65 counting down as needed ... if Number, it has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs. See github page on how to implement this.
+    resetTeleLS            = "create", -- use "create" in order for the script to create everything for you ... creation will start at LS/SF 65 counting down as needed ... if Number, it has to be a Sticky LS (0=L01) LS has to be used for Reset - Telemetry. See github page on how to implement this.
 
     -- Switches have to be lowercase ... Sensors are Case Sensitive ... Condition for a 3 position switch -1024, 0 and 1024
     -- See Example(s) below. ActivityTrigger (normally your Arm Switch) will currently only be used to dismiss the preflight status screen
@@ -593,9 +608,9 @@ local modelTable = {
 
     doScreenshot           = true, -- Take a Screenshot after a reset (see resetSwitch above)
 
-    screenshotLS           = 0, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function Screenshot. See github page on how to implement this.
-    loggingLS              = 1, -- Number has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs. See github page on how to implement this.
-    resetTeleLS            = 2, -- Number has to be a Sticky LS (0=L01) LS has to be used for Reset - Telemetry. See github page on how to implement this.
+    screenshotLS           = "create", -- use "create" in order for the script to create everything for you ... creation will start at LS/SF 65 counting down as needed ... if Number, it has to be a Sticky LS (0=L01) LS has to be used for Special Function Screenshot. See github page on how to implement this.
+    loggingLS              = "create", -- use "create" in order for the script to create everything for you ... creation will start at LS/SF 65 counting down as needed ... if Number, it has to be a Sticky LS (0=L01) LS has to be used for Special Function SD Logs. See github page on how to implement this.
+    resetTeleLS            = "create", -- use "create" in order for the script to create everything for you ... creation will start at LS/SF 65 counting down as needed ... if Number, it has to be a Sticky LS (0=L01) LS has to be used for Reset - Telemetry. See github page on how to implement this.
 
     -- Switches have to be lowercase ... Sensors are Case Sensitive ... Condition for a 3 position switch -1024, 0 and 1024
     -- See Example(s) below. ActivityTrigger (normally your Arm Switch) will currently only be used to dismiss the preflight status screen
@@ -865,6 +880,165 @@ local timer = {
 -- FUNCTIONS
 ---------------------------------------------------------------------------------------------------------------------------------------
 
+
+---------------------------------------------------------------------------------------------------------------------------------------
+-- CF FUNCTIONS
+---------------------------------------------------------------------------------------------------------------------------------------
+
+
+--
+--  variables for demo
+--
+-- local lastActive = 0													-- for demo: toggles SD Logs on/off every 5s
+-- local interval = 500													
+-- local enable = 0															
+
+--
+-- internal variables for SF SD Logs enable/disable function 
+--
+local nSF = 64																-- 64 SFs to consider
+
+
+local function init_sf(trigger,type)						-- initializes the SF SD Logs enable/disable function
+		
+  local createSF = false
+
+  local index = nil
+  
+  for i = nSF-1, 0, -1 do
+
+    local sf = model.getCustomFunction(i)		-- get SF at index i
+
+    print("SFDEBG: Getting CF:" .. i )
+
+    if sf ~= nil then
+      
+      if sf.func == type then 					-- check if SF is SF SD Logs
+        --SDlogsTable = cf											-- copy entry
+        index = i											-- memorize index
+        createSF = false										-- no need to create SF
+        print("SFDEBG: EXISTING SF FOUND:" .. i )
+
+        break																-- exit search loop
+      end
+      
+
+      if index == nil and 						-- search for first free index
+         sf.switch == 0 then									
+          index = i											-- memorize index
+        createSF = true										  -- need to create the SF
+        print("SFDEBG: Setting Create to true. index: " .. index )
+      end
+
+    end
+
+  end
+      
+  if createSF == true then
+
+
+   
+
+    local switchname = string.format("L%02d", tonumber(index+1))
+
+    SF_Table = { 
+      ["switch"] = getSwitchIndex(switchname),		-- trigger permanently ON 
+      ["func"] = type,									-- SD Logs
+      ["active"] = 1 												-- disabled
+    } 
+
+    if type == FUNC_LOGS then
+      SF_Table.value = 10
+    end
+
+    if type == FUNC_RESET then
+      SF_Table.value = 4
+    end
+
+    print("SFDEBG: Creating SF:" .. switchname)
+
+    model.setCustomFunction(index, SF_Table)
+
+  end
+end
+
+
+
+local function init_ls(internalidx, isonoff )						-- initializes the SF SD Logs enable/disable function
+		
+  local createLS = false
+
+  local index = nil
+
+  local duration = 10 + internalidx
+  local delay = internalidx
+
+  if isonoff then
+    duration = 0
+  end
+  
+  --for i = 0, nSF-1 do												-- go through all LSs
+    for i = nSF-1, 0, -1 do
+
+
+    print("LSDEBG: Getting LS:" .. i )
+
+  local ls = model.getLogicalSwitch(i)		-- get SF at index i
+
+
+    if ls ~= nil then
+
+      print("LSDEBG: NOT NIL:" .. i )
+      print("LSDEBG: FUNC:" .. ls.func )
+
+
+      
+      if ls.func == LS_FUNC_STICKY and ls.duration == duration and ls.delay == delay then 					-- check if SF is SF SD Logs
+        --SF_RESET_Table = cf											-- copy entry
+        index = i											-- memorize index
+        --thisModel.resetTeleLS = index
+        createLS = false										-- no need to create SF
+        print("LSDEBG: EXISTING LS FOUND:" .. i )
+
+        break																-- exit search loop
+      end
+      
+
+      if index == nil and 						-- search for first free index
+         ls.func == 0 then									
+          index = i											-- memorize index
+          --thisModel.resetTeleLS = index
+          createLS = true										  -- need to create the SF
+        print("LSDEBG: Setting Create to true. index: " .. index )
+      end
+
+    end
+
+  end
+      
+  if createLS == true then
+
+    print("LSDEBG: Creating LS RESET " .. duration .. " " .. delay)
+
+    LS_Table = { 
+      ["duration"] = duration ,		-- trigger permanently ON 
+      ["delay"] = delay ,		-- trigger permanently ON 
+      ["func"] = LS_FUNC_STICKY,									-- SD Logs
+    } 
+
+    model.setLogicalSwitch(index, LS_Table)
+
+  end
+
+
+
+  return index
+
+end
+
+
+
+
 ---------------------------------------------------------------------------------------------------------------------------------------
 
 local function timerControl(action, offset)
@@ -1063,11 +1237,11 @@ end
 -- Function to get model details based on current model name
 local function getModelDetails(name)
   local defaultDetails
-  for _, model in ipairs(modelTable) do
-    if model.modelNameMatch == "DEFAULT" then
-      defaultDetails = model
-    elseif matchModelName(name, model.modelNameMatch) then
-      return model
+  for _, currmodel in ipairs(modelTable) do
+    if currmodel.modelNameMatch == "DEFAULT" then
+      defaultDetails = currmodel
+    elseif matchModelName(name, currmodel.modelNameMatch) then
+      return currmodel
     end
   end
   -- Return default values if no match is found
@@ -1941,6 +2115,7 @@ thisModel.resetTrigger.Value = 0
 --thisModel.loggingTriggerID = getFieldInfo(thisModel.loggingTrigger).id
 
 setStickySwitch(thisModel.resetTeleLS, true)
+--sf_reset_tele()
 
 telegrace = thisModel.telemetrysettlement
 
@@ -2028,6 +2203,8 @@ local function reset_if_needed()
 
       if thisModel.doScreenshot ~= nil and thisModel.doScreenshot then
         setStickySwitch(thisModel.screenshotLS, true)
+        --take_sf_screenshot()
+
         --setStickySwitch(thisModel.doScreenshot, false)
         screenshotTriggered = true
                 --Timer("waitForScreenshot")
@@ -2115,6 +2292,17 @@ local function init_func()
 
 if not modelAlreadyLoaded then --todo --- maybe move all of this stuff out of init 
 
+  -- SDLogsEnable("1") -- todo
+
+
+  --local test = model.getCustomFunction(SF_RESET_SFIndex)
+--
+  --print("SFDEBGT: CF Debug " .. test.param )
+  --print("SFDEBGT: CF Debug " .. test.mode )
+  --print("SFDEBGT: CF Debug " .. test.value )
+  
+
+
   local currentModelName = model.getInfo().name
 
   debugPrint ("TEST MODEL:" , currentModelName)
@@ -2124,6 +2312,32 @@ if not modelAlreadyLoaded then --todo --- maybe move all of this stuff out of in
   rxReferenceVoltage = modelDetails.rxReferenceVoltage
   
   thisModel = modelDetails
+
+
+  -- init_log_cf()														-- Initialize the SF SD Logs enable/disable function
+  -- init_ss_cf()														-- Initialize the SF SD Logs enable/disable function
+  -- init_reset_cf()
+
+
+  if thisModel.screenshotLS == "create" then 
+    thisModel.screenshotLS = init_ls(1,false)
+    init_sf(thisModel.screenshotLS, FUNC_SCREENSHOT)
+  end
+
+  if thisModel.resetTeleLS == "create" then 
+    thisModel.resetTeleLS = init_ls(2,false)
+    init_sf(thisModel.resetTeleLS, FUNC_RESET)
+  end
+
+  if thisModel.loggingLS == "create" then 
+    thisModel.loggingLS = init_ls(3,true)
+    init_sf(thisModel.loggingLS, FUNC_LOGS)
+  end
+
+  
+  -- thisModel.resetTeleLS = init_ls(2,false)
+  -- thisModel.loggingLS = init_ls(3,true)
+
 
   switchIndexes = {}
   previousSwitchState = {}
@@ -2434,6 +2648,7 @@ end
   if evalLogging then
     if not loggingState then 
       setStickySwitch(thisModel.loggingLS, true) 
+      --SDLogsEnable("1")
     loggingState = true
     queueSound("tl", 0)
     queueSound("on", 2)
@@ -2443,6 +2658,7 @@ end
   else
     if loggingState then 
       setStickySwitch(thisModel.loggingLS, false) 
+      --SDLogsEnable("0")
         loggingState = false
         queueSound("tl", 0)
         queueSound("off", 2)
@@ -3458,6 +3674,7 @@ end
 
 function create(zone, options)
   init_func()
+
   local Context = { zone=zone, options=options }
   return Context
 end
